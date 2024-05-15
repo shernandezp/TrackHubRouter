@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>ReThinkMarket.Application</RootNamespace>
-    <AssemblyName>ReThinkMarket.Application</AssemblyName>
+    <RootNamespace>TrackHubRouter.Application</RootNamespace>
+    <AssemblyName>TrackHubRouter.Application</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Ardalis.GuardClauses" />
-    <PackageReference Include="Common.Application" />
-    <PackageReference Include="Common.Domain" />
+    <PackageReference Include="TrackHubCommon.Application" />
+    <PackageReference Include="TrackHubCommon.Domain" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>

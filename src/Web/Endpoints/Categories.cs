@@ -1,5 +1,4 @@
-﻿using Common.Application.Models;
-using Common.Domain.Enums;
+﻿using Common.Domain.Enums;
 using TrackHubRouter.Application.Categories.Commands.CreateCategory;
 using TrackHubRouter.Application.Categories.Commands.DeleteCategory;
 using TrackHubRouter.Application.Categories.Commands.UpdateCategory;
