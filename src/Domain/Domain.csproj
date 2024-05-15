@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>ReThinkMarket.Domain</RootNamespace>
+    <AssemblyName>ReThinkMarket.Domain</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Common.Domain" />
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+</Project>
