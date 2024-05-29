@@ -19,7 +19,7 @@ public sealed class Categories
     public async Task<CategoryVm> CreateCategory([Service] ISender sender, CreateCategoryCommand command)
         => await sender.Send(command);
 
-    public async Task<IResult> UpdateCategory(ISender sender, Guid id, UpdateCategoryCommand command)
+    /*public async Task<IResult> UpdateCategory(ISender sender, Guid id, UpdateCategoryCommand command)
     {
         if (id != command.Category.CategoryId) return Results.BadRequest();
         await sender.Send(command);
@@ -30,5 +30,5 @@ public sealed class Categories
     {
         await sender.Send(new DeleteCategoryCommand(id));
         return Results.NoContent();
-    }
+    }*/
 }

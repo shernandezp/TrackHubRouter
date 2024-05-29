@@ -12,7 +12,7 @@ using TrackHubRouter.Infrastructure;
 namespace TrackHubRouter.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231227024046_InitialCreate")]
+    [Migration("20240522033711_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,12 +20,12 @@ namespace TrackHubRouter.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "8.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ReThinkMarket.Infrastructure.Entities.Category", b =>
+            modelBuilder.Entity("TrackHubRouter.Infrastructure.Entities.Category", b =>
                 {
                     b.Property<Guid>("CategoryId")
                         .ValueGeneratedOnAdd()
@@ -69,7 +69,7 @@ namespace TrackHubRouter.Infrastructure.Migrations
                     b.ToTable("categories", "app");
                 });
 
-            modelBuilder.Entity("ReThinkMarket.Infrastructure.Entities.User", b =>
+            modelBuilder.Entity("TrackHubRouter.Infrastructure.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()

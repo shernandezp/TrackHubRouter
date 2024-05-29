@@ -1,9 +1,12 @@
-﻿using TrackHubRouter.Domain.Interfaces;
+﻿using Common.Application.Attributes;
+using Common.Domain.Constants;
+using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.Categories.Queries.GetCategory;
 
-public record GetCategoryQuery : IRequest<CategoryVm>
+[Authorize(Resource = Resources.MapScreen, Action = Actions.View)]
+public readonly record struct GetCategoryQuery : IRequest<CategoryVm>
 {
     public required Guid Id { get; init; }
 }
