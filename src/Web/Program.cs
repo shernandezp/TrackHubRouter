@@ -1,16 +1,12 @@
 using System.Reflection;
 using Common.Application;
-using GraphQL.Client.Abstractions;
-using GraphQL.Client.Http;
-using GraphQL.Client.Serializer.SystemTextJson;
 using TrackHubRouter.Infrastructure;
 using TrackHubRouter.Web.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var assembly = Assembly.GetExecutingAssembly();
-builder.Services.AddApplicationServices(assembly);
+builder.Services.AddApplicationServices();
 builder.Services.AddApplicationDbContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices("Router API");
@@ -18,21 +14,6 @@ builder.Services.AddWebServices("Router API");
 // Add HealthChecks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>();
-
-builder.Services.AddHttpClient("GraphQLClient")
-    .AddHeaderPropagation();
-
-builder.Services.AddSingleton<IGraphQLClient>(sp =>
-{
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient("GraphQLClient");
-    var options = new GraphQLHttpClientOptions
-    {
-        EndPoint = new Uri("https://localhost/Security/graphql/"), //Add this endpoint to the configuration file
-    };
-    var jsonSerializer = new SystemTextJsonSerializer();
-    return new GraphQLHttpClient(options, jsonSerializer, httpClient);
-});
 
 builder.Services
     .AddGraphQLServer()
@@ -62,9 +43,15 @@ app.UseSwaggerUi(settings =>
 
 app.UseExceptionHandler(options => { });
 app.Map("/", () => Results.Redirect("/api"));
-app.MapEndpoints(assembly);
-app.MapGraphQL();
+app.MapEndpoints(Assembly.GetExecutingAssembly());
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapGraphQL();
+}
+else 
+{
+    app.MapGraphQL().RequireAuthorization();
+}
 
 app.Run();
-
-public partial class Program { }
