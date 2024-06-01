@@ -1,7 +1,5 @@
 ﻿using Common.Domain.Constants;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TrackHubRouter.Infrastructure.Entities;
 
 namespace TrackHubRouter.Infrastructure.Configurations;
 public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
