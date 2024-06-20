@@ -7,7 +7,7 @@ using TrackHubRouter.Domain.Records;
 
 namespace TrackHubRouter.Application.Categories.Commands.CreateCategory;
 
-[Authorize(Resource = Resources.SettingsScreen, Action = Actions.View)]
+[Authorize(Resource = Resources.SettingsScreen, Action = Actions.Write)]
 public record CreateCategoryCommand : IRequest<CategoryVm>
 {
     public required CategoryDto Category { get; set; }
