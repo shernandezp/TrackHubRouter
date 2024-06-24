@@ -1,13 +1,14 @@
 using System.Reflection;
 using Common.Application;
-//using TrackHubRouter.Infrastructure;
 using TrackHubRouter.Web.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddApplicationServices();
-//builder.Services.AddApplicationDbContext(builder.Configuration);
+builder.Services.AddAppManagerContext();
+builder.Services.AddCommandTrackContext();
+builder.Services.AddCommonContext();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices("Router API");
 

@@ -10,7 +10,6 @@
     <PackageReference Include="TrackHubCommon.Application" />
     <PackageReference Include="TrackHubCommon.Domain" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
