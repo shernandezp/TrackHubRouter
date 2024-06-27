@@ -1,6 +1,6 @@
 ﻿using Common.Domain.Extensions;
 using TrackHub.Router.Infrastructure.Traccar.Mappers;
-using TrackHub.Router.Infrastructure.Traccar.Extensions;
+using TrackHubRouter.Domain.Extensions;
 using TrackHub.Router.Infrastructure.Common;
 using TrackHubRouter.Domain.Interfaces;
 using Common.Domain.Enums;
@@ -26,14 +26,14 @@ public sealed class PositionReader(CredentialHttpClientFactory httpClientFactory
         httpClientService.Init(_httpClient, $"{ProtocolType.Traccar}");
     }
 
-    public async Task<PositionVm> GetPositionAsync(DeviceDto deviceDto)
+    public async Task<PositionVm> GetDevicePositionAsync(DeviceDto deviceDto)
     {
         var url = $"positions?id={deviceDto.Identifier}";
         var position = await httpClientService.GetAsync<Position>(url);
         return position.MapToPositionVm(deviceDto);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(IEnumerable<DeviceDto> devices)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceDto> devices)
     {
         var url = $"positions{devices.GetIdsQueryString()}";
         var positions = await httpClientService.GetAsync<IEnumerable<Position>>(url);

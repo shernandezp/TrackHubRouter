@@ -1,34 +1,34 @@
 ﻿namespace TrackHub.Router.Infrastructure.CommandTrack;
 
-using TrackHub.Router.Infrastructure.CommandTrack.Entities;
 using Common.Domain.Enums;
 using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Records;
 using TrackHub.Router.Infrastructure.CommandTrack.Mappers;
-using TrackHub.Router.Infrastructure.CommandTrack.Interfaces;
+using Common.Domain.Extensions;
+using TrackHubRouter.Domain.Extensions;
 
 public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory, IHttpClientService httpClientService) : IPositionReader
 {
     private HttpClient? _httpClient;
 
-    public async Task Init(Guid credential, CancellationToken cancellationToken)
+    public async Task Init(CredentialVm credential, CancellationToken cancellationToken)
     {
-        _httpClient = await httpClientFactory.CreateClientAsync(credential, cancellationToken);
-        httpClientService.Init(_httpClient, $"{ProtocolType.Traccar}");
+        _httpClient = await httpClientFactory.CreateClientAsync(credential.CredentialId, cancellationToken);
+        httpClientService.Init(_httpClient, $"{ProtocolType.CommandTrack}");
     }
 
-    public async Task<PositionVm> GetPositionAsync(DeviceDto deviceDto)
+    public async Task<PositionVm> GetDevicePositionAsync(DeviceDto deviceDto)
     {
-        var url = $"api/position/{deviceDto.Name}";
-        var position = await httpClientService.GetAsync<Position>(url);
+        var url = $"api/Device/{deviceDto.Name}";
+        var position = await httpClientService.GetAsync<DevicePosition>(url);
         return position.MapToPositionVm(deviceDto);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(IEnumerable<DeviceDto> devices)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceDto> devices)
     {
-        var url = $"api/position";
-        var positions = await httpClientService.GetAsync<IEnumerable<Position>>(url);
+        var url = $"api/Devices{devices.GetIdsQueryString()}";
+        var positions = await httpClientService.GetAsync<IEnumerable<DevicePosition>>(url);
         if (positions is null)
         {
             return [];
@@ -39,7 +39,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
 
     public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceDto deviceDto)
     {
-        var url = $"api/position";
+        var url = $"api/Position/{deviceDto.Name}/{from.ToIso8601String()}/{to.ToIso8601String()}";
         var positions = await httpClientService.GetAsync<IEnumerable<Position>>(url);
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);
     }

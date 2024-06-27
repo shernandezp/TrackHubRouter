@@ -1,8 +1,8 @@
 ﻿using System.Text;
+using TrackHubRouter.Domain.Records;
 
-namespace TrackHub.Router.Infrastructure.Traccar.Extensions;
-
-internal static class DeviceExtensions
+namespace TrackHubRouter.Domain.Extensions;
+public static class DeviceExtensions
 {
     public static string GetIdsQueryString(this IEnumerable<DeviceDto> devices)
     {

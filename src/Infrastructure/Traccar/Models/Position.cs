@@ -1,4 +1,4 @@
-﻿namespace TrackHub.Router.Infrastructure.Traccar.Entities;
+﻿namespace TrackHub.Router.Infrastructure.Traccar.Models;
 
 internal readonly record struct Position(
     int Id,
