@@ -1,7 +1,7 @@
 ﻿namespace TrackHub.Router.Infrastructure.CommandTrack.Models;
 
 internal readonly record struct DevicePosition(
-    int PositionId,
+    int Id,
     string Serial,
     string Plate,
     double Latitude,

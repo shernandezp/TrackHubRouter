@@ -1,5 +1,5 @@
 ﻿using TrackHub.Router.Infrastructure.Common;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Infrastructure.Common.Helpers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddScoped<ICredentialHttpClientFactory, CredentialHttpClientFactory>();
         services.AddScoped<IHttpClientService, HttpClientService>();
+        services.AddScoped<IRefreshTokenHelper, RefreshTokenHelper>();
         return services;
     }
 }

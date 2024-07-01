@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using Ardalis.GuardClauses;
-using TrackHubRouter.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Common;
 public class HttpClientService : IHttpClientService
@@ -14,11 +13,19 @@ public class HttpClientService : IHttpClientService
         _clientName = clientName;
     }
 
-    public async Task<T?> GetAsync<T>(string url)
+    public async Task<T?> GetAsync<T>(string url, IDictionary<string, string>? headers = null)
     {
         Guard.Against.Null(_httpClient, message: $"Client configuration for {_clientName} not loaded");
 
-        var response = await _httpClient.GetAsync(url);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        if (headers is not null)
+        {
+            foreach (var item in headers)
+            {
+                request.Headers.Add(item.Key, item.Value);
+            }
+        }
+        var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<T>(content);

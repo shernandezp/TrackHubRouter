@@ -15,6 +15,7 @@ public static class DependencyInjection
             .AddHeaderPropagation();
 
         services.AddScoped<ICredentialReader, CredentialReader>();
+        services.AddScoped<ICredentialWriter, CredentialWriter>();
 
         return services;
     }
