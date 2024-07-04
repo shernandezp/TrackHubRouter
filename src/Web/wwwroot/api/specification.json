@@ -6,15 +6,15 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/Categories": {
+    "/api/Positions": {
       "get": {
         "tags": [
-          "Categories"
+          "Positions"
         ],
-        "operationId": "GetCategory",
+        "operationId": "GetPositionByUser",
         "parameters": [
           {
-            "name": "Id",
+            "name": "UserId",
             "in": "query",
             "required": true,
             "schema": {
@@ -30,80 +30,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CategoryVm"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Categories"
-        ],
-        "operationId": "CreateCategory",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoryVm"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/Categories/ByType/{id}": {
-      "get": {
-        "tags": [
-          "Categories"
-        ],
-        "operationId": "GetCategories",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/CategoryType"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CategoryVm"
+                    "$ref": "#/components/schemas/PositionVm"
                   }
                 }
               }
@@ -116,149 +45,107 @@
           }
         ]
       }
-    },
-    "/api/Categories/{id}": {
-      "put": {
-        "tags": [
-          "Categories"
-        ],
-        "operationId": "UpdateCategory",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Categories"
-        ],
-        "operationId": "DeleteCategory",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
     }
   },
   "components": {
     "schemas": {
-      "CategoryVm": {
+      "PositionVm": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "categoryId": {
+          "deviceId": {
             "type": "string",
             "format": "guid"
           },
-          "name": {
-            "type": "string"
+          "latitude": {
+            "type": "number",
+            "format": "double"
           },
-          "description": {
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "altitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "deviceDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "speed": {
+            "type": "number",
+            "format": "double"
+          },
+          "course": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "address": {
             "type": "string",
             "nullable": true
           },
-          "type": {
-            "$ref": "#/components/schemas/CategoryType"
-          }
-        }
-      },
-      "CategoryType": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Unknown",
-          "Product",
-          "Service"
-        ],
-        "enum": [
-          0,
-          1,
-          2
-        ]
-      },
-      "CreateCategoryCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "category": {
-            "$ref": "#/components/schemas/CategoryDto"
-          }
-        }
-      },
-      "CategoryDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "categoryId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
+          "city": {
             "type": "string",
             "nullable": true
           },
-          "type": {
-            "$ref": "#/components/schemas/CategoryType"
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "attributes": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AttributesVm"
+              }
+            ]
           }
         }
       },
-      "UpdateCategoryCommand": {
+      "AttributesVm": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "category": {
-            "$ref": "#/components/schemas/CategoryDto"
+          "ignition": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "satellites": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "mileage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "hobbsMeter": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         }
       }

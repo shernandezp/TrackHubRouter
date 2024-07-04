@@ -1,5 +1,5 @@
 ﻿using System.Collections.Concurrent;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.Common;
 

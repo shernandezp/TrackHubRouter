@@ -1,23 +1,22 @@
 ﻿using System.Text;
 using System.Text.Json;
-using TrackHubRouter.Domain.Interfaces;
 using Common.Domain.Extensions;
+using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Helpers;
 internal class TokenHelper(ICredentialWriter credentialWriter)
 {
 
     public async Task<string> GetTokenAsync(HttpClient httpClient,
-        CredentialVm credential,
-        CredentialTokenVm credentialToken,
+        CredentialTokenVm credential,
         CancellationToken token)
     {
-        return string.IsNullOrEmpty(credentialToken.Token) || IsTokenExpired(credentialToken)
+        return string.IsNullOrEmpty(credential.Token) || IsTokenExpired(credential)
             ? await RefreshTokenAsync(httpClient, credential, token)
-            : credentialToken.Token;
+            : credential.Token;
     }
 
-    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialVm credential, CancellationToken token)
+    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialTokenVm credential, CancellationToken token)
     {
         var model = new AuthenticateModel
         {
@@ -34,7 +33,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
         {
             throw new Exception("Failed to retrieve a new token");
         }
-        await credentialWriter.UpdateTokenCredentialAsync(credential.CredentialId, new UpdateCredentialTokenDto(
+        await credentialWriter.UpdateTokenAsync(credential.CredentialId, new UpdateTokenDto(
                 credential.CredentialId,
                 newToken.Token,
                 newToken.Expires,

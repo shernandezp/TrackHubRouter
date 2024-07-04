@@ -2,20 +2,20 @@
 using Common.Domain.Constants;
 using Common.Infrastructure;
 using GraphQL;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Records;
 
 namespace ManagerApi;
 
 public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialWriter
 {
-    public async Task<bool> UpdateTokenCredentialAsync(Guid id, UpdateCredentialTokenDto credential, CancellationToken token)
+    public async Task<bool> UpdateTokenAsync(Guid id, UpdateTokenDto credential, CancellationToken token)
     {
         var request = new GraphQLRequest
         {
             Query = @"
                 mutation($id:UUID!, $active: Boolean!, $userId: UUID!, $username: String!) {
-                  updateCredentialToken(id: $id,
+                  updateToken(id: $id,
                         command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
                 }",
             Variables = new

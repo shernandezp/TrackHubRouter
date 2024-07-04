@@ -16,4 +16,10 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Devices\Queries\Get\" />
+    <Folder Include="Devices\Queries\GetAll\" />
+    <Folder Include="Devices\Queries\GetById\" />
+  </ItemGroup>
+
 </Project>

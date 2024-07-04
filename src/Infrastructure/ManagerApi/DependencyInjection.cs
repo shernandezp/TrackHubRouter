@@ -1,6 +1,6 @@
 ﻿using Common.Domain.Constants;
 using ManagerApi;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +16,8 @@ public static class DependencyInjection
 
         services.AddScoped<ICredentialReader, CredentialReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
+        services.AddScoped<IDeviceReader, DeviceReader>();
+        services.AddScoped<IOperatorReader, OperatorReader>();
 
         return services;
     }

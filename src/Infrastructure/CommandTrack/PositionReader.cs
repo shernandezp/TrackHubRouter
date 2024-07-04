@@ -6,23 +6,25 @@ using TrackHubRouter.Domain.Records;
 using TrackHub.Router.Infrastructure.CommandTrack.Mappers;
 using Common.Domain.Extensions;
 using TrackHubRouter.Domain.Extensions;
+using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHubRouter.Domain.Interfaces.Operator;
 
 public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory, 
     IHttpClientService httpClientService,
     ICredentialWriter credentialWriter
     ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IPositionReader
 {
-    public async Task<PositionVm> GetDevicePositionAsync(DeviceDto deviceDto)
+    public async Task<PositionVm> GetDevicePositionAsync(DeviceDto deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Device/{deviceDto.Name}";
-        var position = await HttpClientService.GetAsync<DevicePosition>(url, Header);
+        var position = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
         return position.MapToPositionVm(deviceDto);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceDto> devices)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceDto> devices, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Devices{devices.GetIdsQueryString()}";
-        var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header);
+        var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
         if (positions is null)
         {
             return [];
@@ -31,10 +33,10 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
         return positions.MapToPositionVm(devicesDictionary);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceDto deviceDto)
+    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceDto deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Position/{deviceDto.Name}/{from.ToIso8601String()}/{to.ToIso8601String()}";
-        var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, Header);
+        var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, Header, cancellationToken);
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);
     }
 }

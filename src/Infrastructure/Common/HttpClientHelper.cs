@@ -13,7 +13,7 @@ public class HttpClientService : IHttpClientService
         _clientName = clientName;
     }
 
-    public async Task<T?> GetAsync<T>(string url, IDictionary<string, string>? headers = null)
+    public async Task<T?> GetAsync<T>(string url, IDictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         Guard.Against.Null(_httpClient, message: $"Client configuration for {_clientName} not loaded");
 
@@ -25,9 +25,9 @@ public class HttpClientService : IHttpClientService
                 request.Headers.Add(item.Key, item.Value);
             }
         }
-        var response = await _httpClient.SendAsync(request);
+        var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
         return JsonSerializer.Deserialize<T>(content);
     }
 }

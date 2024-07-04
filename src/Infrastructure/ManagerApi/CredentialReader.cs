@@ -1,33 +1,15 @@
 ﻿using Common.Application.Interfaces;
 using Common.Domain.Constants;
 using Common.Infrastructure;
-using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
 using GraphQL;
+using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace ManagerApi;
 
-public class CredentialReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialReader
+public class CredentialReader(IGraphQLClientFactory graphQLClient) 
+    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialReader
 {
-    public async Task<CredentialVm> GetCredentialAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
-                    query($id: UUID!) {
-                        credential(query: { id: $id }) 
-                        {
-                            uri
-                            username
-                            password
-                            key
-                            key2
-                        }
-                    }",
-            Variables = new { id }
-        };
-        return await QueryAsync<CredentialVm>(request, cancellationToken);
-    }
 
     public async Task<string> GetCredentialUrlAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -42,17 +24,17 @@ public class CredentialReader(IGraphQLClientFactory graphQLClient) : GraphQLServ
                     }",
             Variables = new { id }
         };
-        var credential = await QueryAsync<CredentialVm>(request, cancellationToken);
+        var credential = await QueryAsync<CredentialTokenVm>(request, cancellationToken);
         return credential.Uri;
     }
 
-    public async Task<CredentialTokenVm> GetCredentialTokenAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<TokenVm> GetTokenAsync(Guid id, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
             Query = @"
                     query($id: UUID!) {
-                        credentialToken(query: { id: $id })
+                        token(query: { id: $id })
                         {
                             token
                             tokenExpiration
@@ -62,6 +44,6 @@ public class CredentialReader(IGraphQLClientFactory graphQLClient) : GraphQLServ
                     }",
             Variables = new { id }
         };
-        return await QueryAsync<CredentialTokenVm>(request, cancellationToken);
+        return await QueryAsync<TokenVm>(request, cancellationToken);
     }
 }
