@@ -1,4 +1,4 @@
-﻿using TrackHubRouter.Application.Positions.GetByUser;
+﻿using TrackHubRouter.Application.Positions.Get;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Web.Endpoints;
@@ -9,10 +9,10 @@ public class Positions : EndpointGroupBase
     {
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetPositionByUser);
+            .MapGet(GetPositions);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionByUser(ISender sender, [AsParameters] GetPositionByUserQuery query)
+    public async Task<IEnumerable<PositionVm>> GetPositions(ISender sender, [AsParameters] GetPositionsQuery query)
         => await sender.Send(query);
 
 }

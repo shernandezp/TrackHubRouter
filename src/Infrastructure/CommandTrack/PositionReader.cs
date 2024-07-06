@@ -2,7 +2,6 @@
 
 using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
 using TrackHub.Router.Infrastructure.CommandTrack.Mappers;
 using Common.Domain.Extensions;
 using TrackHubRouter.Domain.Extensions;
@@ -14,14 +13,14 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
     ICredentialWriter credentialWriter
     ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IPositionReader
 {
-    public async Task<PositionVm> GetDevicePositionAsync(DeviceDto deviceDto, CancellationToken cancellationToken)
+    public async Task<PositionVm> GetDevicePositionAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Device/{deviceDto.Name}";
         var position = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
         return position.MapToPositionVm(deviceDto);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceDto> devices, CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Devices{devices.GetIdsQueryString()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
@@ -33,7 +32,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
         return positions.MapToPositionVm(devicesDictionary);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceDto deviceDto, CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Position/{deviceDto.Name}/{from.ToIso8601String()}/{to.ToIso8601String()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, Header, cancellationToken);

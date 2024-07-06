@@ -10,7 +10,7 @@ namespace ManagerApi;
 public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceReader
 {
 
-    public async Task<IEnumerable<DeviceVm>> GetOperatorsAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> GetDevicesByOperatorAsync(Guid userId, Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
@@ -24,7 +24,7 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
                             name
                         }
                     }",
-            Variables = new { userId }
+            Variables = new { userId, operatorId }
         };
         return await QueryAsync<IEnumerable<DeviceVm>>(request, cancellationToken);
     }

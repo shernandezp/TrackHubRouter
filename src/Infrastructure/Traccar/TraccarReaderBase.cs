@@ -23,9 +23,9 @@ public class TraccarReaderBase
         return Convert.ToBase64String(Encoding.ASCII.GetBytes(credentials));
     }
 
-    public async Task Init(CredentialTokenVm credential, CancellationToken cancellationToken = default)
+    public void Init(CredentialTokenVm credential, CancellationToken cancellationToken = default)
     {
-        var httpClient = await _httpClientFactory.CreateClientAsync(credential.CredentialId, cancellationToken);
+        var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", GetCredentialString(credential));
         HttpClientService.Init(httpClient, $"{ProtocolType.Traccar}");
     }

@@ -11,19 +11,7 @@
         "tags": [
           "Positions"
         ],
-        "operationId": "GetPositionByUser",
-        "parameters": [
-          {
-            "name": "UserId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
+        "operationId": "GetPositions",
         "responses": {
           "200": {
             "description": "",

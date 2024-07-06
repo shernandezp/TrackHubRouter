@@ -1,10 +1,9 @@
 ﻿using System.Text;
-using TrackHubRouter.Domain.Records;
 
 namespace TrackHubRouter.Domain.Extensions;
 public static class DeviceExtensions
 {
-    public static string GetIdsQueryString(this IEnumerable<DeviceDto> devices)
+    public static string GetIdsQueryString(this IEnumerable<DeviceVm> devices)
     {
         var stringBuilder = new StringBuilder();
         bool isFirst = true;

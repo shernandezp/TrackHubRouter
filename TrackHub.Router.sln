@@ -23,13 +23,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "src\Web\Web.csproj",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{04F3953F-2648-4C08-9E6A-64FB933F3043}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommandTrack", "src\Infrastructure\CommandTrack\CommandTrack.csproj", "{D1C44F9A-5BA6-45CC-8498-F3B2DD8C7FA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommandTrack", "src\Infrastructure\CommandTrack\CommandTrack.csproj", "{D1C44F9A-5BA6-45CC-8498-F3B2DD8C7FA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Traccar", "src\Infrastructure\Traccar\Traccar.csproj", "{3B4C4384-0D68-409A-A504-E0C2A38B7ECF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Traccar", "src\Infrastructure\Traccar\Traccar.csproj", "{3B4C4384-0D68-409A-A504-E0C2A38B7ECF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "src\Infrastructure\Common\Common.csproj", "{E080E7B9-3C30-4B2E-A13B-89910B39234F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "src\Infrastructure\Common\Common.csproj", "{E080E7B9-3C30-4B2E-A13B-89910B39234F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagerApi", "src\Infrastructure\ManagerApi\ManagerApi.csproj", "{9F6B3AA7-C131-4492-94A8-1A1B5E2BB072}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagerApi", "src\Infrastructure\ManagerApi\ManagerApi.csproj", "{9F6B3AA7-C131-4492-94A8-1A1B5E2BB072}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

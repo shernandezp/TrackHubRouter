@@ -38,4 +38,33 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
         };
         return await QueryAsync<IEnumerable<OperatorVm>>(request, cancellationToken);
     }
+
+    public async Task<OperatorVm> GetOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+                    query($id: UUID!) {
+                        operator(query: { id: $id })
+                        {
+                            operatorId
+                            protocolType
+                            credential {
+                                credentialId
+                                uri
+                                username
+                                password
+                                key
+                                key2
+                                token
+                                tokenExpiration
+                                refreshToken
+                                refreshTokenExpiration
+                            }
+                        }
+                    }",
+            Variables = new { id = operatorId }
+        };
+        return await QueryAsync<OperatorVm>(request, cancellationToken);
+    }
 }

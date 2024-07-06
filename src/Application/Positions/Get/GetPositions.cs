@@ -1,23 +1,27 @@
 ﻿using System.Runtime.CompilerServices;
 using Common.Application.Attributes;
+using Common.Application.Interfaces;
 using Common.Domain.Constants;
-using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
 using TrackHubRouter.Domain.Models;
 
-namespace TrackHubRouter.Application.Positions.GetByUser;
+namespace TrackHubRouter.Application.Positions.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
-public readonly record struct GetPositionByUserQuery(Guid UserId) : IRequest<IEnumerable<PositionVm>>;
+public readonly record struct GetPositionsQuery() : IRequest<IEnumerable<PositionVm>>;
 
-public class GetPositionByUserQueryHandler(IOperatorReader operatorReader, IPositionRegistry positionRegistry) 
-    : IRequestHandler<GetPositionByUserQuery, IEnumerable<PositionVm>>
+public class GetPositionsQueryHandler(IOperatorReader operatorReader, 
+    IPositionRegistry positionRegistry,
+    IDeviceReader deviceReader,
+    IUser user) 
+    : IRequestHandler<GetPositionsQuery, IEnumerable<PositionVm>>
 {
-    public async Task<IEnumerable<PositionVm>> Handle(GetPositionByUserQuery request, CancellationToken cancellationToken)
+
+    private Guid UserId { get; } = user.Id is null ? throw new UnauthorizedAccessException() : new Guid(user.Id);
+
+    public async Task<IEnumerable<PositionVm>> Handle(GetPositionsQuery request, CancellationToken cancellationToken)
     {
-        var operators = await operatorReader.GetOperatorsAsync(request.UserId, cancellationToken);
+        var operators = await operatorReader.GetOperatorsAsync(UserId, cancellationToken);
         var protocols = operators.Select(o => o.ProtocolType).Distinct();
         
         var allPositions = new List<PositionVm>();
@@ -49,17 +53,17 @@ public class GetPositionByUserQueryHandler(IOperatorReader operatorReader, IPosi
         }
     }
 
-    private static async Task<IEnumerable<PositionVm>> FetchAndProcessPositionsAsync(
+    private async Task<IEnumerable<PositionVm>> FetchAndProcessPositionsAsync(
         IPositionReader reader,
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
     {
-        var credential = operators.FirstOrDefault(o => o.ProtocolType == reader.Protocol).Credential;
-        if (credential is not null)
+        var @operator = operators.FirstOrDefault(o => o.ProtocolType == reader.Protocol);
+        if (@operator.Credential is not null)
         {
-            await reader.Init(credential.Value, cancellationToken);
-            //TO DO: get devices by operator
-            return await reader.GetDevicePositionAsync([], cancellationToken);
+            await reader.Init(@operator.Credential.Value, cancellationToken);
+            var devices = await deviceReader.GetDevicesByOperatorAsync(UserId, @operator.OperatorId, cancellationToken);
+            return await reader.GetDevicePositionAsync(devices, cancellationToken);
         }
         return [];
     }

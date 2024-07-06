@@ -2,7 +2,7 @@
 
 internal static class DeviceMapper
 {
-    public static DeviceVm MapToDeviceVm(this Device device, DeviceDto deviceDto)
+    public static ExternalDeviceVm MapToDeviceVm(this Device device, DeviceVm deviceDto)
         => new(
             deviceDto.DeviceId,
             device.Id,
@@ -10,7 +10,7 @@ internal static class DeviceMapper
             device.Name
         );
 
-    public static DeviceVm MapToDeviceVm(this Device device)
+    public static ExternalDeviceVm MapToDeviceVm(this Device device)
         => new(
             null,
             device.Id,
@@ -18,7 +18,7 @@ internal static class DeviceMapper
             device.Name
         );
 
-    public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<Device> devices, IDictionary<int, DeviceDto> devicesDictionary)
+    public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<Device> devices, IDictionary<int, DeviceVm> devicesDictionary)
     {
         foreach (var device in devices)
         {
@@ -33,7 +33,7 @@ internal static class DeviceMapper
         }
     }
 
-    public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<Device> devices)
+    public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<Device> devices)
     {
         foreach (var device in devices)
         {

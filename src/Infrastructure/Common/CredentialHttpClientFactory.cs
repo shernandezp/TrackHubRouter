@@ -1,32 +1,20 @@
-﻿using System.Collections.Concurrent;
-using TrackHubRouter.Domain.Interfaces.Manager;
+﻿using TrackHubRouter.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Common;
 
-public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFactory, ICredentialReader credentialReader) : ICredentialHttpClientFactory
+public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFactory) : ICredentialHttpClientFactory
 {
-    private readonly ConcurrentDictionary<Guid, string> _baseURLs = new();
-
-    public async Task<HttpClient> CreateClientAsync(Guid name, CancellationToken cancellationToken)
+    public HttpClient CreateClientAsync(CredentialTokenVm credential, CancellationToken cancellationToken)
     {
-        if (!_baseURLs.TryGetValue(name, out var baseUrl))
+        var httpClient = httpClientFactory.CreateClient(credential.CredentialId.ToString());
+        if (!string.IsNullOrEmpty(credential.Uri))
         {
-            baseUrl = await credentialReader.GetCredentialUrlAsync(name, cancellationToken);
-            if (!string.IsNullOrEmpty(baseUrl))
-            {
-                _baseURLs[name] = baseUrl;
-            }
-        }
-
-        var httpClient = httpClientFactory.CreateClient($"{name}");
-        if (!string.IsNullOrEmpty(baseUrl))
-        {
-            httpClient.BaseAddress = new Uri(baseUrl);
+            httpClient.BaseAddress = new Uri(credential.Uri);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
         else
         {
-            throw new InvalidOperationException($"Base URL for client '{name}' not initialized.");
+            throw new InvalidOperationException($"Base URL for client '{credential.CredentialId}' not initialized.");
         }
         return httpClient;
     }

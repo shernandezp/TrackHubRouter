@@ -14,7 +14,6 @@ public static class DependencyInjection
             client => client.Timeout = TimeSpan.FromSeconds(30))
             .AddHeaderPropagation();
 
-        services.AddScoped<ICredentialReader, CredentialReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
         services.AddScoped<IDeviceReader, DeviceReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();

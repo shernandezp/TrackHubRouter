@@ -2,5 +2,5 @@
 
 public interface ICredentialHttpClientFactory
 {
-    Task<HttpClient> CreateClientAsync(Guid name, CancellationToken cancellationToken);
+    HttpClient CreateClientAsync(CredentialTokenVm credential, CancellationToken cancellationToken);
 }

@@ -32,7 +32,7 @@ public class CommandTrackReaderBase
         Guard.Against.Null(credential, message: $"No CredentialToken configurations provided for {credential.CredentialId}");
 
         var tokenHelper = new TokenHelper(_credentialWriter);
-        _httpClient = await _httpClientFactory.CreateClientAsync(credential.CredentialId, cancellationToken);
+        _httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         var token = await tokenHelper.GetTokenAsync(_httpClient, credential, cancellationToken);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         Header = new Dictionary<string, string> { { "Client-ID", credential.Key } };

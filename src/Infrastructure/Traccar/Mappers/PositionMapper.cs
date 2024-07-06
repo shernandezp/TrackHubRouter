@@ -34,7 +34,7 @@ internal static class PositionMapper
         };
     }
 
-    public static PositionVm MapToPositionVm(this Position position, DeviceDto deviceDto)
+    public static PositionVm MapToPositionVm(this Position position, DeviceVm deviceDto)
         => new(
             deviceDto.DeviceId,
             position.Latitude,
@@ -52,7 +52,7 @@ internal static class PositionMapper
             position.Attributes.ExtractAttributes()
         );
 
-    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, DeviceDto deviceDto)
+    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, DeviceVm deviceDto)
     {
         foreach (var position in positions)
         {
@@ -60,7 +60,7 @@ internal static class PositionMapper
         }
     }
 
-    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, IDictionary<int, DeviceDto> devicesDictionary)
+    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, IDictionary<int, DeviceVm> devicesDictionary)
     {
         foreach (var position in positions)
         {

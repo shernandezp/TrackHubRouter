@@ -4,7 +4,7 @@ namespace TrackHub.Router.Infrastructure.CommandTrack.Mappers;
 
 internal static class PositionMapper
 {
-    public static PositionVm MapToPositionVm(this Position position, DeviceDto deviceDto)
+    public static PositionVm MapToPositionVm(this Position position, DeviceVm deviceDto)
         => new (
             deviceDto.DeviceId,
             position.Latitude,
@@ -28,7 +28,7 @@ internal static class PositionMapper
             }
         );
 
-    public static PositionVm MapToPositionVm(this DevicePosition position, DeviceDto deviceDto)
+    public static PositionVm MapToPositionVm(this DevicePosition position, DeviceVm deviceDto)
         => new(
             deviceDto.DeviceId,
             position.Latitude,
@@ -53,7 +53,7 @@ internal static class PositionMapper
             }
         );
 
-    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, DeviceDto deviceDto)
+    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, DeviceVm deviceDto)
     {
         foreach (var position in positions)
         {
@@ -61,7 +61,7 @@ internal static class PositionMapper
         }
     }
 
-    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, IDictionary<string, DeviceDto> devicesDictionary)
+    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, IDictionary<string, DeviceVm> devicesDictionary)
     {
         foreach (var position in positions)
         {
@@ -76,7 +76,7 @@ internal static class PositionMapper
         }
     }
 
-    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<DevicePosition> positions, IDictionary<string, DeviceDto> devicesDictionary)
+    public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<DevicePosition> positions, IDictionary<string, DeviceVm> devicesDictionary)
     {
         foreach (var position in positions)
         {
