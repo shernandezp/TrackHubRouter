@@ -27,9 +27,10 @@ public class CommandTrackReaderBase
         _credentialWriter = credentialWriter;
     }
 
-    public async Task Init(CredentialTokenVm credential, CancellationToken cancellationToken)
+    public async Task Init(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         Guard.Against.Null(credential, message: $"No CredentialToken configurations provided for {credential.CredentialId}");
+        Guard.Against.Null(credential.Key, message: $"No Credential key found for {credential.CredentialId}");
 
         var tokenHelper = new TokenHelper(_credentialWriter);
         _httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);

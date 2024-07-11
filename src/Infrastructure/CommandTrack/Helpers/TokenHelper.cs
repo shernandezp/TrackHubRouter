@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Ardalis.GuardClauses;
 using Common.Domain.Extensions;
 using TrackHubRouter.Domain.Interfaces.Manager;
 
@@ -8,7 +9,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
 {
 
     public async Task<string> GetTokenAsync(HttpClient httpClient,
-        CredentialTokenVm credential,
+        CredentialTokenDto credential,
         CancellationToken token)
     {
         return string.IsNullOrEmpty(credential.Token) || IsTokenExpired(credential)
@@ -16,8 +17,9 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
             : credential.Token;
     }
 
-    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialTokenVm credential, CancellationToken token)
+    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialTokenDto credential, CancellationToken token)
     {
+        Guard.Against.Null(credential.Key, message: "Credential key not found.");
         var model = new AuthenticateModel
         {
             Username = credential.Username,
@@ -43,7 +45,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
         return newToken.Token;
     }
 
-    private static bool IsTokenExpired(CredentialTokenVm token)
+    private static bool IsTokenExpired(CredentialTokenDto token)
         => DateTime.UtcNow >= token.TokenExpiration;
 
 }

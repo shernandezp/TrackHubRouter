@@ -11,14 +11,14 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
 
     public async Task<PositionVm> GetDevicePositionAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
     {
-        var url = $"/positions?id={deviceDto.Identifier}";
+        var url = $"positions?id={deviceDto.Identifier}";
         var position = await HttpClientService.GetAsync<Position>(url, cancellationToken: cancellationToken);
         return position.MapToPositionVm(deviceDto);
     }
 
     public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
-        var url = $"/positions{devices.GetIdsQueryString()}";
+        var url = $"positions{devices.GetIdsQueryString()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, cancellationToken: cancellationToken);
         if (positions is null)
         {
@@ -30,7 +30,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
 
     public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceVm deviceDto, CancellationToken cancellationToken)
     {
-        var url = $"/positions?deviceId={deviceDto.Identifier}&from={from.ToIso8601String()}&to={to.ToIso8601String()}";
+        var url = $"positions?deviceId={deviceDto.Identifier}&from={from.ToIso8601String()}&to={to.ToIso8601String()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, cancellationToken: cancellationToken);
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);
     }

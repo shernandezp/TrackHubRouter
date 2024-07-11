@@ -8,7 +8,7 @@ public sealed class DeviceReaderAdapter(DeviceReader deviceReader) : IExternalDe
 {
     public ProtocolType Protocol => deviceReader.Protocol;
 
-    public Task Init(CredentialTokenVm credential, CancellationToken cancellationToken = default)
+    public Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
         => Task.Run(() => deviceReader.Init(credential), cancellationToken);
 
     public Task<ExternalDeviceVm> GetDeviceAsync(DeviceVm deviceDto, CancellationToken cancellationToken)

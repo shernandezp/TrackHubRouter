@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Ardalis.GuardClauses;
+using Common.Domain.Extensions;
 
 namespace TrackHub.Router.Infrastructure.Common;
 public class HttpClientService : IHttpClientService
@@ -28,6 +29,6 @@ public class HttpClientService : IHttpClientService
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
-        return JsonSerializer.Deserialize<T>(content);
+        return content.Deserialize<T>();
     }
 }

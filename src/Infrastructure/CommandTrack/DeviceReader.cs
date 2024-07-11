@@ -13,15 +13,15 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 {
     public async Task<ExternalDeviceVm> GetDeviceAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
     {
-        var url = $"/Device?id={deviceDto.Identifier}";
-        var device = await HttpClientService.GetAsync<DevicePosition>(url, cancellationToken: cancellationToken);
+        var url = $"DataConnectAPI/api/Device?id={deviceDto.Identifier}";
+        var device = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
         return device.MapToDeviceVm(deviceDto);
     }
 
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
-        var url = $"/Devices{devices.GetIdsQueryString()}";
-        var result = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, cancellationToken: cancellationToken);
+        var url = $"DataConnectAPI/api/Devices{devices.GetIdsQueryString()}";
+        var result = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
         if (result is null)
         {
             return [];
@@ -32,8 +32,8 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
-        var url = "/AllDevices";
-        var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, cancellationToken: cancellationToken);
+        var url = "DataConnectAPI/api/AllDevices";
+        var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
         return positions is null ? ([]) : positions.MapToDeviceVm();
     }
 }

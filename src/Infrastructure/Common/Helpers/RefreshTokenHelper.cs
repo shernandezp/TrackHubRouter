@@ -9,14 +9,14 @@ namespace TrackHub.Router.Infrastructure.Common.Helpers;
 public class RefreshTokenHelper(ICredentialWriter credentialWriter) : IRefreshTokenHelper
 {
 
-    public async Task<string> GetTokenAsync(HttpClient httpClient, CredentialTokenVm credential, CancellationToken token)
+    public async Task<string> GetTokenAsync(HttpClient httpClient, CredentialTokenDto credential, CancellationToken token)
     {
         return string.IsNullOrEmpty(credential.Token) || IsTokenExpired(credential)
             ? await RefreshTokenAsync(httpClient, credential, token)
             : credential.Token;
     }
 
-    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialTokenVm credential, CancellationToken token)
+    private async Task<string> RefreshTokenAsync(HttpClient httpClient, CredentialTokenDto credential, CancellationToken token)
     {
         TokenVm newCredentialToken;
         if (!string.IsNullOrEmpty(credential.RefreshToken) && !IsRefreshTokenExpired(credential))
@@ -52,9 +52,9 @@ public class RefreshTokenHelper(ICredentialWriter credentialWriter) : IRefreshTo
         return newCredentialToken.Token;
     }
 
-    private static bool IsTokenExpired(CredentialTokenVm token)
+    private static bool IsTokenExpired(CredentialTokenDto token)
         => DateTime.UtcNow >= token.TokenExpiration;
 
-    private static bool IsRefreshTokenExpired(CredentialTokenVm token)
+    private static bool IsRefreshTokenExpired(CredentialTokenDto token)
         => DateTime.UtcNow >= token.RefreshTokenExpiration;
 }

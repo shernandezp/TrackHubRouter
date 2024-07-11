@@ -1,13 +1,20 @@
 ﻿namespace TrackHubRouter.Application.Devices.Registry;
 
-public class DeviceRegistry(IServiceProvider serviceProvider) : IDeviceRegistry
+public class DeviceRegistry(IServiceScopeFactory scopeFactory) : IDeviceRegistry
 {
+
     public IEnumerable<IExternalDeviceReader> GetReaders(IEnumerable<ProtocolType> types)
-        => serviceProvider.GetServices<IExternalDeviceReader>()
+    {
+        using var scope = scopeFactory.CreateScope();
+        return scope.ServiceProvider.GetServices<IExternalDeviceReader>()
             .Where(reader => types.Contains(reader.Protocol));
+    }
 
     public IExternalDeviceReader GetReader(ProtocolType type)
-        => serviceProvider.GetServices<IExternalDeviceReader>()
-            .First(reader => reader.Protocol == type);
+    {
+        using var scope = scopeFactory.CreateScope();
+        return scope.ServiceProvider.GetServices<IExternalDeviceReader>()
+            .First(reader => reader.Protocol == type); 
+    }
 
 }

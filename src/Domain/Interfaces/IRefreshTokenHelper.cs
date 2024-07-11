@@ -2,5 +2,5 @@
 
 public interface IRefreshTokenHelper
 {
-    Task<string> GetTokenAsync(HttpClient httpClient, CredentialTokenVm credential, CancellationToken cancellationToken);
+    Task<string> GetTokenAsync(HttpClient httpClient, CredentialTokenDto credential, CancellationToken cancellationToken);
 }

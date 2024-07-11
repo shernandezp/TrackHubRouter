@@ -8,7 +8,7 @@ public sealed class PositionReaderAdapter(PositionReader positionReader) : IPosi
 {
     public ProtocolType Protocol => positionReader.Protocol;
 
-    public Task Init(CredentialTokenVm credential, CancellationToken cancellationToken = default)
+    public Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
         => Task.Run(() => positionReader.Init(credential), cancellationToken);
 
     public Task<PositionVm> GetDevicePositionAsync(DeviceVm deviceDto, CancellationToken cancellationToken)

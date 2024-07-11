@@ -2,15 +2,18 @@
 using Common.Domain.Constants;
 using System.Runtime.CompilerServices;
 using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using Common.Application.Interfaces;
+using TrackHubRouter.Domain.Extensions;
+using Microsoft.Extensions.Configuration;
+using Ardalis.GuardClauses;
 
 namespace TrackHubRouter.Application.Devices.Queries.Get;
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
 public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<ExternalDeviceVm>>;
 
-public class GetDevicesQueryHandler(IOperatorReader operatorReader,
+public class GetDevicesQueryHandler(
+    IConfiguration configuration,
+    IOperatorReader operatorReader,
     IDeviceRegistry deviceRegistry,
     IDeviceReader deviceReader,
     IUser user)
@@ -18,11 +21,12 @@ public class GetDevicesQueryHandler(IOperatorReader operatorReader,
 {
 
     private Guid UserId { get; } = user.Id is null ? throw new UnauthorizedAccessException() : new Guid(user.Id);
+    private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
     public async Task<IEnumerable<ExternalDeviceVm>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
     {
         var operators = await operatorReader.GetOperatorsAsync(UserId, cancellationToken);
-        var protocols = operators.Select(o => o.ProtocolType).Distinct();
+        var protocols = operators.Select(o => (ProtocolType)o.ProtocolType).Distinct();
 
         var allDevices = new List<ExternalDeviceVm>();
         await foreach (var devicesCollection in GetDevicesAsync(operators, protocols, cancellationToken))
@@ -58,14 +62,14 @@ public class GetDevicesQueryHandler(IOperatorReader operatorReader,
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
     {
-        var @operator = operators.FirstOrDefault(o => o.ProtocolType == reader.Protocol);
+        Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
+        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolType == reader.Protocol);
         if (@operator.Credential is not null)
         {
-            await reader.Init(@operator.Credential.Value, cancellationToken);
+            await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             var devices = await deviceReader.GetDevicesByOperatorAsync(UserId, @operator.OperatorId, cancellationToken);
             return await reader.GetDevicesAsync(devices, cancellationToken);
         }
         return [];
     }
-
 }

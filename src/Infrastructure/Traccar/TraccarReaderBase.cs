@@ -17,13 +17,13 @@ public class TraccarReaderBase
         _httpClientFactory = httpClientFactory;
     }
 
-    private static string GetCredentialString(CredentialTokenVm credential)
+    private static string GetCredentialString(CredentialTokenDto credential)
     {
         var credentials = $"{credential.Username}:{credential.Password}";
         return Convert.ToBase64String(Encoding.ASCII.GetBytes(credentials));
     }
 
-    public void Init(CredentialTokenVm credential, CancellationToken cancellationToken = default)
+    public void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", GetCredentialString(credential));

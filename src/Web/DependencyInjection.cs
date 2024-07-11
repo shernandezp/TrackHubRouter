@@ -11,14 +11,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
-        services.AddTransient<IExternalDeviceReader, CommandTrack.DeviceReader>();
-        services.AddTransient<IPositionReader, CommandTrack.PositionReader>();
+        services.AddScoped<IExternalDeviceReader, CommandTrack.DeviceReader>();
+        services.AddScoped<IPositionReader, CommandTrack.PositionReader>();
 
-        services.AddTransient<Traccar.DeviceReader>();
-        services.AddTransient<Traccar.PositionReader>();
-        services.AddTransient<IPositionReader, Traccar.Adapters.PositionReaderAdapter>(provider
+        services.AddScoped<Traccar.DeviceReader>();
+        services.AddScoped<Traccar.PositionReader>();
+        services.AddScoped<IPositionReader, Traccar.Adapters.PositionReaderAdapter>(provider
             => new Traccar.Adapters.PositionReaderAdapter(provider.GetRequiredService<Traccar.PositionReader>()));
-        services.AddTransient<IExternalDeviceReader, Traccar.Adapters.DeviceReaderAdapter>(provider 
+        services.AddScoped<IExternalDeviceReader, Traccar.Adapters.DeviceReaderAdapter>(provider 
             => new Traccar.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Traccar.DeviceReader>()));
 
         services.AddSingleton<IDeviceRegistry, DeviceRegistry>();

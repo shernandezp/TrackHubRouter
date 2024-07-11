@@ -25,6 +25,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                                 uri
                                 username
                                 password
+                                salt
                                 key
                                 key2
                                 token
@@ -54,6 +55,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                                 uri
                                 username
                                 password
+                                salt
                                 key
                                 key2
                                 token

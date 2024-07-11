@@ -1,10 +1,11 @@
 ﻿namespace TrackHubRouter.Application.Positions.Registry;
 
-public class PositionRegistry(IServiceProvider serviceProvider) : IPositionRegistry
+public class PositionRegistry(IServiceScopeFactory scopeFactory) : IPositionRegistry
 {
     public IEnumerable<IPositionReader> GetReaders(IEnumerable<ProtocolType> types)
     {
-        return serviceProvider.GetServices<IPositionReader>()
+        using var scope = scopeFactory.CreateScope();
+        return scope.ServiceProvider.GetServices<IPositionReader>()
             .Where(reader => types.Contains(reader.Protocol));
     }
 }

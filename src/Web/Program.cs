@@ -13,10 +13,6 @@ builder.Services.AddCommonContext();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices("Router API");
 
-// Add HealthChecks
-/*builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ApplicationDbContext>();*/
-
 builder.Services
     .AddGraphQLServer()
     .AddAuthorization()
@@ -33,7 +29,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-//app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

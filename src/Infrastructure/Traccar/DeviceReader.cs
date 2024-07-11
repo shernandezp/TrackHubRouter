@@ -10,14 +10,14 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     public async Task<ExternalDeviceVm> GetDeviceAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
     {
-        var url = $"/devices?id={deviceDto.Identifier}";
+        var url = $"devices?id={deviceDto.Identifier}";
         var device = await HttpClientService.GetAsync<Device>(url, cancellationToken: cancellationToken);
         return device.MapToDeviceVm(deviceDto);
     }
 
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
-        var url = $"/devices{devices.GetIdsQueryString()}";
+        var url = $"devices{devices.GetIdsQueryString()}";
         var result = await HttpClientService.GetAsync<IEnumerable<Device>>(url, cancellationToken: cancellationToken);
         if (result is null)
         {
@@ -29,7 +29,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
-        var url = "/positions?all=true";
+        var url = "positions?all=true";
         var positions = await HttpClientService.GetAsync<IEnumerable<Device>>(url, cancellationToken: cancellationToken);
         return positions is null ? ([]) : positions.MapToDeviceVm();
     }

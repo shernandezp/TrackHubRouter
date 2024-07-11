@@ -14,21 +14,20 @@ public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLServ
         var request = new GraphQLRequest
         {
             Query = @"
-                mutation($id:UUID!, $active: Boolean!, $userId: UUID!, $username: String!) {
+                mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {
                   updateToken(id: $id,
                         command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
                 }",
             Variables = new
             {
                 id,
-                credential.CredentialId,
-                credential.RefreshToken,
-                credential.RefreshTokenExpiration,
-                credential.Token,
-                credential.TokenExpiration
+                credentialId = credential.CredentialId,
+                refreshToken = credential.RefreshToken,
+                refreshTokenExpiration = credential.RefreshTokenExpiration,
+                token = credential.Token,
+                tokenExpiration = credential.TokenExpiration
             }
         };
-        var result = await MutationAsync<bool>(request, token);
-        return result;
+        return await MutationAsync<bool>(request, token);
     }
 }

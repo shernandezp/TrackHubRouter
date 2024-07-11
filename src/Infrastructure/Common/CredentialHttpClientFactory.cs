@@ -1,10 +1,10 @@
-﻿using TrackHubRouter.Domain.Models;
+﻿using TrackHubRouter.Domain.Records;
 
 namespace TrackHub.Router.Infrastructure.Common;
 
 public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFactory) : ICredentialHttpClientFactory
 {
-    public HttpClient CreateClientAsync(CredentialTokenVm credential, CancellationToken cancellationToken)
+    public HttpClient CreateClientAsync(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         var httpClient = httpClientFactory.CreateClient(credential.CredentialId.ToString());
         if (!string.IsNullOrEmpty(credential.Uri))

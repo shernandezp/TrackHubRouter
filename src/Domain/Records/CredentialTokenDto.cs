@@ -1,11 +1,10 @@
-﻿namespace TrackHubRouter.Domain.Models;
+﻿namespace TrackHubRouter.Domain.Records;
 
-public readonly record struct CredentialTokenVm(
+public readonly record struct CredentialTokenDto(
     Guid CredentialId,
     string Uri,
     string Username,
     string Password,
-    string Salt,
     string? Key,
     string? Key2,
     string? Token,

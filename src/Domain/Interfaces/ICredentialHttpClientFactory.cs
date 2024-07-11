@@ -2,5 +2,5 @@
 
 public interface ICredentialHttpClientFactory
 {
-    HttpClient CreateClientAsync(CredentialTokenVm credential, CancellationToken cancellationToken);
+    HttpClient CreateClientAsync(CredentialTokenDto credential, CancellationToken cancellationToken);
 }
