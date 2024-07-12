@@ -5,12 +5,12 @@ internal readonly record struct Device(
     string UniqueId,
     string Status,
     bool Disabled,
-    DateTimeOffset LastUpdate,
+    DateTimeOffset? LastUpdate,
     int PositionId,
     int GroupId,
     string Phone,
     string Model,
     string Contact,
     string Category,
-    string Attributes
+    object Attributes
     );
