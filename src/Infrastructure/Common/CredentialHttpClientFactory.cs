@@ -2,8 +2,12 @@
 
 namespace TrackHub.Router.Infrastructure.Common;
 
+// This class represents a factory for creating HttpClient instances with credentials.
 public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFactory) : ICredentialHttpClientFactory
 {
+    // Creates a new HttpClient instance with the specified credential and cancellation token.
+    // If the credential has a valid URI, sets the BaseAddress and Timeout properties of the HttpClient.
+    // Otherwise, throws an InvalidOperationException.
     public HttpClient CreateClientAsync(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         var httpClient = httpClientFactory.CreateClient(credential.CredentialId.ToString());

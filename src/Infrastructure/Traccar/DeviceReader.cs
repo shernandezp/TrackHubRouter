@@ -4,10 +4,14 @@ using TrackHubRouter.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Traccar;
 
+
+// This class represents a reader for Traccar api - devices.
 public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory, IHttpClientService httpClientService)
     : TraccarReaderBase(httpClientFactory, httpClientService)
 {
 
+    // Retrieves a single device asynchronously based on the provided device DTO.
+    // Returns the device as an ExternalDeviceVm.
     public async Task<ExternalDeviceVm> GetDeviceAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"api/devices?id={deviceDto.Identifier}";
@@ -15,6 +19,8 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
         return device.MapToDeviceVm(deviceDto);
     }
 
+    // Retrieves multiple devices asynchronously based on the provided device DTOs.
+    // Returns the devices as a collection of ExternalDeviceVm.
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
         var url = $"api/devices{devices.GetIdsQueryString()}";
@@ -27,6 +33,8 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
         return result.MapToDeviceVm(devicesDictionary);
     }
 
+    // Retrieves all devices asynchronously.
+    // Returns all devices as a collection of ExternalDeviceVm.
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
         var url = "api/devices?all=true";

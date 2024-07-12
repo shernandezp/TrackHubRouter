@@ -7,9 +7,17 @@ using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace ManagerApi;
 
+// This class represents the implementation of the IOperatorReader interface
+// It is responsible for reading operator data from the GraphQL service
 public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
 {
 
+    // Retrieves a list of operators associated with a specific user
+    // Parameters:
+    // - userId: The ID of the user
+    // - cancellationToken: A cancellation token to cancel the operation if needed
+    // Returns:
+    // - A collection of OperatorVm objects representing the operators
     public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest

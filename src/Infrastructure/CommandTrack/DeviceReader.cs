@@ -6,6 +6,7 @@ using TrackHubRouter.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack;
 
+// This class represents a device reader that retrieves device information from CommandTrack API
 public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
     ICredentialWriter credentialWriter
@@ -18,6 +19,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
         return device.MapToDeviceVm(deviceDto);
     }
 
+    // Retrieves a single device asynchronously
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
     {
         var url = $"DataConnectAPI/api/Devices{devices.GetIdsQueryString()}";
@@ -30,6 +32,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
         return result.MapToDeviceVm(devicesDictionary);
     }
 
+    // Retrieves multiple devices asynchronously
     public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
         var url = "DataConnectAPI/api/AllDevices";

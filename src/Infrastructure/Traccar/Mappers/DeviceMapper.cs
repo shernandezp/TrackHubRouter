@@ -1,7 +1,9 @@
 ﻿namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
 
+
 internal static class DeviceMapper
 {
+    // Maps a Device object and a DeviceVm object to an ExternalDeviceVm object
     public static ExternalDeviceVm MapToDeviceVm(this Device device, DeviceVm deviceDto)
         => new(
             deviceDto.DeviceId,
@@ -10,6 +12,7 @@ internal static class DeviceMapper
             device.Name
         );
 
+    // Maps a Device object to an ExternalDeviceVm object with null DeviceId
     public static ExternalDeviceVm MapToDeviceVm(this Device device)
         => new(
             null,
@@ -18,6 +21,7 @@ internal static class DeviceMapper
             device.Name
         );
 
+    // Maps a collection of Device objects to a collection of ExternalDeviceVm objects using a dictionary of DeviceVm objects
     public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<Device> devices, IDictionary<int, DeviceVm> devicesDictionary)
     {
         foreach (var device in devices)
@@ -33,6 +37,7 @@ internal static class DeviceMapper
         }
     }
 
+    // Maps a collection of Device objects to a collection of ExternalDeviceVm objects
     public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<Device> devices)
     {
         foreach (var device in devices)
@@ -40,5 +45,4 @@ internal static class DeviceMapper
             yield return device.MapToDeviceVm();
         }
     }
-
 }

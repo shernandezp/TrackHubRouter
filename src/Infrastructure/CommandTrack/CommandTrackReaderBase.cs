@@ -6,6 +6,8 @@ using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack;
 
+// This class represents the base class for CommandTrack readers.
+// It provides common functionality and properties for CommandTrack readers.
 public class CommandTrackReaderBase
 {
     private HttpClient? _httpClient;
@@ -18,7 +20,7 @@ public class CommandTrackReaderBase
     protected IHttpClientService HttpClientService { get; }
     protected IDictionary<string, string>? Header { get; private set; }
 
-    protected CommandTrackReaderBase(ICredentialHttpClientFactory httpClientFactory, 
+    protected CommandTrackReaderBase(ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService,
         ICredentialWriter credentialWriter)
     {
@@ -27,6 +29,8 @@ public class CommandTrackReaderBase
         _credentialWriter = credentialWriter;
     }
 
+    // Initializes the CommandTrack reader with the provided credential.
+    // It sets up the HTTP client, retrieves the access token, and initializes the HTTP client service.
     public async Task Init(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         Guard.Against.Null(credential, message: $"No CredentialToken configurations provided for {credential.CredentialId}");
