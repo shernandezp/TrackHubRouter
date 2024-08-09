@@ -42,13 +42,6 @@ app.UseExceptionHandler(options => { });
 app.Map("/", () => Results.Redirect("/api"));
 app.MapEndpoints(Assembly.GetExecutingAssembly());
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapGraphQL();
-}
-else 
-{
-    app.MapGraphQL().RequireAuthorization();
-}
+app.MapGraphQL();
 
 app.Run();

@@ -43,7 +43,7 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         var @operator = new OperatorVm
         {
             OperatorId = operatorId,
-            ProtocolType = (int)ProtocolType.CommandTrack,
+            ProtocolTypeId = (int)ProtocolType.CommandTrack,
             Credential = TestCredentialTokenVm
         };
         var devices = new List<ExternalDeviceVm>
@@ -97,7 +97,7 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         var @operator = new OperatorVm
         {
             OperatorId = operatorId,
-            ProtocolType = (int)ProtocolType.CommandTrack,
+            ProtocolTypeId = (int)ProtocolType.CommandTrack,
             Credential = null
         };
 

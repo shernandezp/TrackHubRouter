@@ -31,7 +31,7 @@ public class GetDevicesByOperatorQueryHandler(
         OperatorVm @operator,
         CancellationToken cancellationToken)
     {
-        var reader = deviceRegistry.GetReader((ProtocolType)@operator.ProtocolType);
+        var reader = deviceRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
         return await FetchAndProcessDevicesAsync(reader, @operator, cancellationToken);
     }
 

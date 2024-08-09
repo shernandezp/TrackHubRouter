@@ -26,7 +26,7 @@ public class GetPositionsQueryHandler(
     public async Task<IEnumerable<PositionVm>> Handle(GetPositionsQuery request, CancellationToken cancellationToken)
     {
         var operators = await operatorReader.GetOperatorsAsync(UserId, cancellationToken);
-        var protocols = operators.Select(o => (ProtocolType)o.ProtocolType).Distinct();
+        var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
         
         var allPositions = new List<PositionVm>();
         await foreach (var positionsCollection in GetDevicePositionAsync(operators, protocols, cancellationToken))
@@ -63,7 +63,7 @@ public class GetPositionsQueryHandler(
         CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolType == reader.Protocol);
+        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol);
         if (@operator.Credential is not null)
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);

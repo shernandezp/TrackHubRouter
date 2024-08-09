@@ -27,7 +27,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                         operatorsByUser(query: { userId: $userId })
                         {
                             operatorId
-                            protocolType
+                            protocolTypeId
                             credential {
                                 credentialId
                                 uri
@@ -57,7 +57,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                         operator(query: { id: $id })
                         {
                             operatorId
-                            protocolType
+                            protocolTypeId
                             credential {
                                 credentialId
                                 uri

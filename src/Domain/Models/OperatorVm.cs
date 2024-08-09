@@ -2,6 +2,6 @@
 
 public readonly record struct OperatorVm(
     Guid OperatorId,
-    int ProtocolType,
+    int ProtocolTypeId,
     CredentialTokenVm? Credential
     );
