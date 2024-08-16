@@ -1,6 +1,5 @@
 ﻿namespace TrackHubRouter.Application.Devices.Registry;
 
-
 // This class represents a device registry that manages external device readers.
 public class DeviceRegistry(IServiceScopeFactory scopeFactory) : IDeviceRegistry
 {

@@ -4,9 +4,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using TrackHubRouter.Application.Devices.Queries.GetByOperator;
-using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHubRouter.Domain.Interfaces.Registry;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Records;
 

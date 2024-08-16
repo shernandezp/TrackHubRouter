@@ -4,9 +4,8 @@ using Common.Domain.Enums;
 using TrackHubRouter.Domain.Interfaces;
 namespace TrackHub.Router.Infrastructure.Traccar;
 
-
 // This class represents the base class for Traccar readers.
-public class TraccarReaderBase
+public abstract class TraccarReaderBase
 {
     private readonly ICredentialHttpClientFactory _httpClientFactory;
     protected IHttpClientService HttpClientService { get; }
@@ -27,7 +26,7 @@ public class TraccarReaderBase
     }
 
     // Initializes the Traccar reader with the provided credential.
-    public void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
+    public virtual void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", GetCredentialString(credential));
