@@ -11,6 +11,7 @@ public sealed class ConnectivityTester(ICredentialHttpClientFactory httpClientFa
     {
         Init(credential, cancellationToken);
         var url = $"api/server";
-        await HttpClientService.GetAsync<string>(url, cancellationToken: cancellationToken);
+        await HttpClientService.GetAsync<Pong>(url, cancellationToken: cancellationToken);
     }
+    private class Pong { }
 }

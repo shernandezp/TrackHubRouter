@@ -18,9 +18,20 @@ builder.Services
     .AddAuthorization()
     .AddQueryType<Query>();
 
+builder.Services.AddCors(options => options
+    .AddPolicy("AllowFrontend",
+        builder => builder
+                    .WithOrigins("http://localhost:3000")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()));
+
 var app = builder.Build();
 
 app.UseHeaderPropagation();
+
+// Enable CORS
+app.UseCors("AllowFrontend");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
