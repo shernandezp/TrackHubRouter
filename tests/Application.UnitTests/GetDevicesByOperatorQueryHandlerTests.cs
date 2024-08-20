@@ -46,7 +46,7 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
             ProtocolTypeId = (int)ProtocolType.CommandTrack,
             Credential = TestCredentialTokenVm
         };
-        var devices = new List<ExternalDeviceVm>
+        var devices = new List<DeviceVm>
         {
             new() { DeviceId = Guid.NewGuid(), Name = "Device 1" },
             new() { DeviceId = Guid.NewGuid(), Name = "Device 2" }

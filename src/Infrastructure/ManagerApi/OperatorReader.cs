@@ -12,19 +12,18 @@ namespace ManagerApi;
 public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
 {
 
-    // Retrieves a list of operators associated with a specific user
+    // Retrieves a list of operators associated with the current user
     // Parameters:
-    // - userId: The ID of the user
     // - cancellationToken: A cancellation token to cancel the operation if needed
     // Returns:
     // - A collection of OperatorVm objects representing the operators
-    public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
             Query = @"
-                    query($userId: UUID!) {
-                        operatorsByUser(query: { userId: $userId })
+                    query {
+                        operatorsByUser
                         {
                             operatorId
                             protocolTypeId
@@ -42,8 +41,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                                 refreshTokenExpiration
                             }
                         }
-                    }",
-            Variables = new { userId }
+                    }"
         };
         return await QueryAsync<IEnumerable<OperatorVm>>(request, cancellationToken);
     }

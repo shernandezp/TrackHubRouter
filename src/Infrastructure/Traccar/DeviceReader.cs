@@ -12,7 +12,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     // Retrieves a single device asynchronously based on the provided device DTO.
     // Returns the device as an ExternalDeviceVm.
-    public async Task<ExternalDeviceVm> GetDeviceAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
+    public async Task<DeviceVm> GetDeviceAsync(DeviceOperatorVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"api/devices?id={deviceDto.Identifier}";
         var device = await HttpClientService.GetAsync<Device>(url, cancellationToken: cancellationToken);
@@ -21,7 +21,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     // Retrieves multiple devices asynchronously based on the provided device DTOs.
     // Returns the devices as a collection of ExternalDeviceVm.
-    public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
     {
         var url = $"api/devices{devices.GetIdsQueryString()}";
         var result = await HttpClientService.GetAsync<IEnumerable<Device>>(url, cancellationToken: cancellationToken);
@@ -35,7 +35,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
 
     // Retrieves all devices asynchronously.
     // Returns all devices as a collection of ExternalDeviceVm.
-    public async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
         var url = "api/devices?all=true";
         var positions = await HttpClientService.GetAsync<IEnumerable<Device>>(url, cancellationToken: cancellationToken);

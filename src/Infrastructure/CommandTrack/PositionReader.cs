@@ -13,14 +13,14 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
     ICredentialWriter credentialWriter
     ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IPositionReader
 {
-    public async Task<PositionVm> GetDevicePositionAsync(DeviceVm deviceDto, CancellationToken cancellationToken)
+    public async Task<PositionVm> GetDevicePositionAsync(DeviceOperatorVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Device/{deviceDto.Name}";
         var position = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
         return position.MapToPositionVm(deviceDto);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceVm> devices, CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Devices{devices.GetIdsQueryString()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
@@ -32,7 +32,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
         return positions.MapToPositionVm(devicesDictionary);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceVm deviceDto, CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceOperatorVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"/DataConnect/api/Position/{deviceDto.Name}/{from.ToIso8601String()}/{to.ToIso8601String()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, Header, cancellationToken);

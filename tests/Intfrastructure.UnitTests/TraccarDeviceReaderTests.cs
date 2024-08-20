@@ -25,10 +25,10 @@ public class DeviceReaderTests
     public async Task GetDeviceAsync_ValidDevice_ReturnsDeviceVm()
     {
         // Arrange
-        var deviceDto = new DeviceVm { Identifier = 1 };
+        var deviceDto = new DeviceOperatorVm { Identifier = 1 };
         var cancellationToken = CancellationToken.None;
         var device = new Device();
-        var expectedDeviceVm = new ExternalDeviceVm() { DeviceId = Guid.Empty };
+        var expectedDeviceVm = new DeviceVm() { DeviceId = Guid.Empty };
 
         _httpClientServiceMock.Setup(x => x.GetAsync<Device>("api/devices?id=1", null, cancellationToken))
             .ReturnsAsync(device);
@@ -44,14 +44,14 @@ public class DeviceReaderTests
     public async Task GetDevicesAsync_ValidDevices_ReturnsDeviceVms()
     {
         // Arrange
-        var devices = new List<DeviceVm>
+        var devices = new List<DeviceOperatorVm>
         {
             new () { Identifier = 1 },
             new () { Identifier = 2 }
         };
         var cancellationToken = CancellationToken.None;
         var resultDevices = new List<Device>();
-        var expectedDeviceVms = new List<ExternalDeviceVm>();
+        var expectedDeviceVms = new List<DeviceVm>();
 
         _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>("api/devices?id=1,2", null, cancellationToken))
             .ReturnsAsync(resultDevices);

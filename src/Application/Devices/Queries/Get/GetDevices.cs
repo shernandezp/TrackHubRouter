@@ -9,26 +9,24 @@ using Ardalis.GuardClauses;
 namespace TrackHubRouter.Application.Devices.Queries.Get;
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
-public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<ExternalDeviceVm>>;
+public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader,
     IDeviceRegistry deviceRegistry,
-    IDeviceReader deviceReader,
-    IUser user)
-    : IRequestHandler<GetDevicesQuery, IEnumerable<ExternalDeviceVm>>
+    IDeviceReader deviceReader)
+    : IRequestHandler<GetDevicesQuery, IEnumerable<DeviceVm>>
 {
 
-    private Guid UserId { get; } = user.Id is null ? throw new UnauthorizedAccessException() : new Guid(user.Id);
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
-    public async Task<IEnumerable<ExternalDeviceVm>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
     {
-        var operators = await operatorReader.GetOperatorsAsync(UserId, cancellationToken);
+        var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
         var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
 
-        var allDevices = new List<ExternalDeviceVm>();
+        var allDevices = new List<DeviceVm>();
         await foreach (var devicesCollection in GetDevicesAsync(operators, protocols, cancellationToken))
         {
             allDevices.AddRange(devicesCollection);
@@ -37,7 +35,7 @@ public class GetDevicesQueryHandler(
         return allDevices;
     }
 
-    private async IAsyncEnumerable<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(
+    private async IAsyncEnumerable<IEnumerable<DeviceVm>> GetDevicesAsync(
         IEnumerable<OperatorVm> operators,
         IEnumerable<ProtocolType> protocols,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -57,7 +55,7 @@ public class GetDevicesQueryHandler(
         }
     }
 
-    private async Task<IEnumerable<ExternalDeviceVm>> FetchAndProcessDevicesAsync(
+    private async Task<IEnumerable<DeviceVm>> FetchAndProcessDevicesAsync(
         IExternalDeviceReader reader,
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
@@ -67,7 +65,7 @@ public class GetDevicesQueryHandler(
         if (@operator.Credential is not null)
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDevicesByOperatorAsync(UserId, @operator.OperatorId, cancellationToken);
+            var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             return await reader.GetDevicesAsync(devices, cancellationToken);
         }
         return [];

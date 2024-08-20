@@ -3,7 +3,7 @@
 internal static class DeviceMapper
 {
     // Maps a DevicePosition and a DeviceVm to an ExternalDeviceVm
-    public static ExternalDeviceVm MapToDeviceVm(this DevicePosition device, DeviceVm deviceDto)
+    public static DeviceVm MapToDeviceVm(this DevicePosition device, DeviceOperatorVm deviceDto)
         => new(
             deviceDto.DeviceId,
             device.Id,
@@ -12,7 +12,7 @@ internal static class DeviceMapper
     );
 
     // Maps a DevicePosition to an ExternalDeviceVm with null DeviceId
-    public static ExternalDeviceVm MapToDeviceVm(this DevicePosition device)
+    public static DeviceVm MapToDeviceVm(this DevicePosition device)
         => new(
             null,
             device.Id,
@@ -21,7 +21,7 @@ internal static class DeviceMapper
     );
 
     // Maps a collection of DevicePosition objects to a collection of ExternalDeviceVm objects using a dictionary of DeviceVm objects
-    public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices, IDictionary<int, DeviceVm> devicesDictionary)
+    public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices, IDictionary<int, DeviceOperatorVm> devicesDictionary)
     {
         foreach (var device in devices)
         {
@@ -37,7 +37,7 @@ internal static class DeviceMapper
     }
 
     // Maps a collection of DevicePosition objects to a collection of ExternalDeviceVm objects
-    public static IEnumerable<ExternalDeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices)
+    public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices)
     {
         foreach (var device in devices)
         {

@@ -9,25 +9,25 @@ namespace TrackHubRouter.Application.Devices.Queries.GetByOperator;
 
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
-public readonly record struct GetDevicesByOperatorQuery(Guid OperatorId) : IRequest<IEnumerable<ExternalDeviceVm>>;
+public readonly record struct GetDevicesByOperatorQuery(Guid OperatorId) : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesByOperatorQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IDeviceRegistry deviceRegistry)
-        : IRequestHandler<GetDevicesByOperatorQuery, IEnumerable<ExternalDeviceVm>>
+        : IRequestHandler<GetDevicesByOperatorQuery, IEnumerable<DeviceVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
     // Handles the GetDevicesByOperatorQuery and returns a list of external device view models
-    public async Task<IEnumerable<ExternalDeviceVm>> Handle(GetDevicesByOperatorQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> Handle(GetDevicesByOperatorQuery request, CancellationToken cancellationToken)
     {
         var @operator = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
         return await GetDevicesAsync(@operator, cancellationToken);
     }
 
     // Retrieves the devices for the operator and returns a list of external device view models
-    private async Task<IEnumerable<ExternalDeviceVm>> GetDevicesAsync(
+    private async Task<IEnumerable<DeviceVm>> GetDevicesAsync(
         OperatorVm @operator,
         CancellationToken cancellationToken)
     {
@@ -36,7 +36,7 @@ public class GetDevicesByOperatorQueryHandler(
     }
 
     // Fetches and processes the devices using the external device reader and returns a list of external device view models
-    private async Task<IEnumerable<ExternalDeviceVm>> FetchAndProcessDevicesAsync(
+    private async Task<IEnumerable<DeviceVm>> FetchAndProcessDevicesAsync(
         IExternalDeviceReader reader,
         OperatorVm @operator,
         CancellationToken cancellationToken)

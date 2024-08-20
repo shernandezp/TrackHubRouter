@@ -14,18 +14,17 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
 
     // Retrieves devices by operator asynchronously.
     // Parameters:
-    //   userId: The ID of the user.
     //   operatorId: The ID of the operator.
     //   cancellationToken: The cancellation token.
     // Returns:
     //   A collection of DeviceVm objects representing the devices.
-    public async Task<IEnumerable<DeviceVm>> GetDevicesByOperatorAsync(Guid userId, Guid operatorId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceOperatorVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
             Query = @"
-                    query($userId: UUID!, $operatorId: UUID!) {
-                        devicesByUserByOperator(query: { userId: $userId, operatorId: $operatorId })
+                    query($operatorId: UUID!) {
+                        deviceOperatorByUserByOperator(query: { operatorId: $operatorId })
                         {
                             deviceId,
                             identifier,
@@ -33,8 +32,8 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
                             name
                         }
                     }",
-            Variables = new { userId, operatorId }
+            Variables = new { operatorId }
         };
-        return await QueryAsync<IEnumerable<DeviceVm>>(request, cancellationToken);
+        return await QueryAsync<IEnumerable<DeviceOperatorVm>>(request, cancellationToken);
     }
 }

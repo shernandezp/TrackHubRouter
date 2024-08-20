@@ -30,9 +30,9 @@ public class DeviceReaderTests
     public async Task GetDeviceAsync_WithValidDeviceDto_ReturnsDeviceVm()
     {
         // Arrange
-        var deviceDto = new DeviceVm { Identifier = 1 };
+        var deviceDto = new DeviceOperatorVm { Identifier = 1 };
         var devicePosition = new DevicePosition();
-        var expectedDeviceVm = new ExternalDeviceVm { DeviceId = Guid.Empty };
+        var expectedDeviceVm = new DeviceVm { DeviceId = Guid.Empty };
 
         _httpClientServiceMock.Setup(x => x.GetAsync<DevicePosition>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(devicePosition);
@@ -48,9 +48,9 @@ public class DeviceReaderTests
     public async Task GetDevicesAsync_WithValidDevices_ReturnsListOfDeviceVm()
     {
         // Arrange
-        var devices = new List<DeviceVm> { new () { Identifier = 1 }, new () { Identifier = 2 } };
+        var devices = new List<DeviceOperatorVm> { new () { Identifier = 1 }, new () { Identifier = 2 } };
         var devicePositions = new List<DevicePosition>();
-        var expectedDeviceVms = new List<ExternalDeviceVm>();
+        var expectedDeviceVms = new List<DeviceVm>();
 
         _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(devicePositions);
@@ -66,7 +66,7 @@ public class DeviceReaderTests
     public async Task GetDevicesAsync_WithEmptyResult_ReturnsEmptyList()
     {
         // Arrange
-        var devices = new List<DeviceVm> { new () { Identifier = 1 }, new () { Identifier = 2 } };
+        var devices = new List<DeviceOperatorVm> { new () { Identifier = 1 }, new () { Identifier = 2 } };
         var emptyDevices = new List<DevicePosition>();
 
         _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
@@ -83,7 +83,7 @@ public class DeviceReaderTests
     public async Task GetDevicesAsync_WithNoDevices_ReturnsEmptyList()
     {
         // Arrange
-        var devices = new List<DeviceVm>();
+        var devices = new List<DeviceOperatorVm>();
         var devicePositions = new List<DevicePosition> ();
 
         _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))

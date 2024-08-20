@@ -3,7 +3,7 @@
 namespace TrackHubRouter.Domain.Extensions;
 public static class DeviceExtensions
 {
-    public static string GetIdsQueryString(this IEnumerable<DeviceVm> devices)
+    public static string GetIdsQueryString(this IEnumerable<DeviceOperatorVm> devices)
     {
         var stringBuilder = new StringBuilder();
         bool isFirst = true;

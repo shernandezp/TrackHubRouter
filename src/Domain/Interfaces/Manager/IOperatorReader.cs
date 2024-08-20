@@ -3,5 +3,5 @@
 public interface IOperatorReader
 {
     Task<OperatorVm> GetOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
-    Task<IEnumerable<OperatorVm>> GetOperatorsAsync(Guid userId, CancellationToken cancellationToken);
+    Task<IEnumerable<OperatorVm>> GetOperatorsAsync(CancellationToken cancellationToken);
 }

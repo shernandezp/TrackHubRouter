@@ -15,17 +15,15 @@ public class GetPositionsQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader, 
     IPositionRegistry positionRegistry,
-    IDeviceReader deviceReader,
-    IUser user) 
+    IDeviceReader deviceReader) 
     : IRequestHandler<GetPositionsQuery, IEnumerable<PositionVm>>
 {
 
-    private Guid UserId { get; } = user.Id is null ? throw new UnauthorizedAccessException() : new Guid(user.Id);
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
     public async Task<IEnumerable<PositionVm>> Handle(GetPositionsQuery request, CancellationToken cancellationToken)
     {
-        var operators = await operatorReader.GetOperatorsAsync(UserId, cancellationToken);
+        var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
         var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
         
         var allPositions = new List<PositionVm>();
@@ -67,7 +65,7 @@ public class GetPositionsQueryHandler(
         if (@operator.Credential is not null)
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDevicesByOperatorAsync(UserId, @operator.OperatorId, cancellationToken);
+            var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             return await reader.GetDevicePositionAsync(devices, cancellationToken);
         }
         return [];
