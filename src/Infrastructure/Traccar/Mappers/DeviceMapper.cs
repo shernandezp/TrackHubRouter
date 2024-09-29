@@ -1,15 +1,22 @@
-﻿namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
+﻿using Common.Domain.Enums;
 
+namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
 
 internal static class DeviceMapper
 {
+    // Default device type and transporter type if not provided
+    const DeviceType DefaultDeviceType = DeviceType.Cellular;
+    const TransporterType DefaultTransporterType = TransporterType.Truck;
+
     // Maps a Device object and a DeviceVm object to an ExternalDeviceVm object
     public static DeviceVm MapToDeviceVm(this Device device, DeviceOperatorVm deviceDto)
         => new(
             deviceDto.DeviceId,
             device.Id,
             device.UniqueId,
-            device.Name
+            device.Name,
+            (short)DefaultDeviceType,
+            (short)DefaultTransporterType
         );
 
     // Maps a Device object to an ExternalDeviceVm object with null DeviceId
@@ -18,7 +25,9 @@ internal static class DeviceMapper
             null,
             device.Id,
             device.UniqueId,
-            device.Name
+            device.Name,
+            (short)DefaultDeviceType,
+            (short)DefaultTransporterType
         );
 
     // Maps a collection of Device objects to a collection of ExternalDeviceVm objects using a dictionary of DeviceVm objects

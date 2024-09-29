@@ -24,7 +24,7 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
         {
             Query = @"
                     query($operatorId: UUID!) {
-                        deviceOperatorByUserByOperator(query: { operatorId: $operatorId })
+                        deviceByUserByOperator(query: { operatorId: $operatorId })
                         {
                             deviceId,
                             identifier,
