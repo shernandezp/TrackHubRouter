@@ -18,7 +18,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
 
     public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
     {
-        var url = $"api/positions{devices.GetIdsQueryString()}";
+        var url = $"api/positions?{devices.GetIdsQueryString()}";
         var positions = await HttpClientService.GetAsync<IEnumerable<Position>>(url, cancellationToken: cancellationToken);
         if (positions is null)
         {

@@ -45,6 +45,9 @@
             "type": "string",
             "format": "guid"
           },
+          "deviceName": {
+            "type": "string"
+          },
           "latitude": {
             "type": "number",
             "format": "double"

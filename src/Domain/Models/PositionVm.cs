@@ -1,6 +1,7 @@
 ﻿namespace TrackHubRouter.Domain.Models;
 public readonly record struct PositionVm(
     Guid DeviceId,
+    string DeviceName,
     double Latitude,
     double Longitude,
     double? Altitude,

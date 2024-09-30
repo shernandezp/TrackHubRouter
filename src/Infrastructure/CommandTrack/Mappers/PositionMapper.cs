@@ -7,6 +7,7 @@ internal static class PositionMapper
     public static PositionVm MapToPositionVm(this Position position, DeviceOperatorVm deviceDto)
         => new (
             deviceDto.DeviceId,
+            deviceDto.Name,
             position.Latitude,
             position.Longitude,
             position.Altitude,
@@ -31,6 +32,7 @@ internal static class PositionMapper
     public static PositionVm MapToPositionVm(this DevicePosition position, DeviceOperatorVm deviceDto)
         => new(
             deviceDto.DeviceId,
+            deviceDto.Name,
             position.Latitude,
             position.Longitude,
             position.Altitude,

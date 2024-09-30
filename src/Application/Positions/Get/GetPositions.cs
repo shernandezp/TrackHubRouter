@@ -66,7 +66,15 @@ public class GetPositionsQueryHandler(
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
-            return await reader.GetDevicePositionAsync(devices, cancellationToken);
+            try
+            {
+                return await reader.GetDevicePositionAsync(devices, cancellationToken);
+            }
+            catch 
+            {
+                //go to the local db
+                return [];
+            }
         }
         return [];
     }
