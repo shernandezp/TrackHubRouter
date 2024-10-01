@@ -18,4 +18,21 @@ public static class DeviceExtensions
         }
         return stringBuilder.ToString();
     }
+
+    public static string GetIdsQueryString(this IEnumerable<int> ids)
+    {
+        var stringBuilder = new StringBuilder();
+        bool isFirst = true;
+        foreach (var id in ids)
+        {
+            if (!isFirst)
+            {
+                stringBuilder.Append('&');
+            }
+            stringBuilder.Append("id=").Append(id);
+            isFirst = false;
+        }
+        return stringBuilder.ToString();
+    }
+
 }

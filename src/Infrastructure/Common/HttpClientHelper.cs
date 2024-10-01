@@ -16,9 +16,16 @@ public class HttpClientService : IHttpClientService
         _clientName = clientName;
     }
 
-    // Sends an HTTP GET request to the specified URL and returns the deserialized response content.
-    // If headers are provided, they will be added to the request.
-    // Throws an exception if the client configuration is not loaded or if the request fails.
+    /// <summary>
+    /// Sends an HTTP GET request to the specified URL and returns the deserialized response content.
+    /// If headers are provided, they will be added to the request.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="url"></param>
+    /// <param name="headers"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>The deserialized response content</returns>
+    /// Throws an exception if the client configuration is not loaded or if the request fails.
     public async Task<T?> GetAsync<T>(string url, IDictionary<string, string>? headers = null, CancellationToken cancellationToken = default)
     {
         Guard.Against.Null(_httpClient, message: $"Client configuration for {_clientName} not loaded");

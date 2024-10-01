@@ -23,7 +23,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     // Returns the devices as a collection of ExternalDeviceVm.
     public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
     {
-        var url = $"api/devices{devices.GetIdsQueryString()}";
+        var url = $"api/devices?{devices.GetIdsQueryString()}";
         var result = await HttpClientService.GetAsync<IEnumerable<Device>>(url, cancellationToken: cancellationToken);
         if (result is null)
         {

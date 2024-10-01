@@ -1,39 +1,14 @@
-﻿using System.Text.Json;
-
-namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
+﻿namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
 
 internal static class PositionMapper
 {
-    private static AttributesVm? ExtractAttributes(this string attributes) 
-    {
-        if (string.IsNullOrEmpty(attributes))
-        {
-            return null;
-        }
 
-        using JsonDocument doc = JsonDocument.Parse(attributes);
-        JsonElement root = doc.RootElement;
-
-        bool? ignition = null;
-        if (root.TryGetProperty("ignition", out JsonElement ignitionElement) &&
-                (ignitionElement.ValueKind == JsonValueKind.True || ignitionElement.ValueKind == JsonValueKind.False))
-        {
-            ignition = ignitionElement.GetBoolean();
-        }
-
-        double? totalDistance = null;
-        if (root.TryGetProperty("totalDistance", out JsonElement totalDistanceElement) && 
-                totalDistanceElement.ValueKind == JsonValueKind.Number)
-        {
-            totalDistance = totalDistanceElement.GetDouble();
-        }
-        return new AttributesVm
-        {
-            Ignition = ignition,
-            Mileage = totalDistance
-        };
-    }
-
+    /// <summary>
+    /// Maps a Position object to a PositionVm object
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="deviceDto"></param>
+    /// <returns>returns a PositionVm object</returns>
     public static PositionVm MapToPositionVm(this Position position, DeviceOperatorVm deviceDto)
         => new(
             deviceDto.DeviceId,
@@ -50,9 +25,19 @@ internal static class PositionMapper
             null,
             null,
             null,
-            position.Attributes.ExtractAttributes()
+            new AttributesVm
+            {
+                Ignition = position.Attributes.Ignition,
+                Mileage = position.Attributes.Odometer != null ? position.Attributes.Odometer : position.Attributes.TotalDistance
+            }
         );
 
+    /// <summary>
+    /// Maps a collection of Position objects to a collection of PositionVm objects
+    /// </summary>
+    /// <param name="positions"></param>
+    /// <param name="deviceDto"></param>
+    /// <returns>returns a collection of PositionVm objects</returns>
     public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, DeviceOperatorVm deviceDto)
     {
         foreach (var position in positions)
@@ -61,6 +46,12 @@ internal static class PositionMapper
         }
     }
 
+    /// <summary>
+    /// Maps a collection of Position objects to a collection of PositionVm objects based on a devicesDictionary
+    /// </summary>
+    /// <param name="positions"></param>
+    /// <param name="devicesDictionary"></param>
+    /// <returns>returns a collection of PositionVm objects</returns>
     public static IEnumerable<PositionVm> MapToPositionVm(this IEnumerable<Position> positions, IDictionary<int, DeviceOperatorVm> devicesDictionary)
     {
         foreach (var position in positions)

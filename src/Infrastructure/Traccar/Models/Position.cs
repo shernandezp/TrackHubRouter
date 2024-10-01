@@ -16,5 +16,5 @@ internal readonly record struct Position(
     double Course,
     string Address,
     double Accuracy,
-    string Attributes
+    PositionAttribute Attributes
     );
