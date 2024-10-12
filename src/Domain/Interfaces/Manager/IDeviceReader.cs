@@ -2,5 +2,5 @@
 
 public interface IDeviceReader
 {
-    Task<IEnumerable<DeviceOperatorVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
+    Task<IEnumerable<DeviceTransporterVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
 }

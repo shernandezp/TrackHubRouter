@@ -25,7 +25,7 @@ public class DeviceReaderTests
     public async Task GetDeviceAsync_ValidDevice_ReturnsDeviceVm()
     {
         // Arrange
-        var deviceDto = new DeviceOperatorVm { Identifier = 1 };
+        var deviceDto = new DeviceTransporterVm { Identifier = 1 };
         var cancellationToken = CancellationToken.None;
         var device = new Device();
         var expectedDeviceVm = new DeviceVm() { DeviceId = Guid.Empty };
@@ -44,7 +44,7 @@ public class DeviceReaderTests
     public async Task GetDevicesAsync_ValidDevices_ReturnsDeviceVms()
     {
         // Arrange
-        var devices = new List<DeviceOperatorVm>
+        var devices = new List<DeviceTransporterVm>
         {
             new () { Identifier = 1 },
             new () { Identifier = 2 }

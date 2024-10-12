@@ -18,12 +18,12 @@ public sealed class DeviceReaderAdapter(DeviceReader deviceReader) : IExternalDe
 
     // Retrieves a device asynchronously
     // It calls the GetDeviceAsync method of the wrapped DeviceReader instance
-    public Task<DeviceVm> GetDeviceAsync(DeviceOperatorVm deviceDto, CancellationToken cancellationToken)
+    public Task<DeviceVm> GetDeviceAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
         => deviceReader.GetDeviceAsync(deviceDto, cancellationToken);
 
     // Retrieves multiple devices asynchronously
     // It calls the GetDevicesAsync method of the wrapped DeviceReader instance
-    public Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
+    public Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceTransporterVm> devices, CancellationToken cancellationToken)
         => deviceReader.GetDevicesAsync(devices, cancellationToken);
 
     // Retrieves all devices asynchronously

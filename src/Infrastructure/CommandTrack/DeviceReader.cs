@@ -12,7 +12,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     ICredentialWriter credentialWriter
     ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IExternalDeviceReader
 {
-    public async Task<DeviceVm> GetDeviceAsync(DeviceOperatorVm deviceDto, CancellationToken cancellationToken)
+    public async Task<DeviceVm> GetDeviceAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
         var url = $"DataConnectAPI/api/Device?id={deviceDto.Identifier}";
         var device = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
@@ -20,7 +20,7 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     }
 
     // Retrieves a single device asynchronously
-    public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceOperatorVm> devices, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceTransporterVm> devices, CancellationToken cancellationToken)
     {
         var url = $"DataConnectAPI/api/Devices{devices.GetIdsQueryString()}";
         var result = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);

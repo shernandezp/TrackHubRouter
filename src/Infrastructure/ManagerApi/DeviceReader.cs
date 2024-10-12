@@ -12,13 +12,13 @@ namespace ManagerApi;
 public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceReader
 {
 
-    // Retrieves devices by operator asynchronously.
-    // Parameters:
-    //   operatorId: The ID of the operator.
-    //   cancellationToken: The cancellation token.
-    // Returns:
-    //   A collection of DeviceVm objects representing the devices.
-    public async Task<IEnumerable<DeviceOperatorVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Retrieves devices by operator asynchronously.
+    /// </summary>
+    /// <param name="operatorId">The ID of the operator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of DeviceVm objects representing the devices.</returns>
+    public async Task<IEnumerable<DeviceTransporterVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
@@ -29,11 +29,13 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
                             deviceId,
                             identifier,
                             serial,
-                            name
+                            name,
+                            transporterType,
+                            transporterTypeId
                         }
                     }",
             Variables = new { operatorId }
         };
-        return await QueryAsync<IEnumerable<DeviceOperatorVm>>(request, cancellationToken);
+        return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
     }
 }
