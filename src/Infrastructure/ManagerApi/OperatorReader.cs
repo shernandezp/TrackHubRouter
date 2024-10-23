@@ -1,22 +1,18 @@
-﻿using Common.Application.Interfaces;
-using Common.Domain.Constants;
-using Common.Infrastructure;
-using TrackHubRouter.Domain.Models;
-using GraphQL;
-using TrackHubRouter.Domain.Interfaces.Manager;
+﻿using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace ManagerApi;
 
 // This class represents the implementation of the IOperatorReader interface
 // It is responsible for reading operator data from the GraphQL service
-public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
+public class OperatorReader(IGraphQLClientFactory graphQLClient) 
+    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
 {
 
-    // Retrieves a list of operators associated with the current user
-    // Parameters:
-    // - cancellationToken: A cancellation token to cancel the operation if needed
-    // Returns:
-    // - A collection of OperatorVm objects representing the operators
+    /// <summary>
+    /// Retrieves a list of operators associated with the current user 
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation if needed</param>
+    /// <returns>A collection of OperatorVm objects representing the operators</returns>
     public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
@@ -27,6 +23,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                         {
                             operatorId
                             protocolTypeId
+                            accountId
                             credential {
                                 credentialId
                                 uri
@@ -56,6 +53,7 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient) : GraphQLServic
                         {
                             operatorId
                             protocolTypeId
+                            accountId
                             credential {
                                 credentialId
                                 uri

@@ -1,5 +1,5 @@
-﻿using Common.Domain.Constants;
-using ManagerApi;
+﻿using ManagerApi;
+using TrackHub.Router.Infrastructure.ManagerApi;
 using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -14,9 +14,12 @@ public static class DependencyInjection
             client => client.Timeout = TimeSpan.FromSeconds(30))
             .AddHeaderPropagation();
 
+        services.AddScoped<IAccountReader, AccountReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
         services.AddScoped<IDeviceReader, DeviceReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();
+        services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
+        services.AddScoped<IPositionWriter, PositionWriter>();
 
         return services;
     }

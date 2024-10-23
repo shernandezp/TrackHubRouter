@@ -1,4 +1,4 @@
-﻿using TrackHubRouter.Application.Positions.Get;
+﻿using TrackHubRouter.Application.Positions.Queries.Get;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Web.GraphQL;

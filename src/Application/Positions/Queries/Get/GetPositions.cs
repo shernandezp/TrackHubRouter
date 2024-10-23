@@ -5,17 +5,20 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
+using TrackHubRouter.Application.Positions.Events;
 
-namespace TrackHubRouter.Application.Positions.Get;
+namespace TrackHubRouter.Application.Positions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 public readonly record struct GetPositionsQuery() : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsQueryHandler(
+        IPublisher publisher,
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceReader deviceReader)
+        IDeviceReader deviceReader,
+        ITransporterPositionReader transporterPositionReader)
         : IRequestHandler<GetPositionsQuery, IEnumerable<PositionVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -87,13 +90,18 @@ public class GetPositionsQueryHandler(
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             try
             {
-                return await reader.GetDevicePositionAsync(devices, cancellationToken);
+                var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
+                await publisher.Publish(new PositionsRetrieved.Notification(@operator, positions), cancellationToken);
+                return positions;
             }
-            catch (Exception ex)
+            catch
             {
-                var msg = ex.Message;
-                //go to the local db, this in case the api is down
-                return [];
+                try
+                {
+                    // Try to get last known position
+                    return await transporterPositionReader.GetTransporterPositionAsync(@operator.OperatorId, cancellationToken);
+                }
+                catch { return []; }
             }
         }
         return [];

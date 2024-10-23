@@ -11,7 +11,7 @@ internal static class DeviceMapper
     // Maps a Device object and a DeviceVm object to an ExternalDeviceVm object
     public static DeviceVm MapToDeviceVm(this Device device, DeviceTransporterVm deviceDto)
         => new(
-            deviceDto.DeviceId,
+            deviceDto.TransporterId,
             device.Id,
             device.UniqueId,
             device.Name,

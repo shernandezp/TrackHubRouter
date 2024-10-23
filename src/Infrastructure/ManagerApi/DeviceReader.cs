@@ -1,9 +1,4 @@
-﻿using Common.Application.Interfaces;
-using Common.Domain.Constants;
-using Common.Infrastructure;
-using TrackHubRouter.Domain.Models;
-using GraphQL;
-using TrackHubRouter.Domain.Interfaces.Manager;
+﻿using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace ManagerApi;
 
@@ -26,7 +21,7 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
                     query($operatorId: UUID!) {
                         deviceByUserByOperator(query: { operatorId: $operatorId })
                         {
-                            deviceId,
+                            transporterId,
                             identifier,
                             serial,
                             name,

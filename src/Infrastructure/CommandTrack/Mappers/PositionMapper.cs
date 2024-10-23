@@ -14,7 +14,7 @@ internal static class PositionMapper
     /// <returns>returns a PositionVm object</returns>
     public static PositionVm MapToPositionVm(this Position position, DeviceTransporterVm deviceDto)
         => new(
-            deviceDto.DeviceId,
+            deviceDto.TransporterId,
             deviceDto.Name,
             deviceDto.TransporterType,
             position.Latitude,
@@ -46,7 +46,7 @@ internal static class PositionMapper
     /// <returns>returns a PositionVm object</returns>
     public static PositionVm MapToPositionVm(this DevicePosition position, DeviceTransporterVm deviceDto)
         => new(
-            deviceDto.DeviceId,
+            deviceDto.TransporterId,
             deviceDto.Name,
             deviceDto.TransporterType,
             position.Latitude,

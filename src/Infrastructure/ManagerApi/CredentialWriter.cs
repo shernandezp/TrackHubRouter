@@ -1,8 +1,4 @@
-﻿using Common.Application.Interfaces;
-using Common.Domain.Constants;
-using Common.Infrastructure;
-using GraphQL;
-using TrackHubRouter.Domain.Interfaces.Manager;
+﻿using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Records;
 
 namespace ManagerApi;
@@ -11,10 +7,13 @@ namespace ManagerApi;
 // It is responsible for updating a token asynchronously.
 public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialWriter
 {
-    // This method updates a token asynchronously.
-    // It takes in the id of the token, the credential information, and a cancellation token.
-    // It constructs a GraphQL request with the necessary variables and sends a mutation to update the token.
-    // It returns a boolean indicating the success of the update operation.
+    /// <summary>
+    /// It constructs a GraphQL request with the necessary variables and sends a mutation to update the token.
+    /// </summary>
+    /// <param name="id">The ID of the token to update</param>
+    /// <param name="credential">The credential information to update</param>
+    /// <param name="token">The cancellation token</param>
+    /// <returns>A boolean indicating the success of the update operation</returns>
     public async Task<bool> UpdateTokenAsync(Guid id, UpdateTokenDto credential, CancellationToken token)
     {
         var request = new GraphQLRequest
