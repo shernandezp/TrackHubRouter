@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using TrackHubRouter.Domain.Interfaces.Manager;
+﻿using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.ManagerApi;
 
@@ -31,7 +30,7 @@ public class PositionWriter(IGraphQLClientFactory graphQLClient) : GraphQLServic
                         city = p.City,
                         altitude = p.Altitude,
                         address = p.Address,
-                        attributes = JsonSerializer.Serialize(p.Attributes)
+                        attributes = p.Attributes
                     }).ToArray()
                 }
             }

@@ -11,27 +11,33 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
         var request = new GraphQLRequest
         {
             Query = @"
-                    query($id: UUID!) {
-                        transporterPositionByOperator(query: { operatorId: $operatorId })
-                        {
-                            transporterId
-                            transporterType
-                            state
-                            speed
-                            longitude
-                            latitude
-                            geometryId
-                            eventId
-                            deviceName
-                            deviceDateTime
-                            course
-                            country
-                            city
-                            attributes
-                            altitude
-                            address
+                query($operatorId: UUID!) {
+                    transporterPositionByOperator(query: { operatorId: $operatorId })
+                    {
+                        transporterId
+                        transporterType
+                        state
+                        speed
+                        longitude
+                        latitude
+                        geometryId
+                        eventId
+                        deviceName
+                        deviceDateTime
+                        course
+                        country
+                        city
+                        attributes {
+                            temperature
+                            satellites
+                            mileage
+                            ignition
+                            hobbsMeter
                         }
-                    }",
+                        altitude
+                        address
+                    }
+                }",
             Variables = new { operatorId }
         };
         return await QueryAsync<IEnumerable<PositionVm>>(request, cancellationToken);

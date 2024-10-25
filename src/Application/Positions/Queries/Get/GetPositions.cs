@@ -88,22 +88,43 @@ public class GetPositionsQueryHandler(
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
-            try
+            var positions = await TryGetPositionsAsync(reader, devices, @operator.OperatorId, cancellationToken);
+            if (positions.Any())
             {
-                var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
                 await publisher.Publish(new PositionsRetrieved.Notification(@operator, positions), cancellationToken);
-                return positions;
             }
-            catch
-            {
-                try
-                {
-                    // Try to get last known position
-                    return await transporterPositionReader.GetTransporterPositionAsync(@operator.OperatorId, cancellationToken);
-                }
-                catch { return []; }
-            }
+            return positions;
         }
         return [];
+    }
+
+    private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
+        IPositionReader reader,
+        IEnumerable<DeviceTransporterVm> devices,
+        Guid operatorId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await reader.GetDevicePositionAsync(devices, cancellationToken);
+        }
+        catch
+        {
+            return await GetFallbackPositionsAsync(operatorId, cancellationToken);
+        }
+    }
+
+    private async Task<IEnumerable<PositionVm>> GetFallbackPositionsAsync(
+        Guid operatorId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await transporterPositionReader.GetTransporterPositionAsync(operatorId, cancellationToken);
+        }
+        catch
+        {
+            return [];
+        }
     }
 }
