@@ -3,6 +3,7 @@ using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
 using TrackHub.Router.Infrastructure.Traccar.Models;
 using FluentAssertions;
+using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.Traccar.Tests;
 
@@ -28,7 +29,7 @@ public class DeviceReaderTests
         var deviceDto = new DeviceTransporterVm { Identifier = 1 };
         var cancellationToken = CancellationToken.None;
         var device = new Device();
-        var expectedDeviceVm = new DeviceVm() { DeviceId = Guid.Empty };
+        var expectedDeviceVm = new DeviceVm { DeviceId = Guid.Empty, DeviceTypeId = (short)DeviceType.Cellular, TransporterTypeId = (short)TransporterType.Truck };
 
         _httpClientServiceMock.Setup(x => x.GetAsync<Device>("api/devices?id=1", null, cancellationToken))
             .ReturnsAsync(device);

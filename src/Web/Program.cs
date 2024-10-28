@@ -11,7 +11,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext();
 builder.Services.AddCommonContext();
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddWebServices("Router API");
+builder.Services.AddWebServices();
 
 builder.Services
     .AddGraphQLServer()

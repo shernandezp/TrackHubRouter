@@ -4,6 +4,7 @@ using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHub.Router.Infrastructure.CommandTrack.Models;
 using TrackHubRouter.Domain.Models;
 using FluentAssertions;
+using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Tests;
 
@@ -32,7 +33,7 @@ public class DeviceReaderTests
         // Arrange
         var deviceDto = new DeviceTransporterVm { Identifier = 1 };
         var devicePosition = new DevicePosition();
-        var expectedDeviceVm = new DeviceVm { DeviceId = Guid.Empty };
+        var expectedDeviceVm = new DeviceVm { DeviceId = Guid.Empty, DeviceTypeId = (short)DeviceType.Cellular, TransporterTypeId = (short)TransporterType.Truck };
 
         _httpClientServiceMock.Setup(x => x.GetAsync<DevicePosition>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(devicePosition);
