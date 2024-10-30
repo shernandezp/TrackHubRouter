@@ -73,4 +73,34 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
         };
         return await QueryAsync<OperatorVm>(request, cancellationToken);
     }
+
+    public async Task<IEnumerable<OperatorVm>> GetOperatorsByAccountsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+            query($filter: FiltersInput!) {
+                operatorsMaster(
+                    query: { filter: $filter }
+                    ) {
+                        operatorId
+                    }
+            }",
+            Variables = new
+            {
+                filter = new
+                {
+                    filters = new[]
+                    {
+                    new
+                    {
+                        key = "AccountId",
+                        value = accountId
+                    }
+                }
+                }
+            }
+        };
+        return await QueryAsync<IEnumerable<OperatorVm>>(request, cancellationToken);
+    }
 }

@@ -10,16 +10,16 @@ using TrackHubRouter.Application.Positions.Events;
 namespace TrackHubRouter.Application.Positions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
-public readonly record struct GetPositionsQuery() : IRequest<IEnumerable<PositionVm>>;
+public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
 
-public class GetPositionsQueryHandler(
+public class GetPositionsByUserQueryHandler(
         IPublisher publisher,
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceReader deviceReader,
         ITransporterPositionReader transporterPositionReader)
-        : IRequestHandler<GetPositionsQuery, IEnumerable<PositionVm>>
+        : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
@@ -29,7 +29,7 @@ public class GetPositionsQueryHandler(
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Returns the collection of PositionVm</returns>
-    public async Task<IEnumerable<PositionVm>> Handle(GetPositionsQuery request, CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> Handle(GetPositionsByUserQuery request, CancellationToken cancellationToken)
     {
         var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
         var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
@@ -91,7 +91,7 @@ public class GetPositionsQueryHandler(
             var positions = await TryGetPositionsAsync(reader, devices, @operator.OperatorId, cancellationToken);
             if (positions.Any())
             {
-                await publisher.Publish(new PositionsRetrieved.Notification(@operator, positions), cancellationToken);
+                await publisher.Publish(new ValidateSync.Notification(@operator.AccountId, positions), cancellationToken);
             }
             return positions;
         }
@@ -127,4 +127,5 @@ public class GetPositionsQueryHandler(
             return [];
         }
     }
+
 }

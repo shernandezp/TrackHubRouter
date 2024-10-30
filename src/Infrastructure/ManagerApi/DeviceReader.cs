@@ -4,7 +4,8 @@ namespace ManagerApi;
 
 // This class represents a device reader that implements the IDeviceReader interface.
 // It is responsible for retrieving devices by operator from the GraphQL service.
-public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceReader
+public class DeviceReader(IGraphQLClientFactory graphQLClient) 
+    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceReader
 {
 
     /// <summary>
@@ -18,18 +19,53 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient) : GraphQLService(
         var request = new GraphQLRequest
         {
             Query = @"
-                    query($operatorId: UUID!) {
-                        deviceByUserByOperator(query: { operatorId: $operatorId })
-                        {
-                            transporterId,
-                            identifier,
-                            serial,
-                            name,
-                            transporterType,
-                            transporterTypeId
-                        }
-                    }",
+                query($operatorId: UUID!) {
+                    deviceByUserByOperator(query: { operatorId: $operatorId })
+                    {
+                        transporterId,
+                        identifier,
+                        serial,
+                        name,
+                        transporterType,
+                        transporterTypeId
+                    }
+                }",
             Variables = new { operatorId }
+        };
+        return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
+    }
+
+    public async Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+            query($filter: FiltersInput!) {
+                deviceTransporterMaster(
+                    query: { filter: $filter }
+                    ) {
+                        transporterId,
+                        identifier,
+                        serial,
+                        name,
+                        transporterType,
+                        transporterTypeId
+                    }
+            }",
+            Variables = new
+            {
+                filter = new
+                {
+                    filters = new[]
+                    {
+                        new
+                        {
+                            key = "OperatorId",
+                            value = operatorId
+                        }
+                    }
+                }
+            }
         };
         return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
     }

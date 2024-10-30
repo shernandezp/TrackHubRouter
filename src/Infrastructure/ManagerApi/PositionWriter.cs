@@ -9,9 +9,9 @@ public class PositionWriter(IGraphQLClientFactory graphQLClient) : GraphQLServic
         var request = new GraphQLRequest
         {
             Query = @"
-            mutation($command: BulkTransporterPositionCommandInput!) {
-                bulkTransporterPosition(command: $command)
-            }",
+                mutation($command: BulkTransporterPositionCommandInput!) {
+                    bulkTransporterPosition(command: $command)
+                }",
             Variables = new
             {
                 command = new

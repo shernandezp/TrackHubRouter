@@ -25,6 +25,13 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
     {
         using var scope = _serviceProvider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-        await sender.Send(new SyncPositionCommand(), stoppingToken);
+        try
+        {
+            await sender.Send(new SyncPositionCommand(), stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error syncing data. {ex.Message}");
+        }
     }
 }

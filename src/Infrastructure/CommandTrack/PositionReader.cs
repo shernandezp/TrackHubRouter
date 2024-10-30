@@ -29,7 +29,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
             return [];
         }
         var devicesDictionary = devices.ToDictionary(device => device.Name, device => device);
-        return positions.MapToPositionVm(devicesDictionary);
+        return positions.MapToPositionVm(devicesDictionary).Distinct();
     }
 
     public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceTransporterVm deviceDto, CancellationToken cancellationToken)

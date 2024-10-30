@@ -5,4 +5,5 @@ namespace TrackHubRouter.Domain.Interfaces.Registry;
 public interface IPositionRegistry
 {
     IEnumerable<IPositionReader> GetReaders(IEnumerable<ProtocolType> types);
+    IPositionReader GetReader(ProtocolType type);
 }

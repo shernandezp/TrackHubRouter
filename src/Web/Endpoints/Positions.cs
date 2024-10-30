@@ -12,7 +12,7 @@ public class Positions : EndpointGroupBase
             .MapGet(GetPositions);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositions(ISender sender, [AsParameters] GetPositionsQuery query)
+    public async Task<IEnumerable<PositionVm>> GetPositions(ISender sender, [AsParameters] GetPositionsByUserQuery query)
         => await sender.Send(query);
 
 }

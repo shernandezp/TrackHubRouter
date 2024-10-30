@@ -5,7 +5,7 @@ namespace TrackHubRouter.Web.GraphQL;
 
 public partial class Query
 {
-    public async Task<IEnumerable<PositionVm>> GetPositions([Service] ISender sender)
-        => await sender.Send(new GetPositionsQuery());
+    public async Task<IEnumerable<PositionVm>> GetPositionsByUser([Service] ISender sender)
+        => await sender.Send(new GetPositionsByUserQuery());
 
 }

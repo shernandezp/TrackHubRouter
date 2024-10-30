@@ -29,7 +29,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
         {
             Query = @"
                 query($filter: FiltersInput!) {
-                    accountsSettings(
+                    accountSettingsMaster(
                         query: { filter: $filter }
                       ) {
                             accountId
@@ -46,7 +46,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                         new
                         {
                             key = "StoreLastPosition",
-                            value = false
+                            value = true
                         }
                     }
                 }
