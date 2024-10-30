@@ -37,6 +37,6 @@ public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     {
         var url = "DataConnectAPI/api/AllDevices";
         var positions = await HttpClientService.GetAsync<IEnumerable<DevicePosition>>(url, Header, cancellationToken);
-        return positions is null ? ([]) : positions.MapToDeviceVm();
+        return positions is null ? ([]) : positions.MapToDeviceVm().Distinct();
     }
 }

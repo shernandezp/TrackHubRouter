@@ -2,7 +2,7 @@
 using Ardalis.GuardClauses;
 using Common.Domain.Extensions;
 
-namespace TrackHub.Router.Infrastructure.Common;
+namespace TrackHub.Router.Infrastructure.Common.Helpers;
 
 // This class represents a service for making HTTP requests using HttpClient.
 public class HttpClientService : IHttpClientService

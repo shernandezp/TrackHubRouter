@@ -3,5 +3,5 @@
 public readonly record struct AccountSettingsVm(
     Guid AccountId,
     bool StoreLastPosition,
-    int StoringTimeLapse
+    int StoringInterval
     );

@@ -1,5 +1,6 @@
 using MediatR;
 using TrackHubRouter.Application.Positions.Commands.Sync;
+using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.SyncWorker;
 
@@ -34,4 +35,5 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
             Console.WriteLine($"Error syncing data. {ex.Message}");
         }
     }
+
 }

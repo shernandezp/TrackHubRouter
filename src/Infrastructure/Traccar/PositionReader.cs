@@ -44,7 +44,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
             return [];
         }
         var devicesDictionary = devices.ToDictionary(device => device.Identifier, device => device);
-        return positions.MapToPositionVm(devicesDictionary);
+        return positions.MapToPositionVm(devicesDictionary).Distinct();
     }
 
     /// <summary>

@@ -13,7 +13,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                     query($id: UUID!) {
                         accountSettings(query: { id: $id })
                         {
-                            storingTimeLapse
+                            storingInterval
                             storeLastPosition
                             accountId
                         }
@@ -34,7 +34,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                       ) {
                             accountId
                             storeLastPosition
-                            storingTimeLapse
+                            storingInterval
                       }
                 }",
             Variables = new
@@ -46,7 +46,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                         new
                         {
                             key = "StoreLastPosition",
-                            value = true
+                            value = false
                         }
                     }
                 }
