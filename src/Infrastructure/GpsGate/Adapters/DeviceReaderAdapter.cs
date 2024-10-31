@@ -1,7 +1,9 @@
 ﻿using Common.Domain.Enums;
 using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHubRouter.Domain.Models;
+using TrackHubRouter.Domain.Records;
 
-namespace TrackHub.Router.Infrastructure.Traccar.Adapters;
+namespace TrackHub.Router.Infrastructure.GpsGate.Adapters;
 
 // Adapter is required here to make the Init method asynchronous
 // This class is an adapter that implements the IExternalDeviceReader interface

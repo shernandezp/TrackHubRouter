@@ -37,7 +37,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application.UnitTests", "te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure.UnitTests", "tests\Intfrastructure.UnitTests\Infrastructure.UnitTests.csproj", "{D99EA56F-9ECD-4A00-845E-37600CD441FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncWorker", "src\SyncWorker\SyncWorker.csproj", "{71970AD1-CC5A-4378-8B60-5373AFD523A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncWorker", "src\SyncWorker\SyncWorker.csproj", "{71970AD1-CC5A-4378-8B60-5373AFD523A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GpsGate", "src\Infrastructure\GpsGate\GpsGate.csproj", "{6A00885C-0164-404F-9985-24135CECE49B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,10 @@ Global
 		{71970AD1-CC5A-4378-8B60-5373AFD523A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71970AD1-CC5A-4378-8B60-5373AFD523A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71970AD1-CC5A-4378-8B60-5373AFD523A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A00885C-0164-404F-9985-24135CECE49B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A00885C-0164-404F-9985-24135CECE49B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A00885C-0164-404F-9985-24135CECE49B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A00885C-0164-404F-9985-24135CECE49B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +107,7 @@ Global
 		{ACD1F11E-775D-4DA5-8DF5-111D0F97488B} = {549E7002-0ECD-48D7-857F-35BCA232B168}
 		{D99EA56F-9ECD-4A00-845E-37600CD441FA} = {549E7002-0ECD-48D7-857F-35BCA232B168}
 		{71970AD1-CC5A-4378-8B60-5373AFD523A2} = {6ED356A7-8B47-4613-AD01-C85CF28491BD}
+		{6A00885C-0164-404F-9985-24135CECE49B} = {04F3953F-2648-4C08-9E6A-64FB933F3043}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3CB609D9-5D54-4C11-A371-DAAC8B74E430}

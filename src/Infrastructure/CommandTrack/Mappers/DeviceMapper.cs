@@ -8,7 +8,7 @@ internal static class DeviceMapper
     const DeviceType DefaultDeviceType = DeviceType.Cellular;
     const TransporterType DefaultTransporterType = TransporterType.Truck;
 
-    // Maps a DevicePosition and a DeviceVm to an ExternalDeviceVm
+    // Maps a DevicePosition and a DeviceVm to an DeviceVm
     public static DeviceVm MapToDeviceVm(this DevicePosition device, DeviceTransporterVm deviceDto)
         => new(
             deviceDto.TransporterId,
@@ -19,7 +19,7 @@ internal static class DeviceMapper
             (short)DefaultTransporterType
     );
 
-    // Maps a DevicePosition to an ExternalDeviceVm with null DeviceId
+    // Maps a DevicePosition to an DeviceVm with null DeviceId
     public static DeviceVm MapToDeviceVm(this DevicePosition device)
         => new(
             null,
@@ -30,7 +30,7 @@ internal static class DeviceMapper
             (short)DefaultTransporterType
     );
 
-    // Maps a collection of DevicePosition objects to a collection of ExternalDeviceVm objects using a dictionary of DeviceVm objects
+    // Maps a collection of DeviceVm objects to a collection of DevicePosition objects using a dictionary of DeviceTransporterVm objects
     public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices, IDictionary<int, DeviceTransporterVm> devicesDictionary)
     {
         foreach (var device in devices)
@@ -46,7 +46,7 @@ internal static class DeviceMapper
         }
     }
 
-    // Maps a collection of DevicePosition objects to a collection of ExternalDeviceVm objects
+    // Maps a collection of DevicePosition objects to a collection of DeviceVm objects
     public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<DevicePosition> devices)
     {
         foreach (var device in devices)

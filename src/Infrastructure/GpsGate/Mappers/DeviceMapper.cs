@@ -1,6 +1,8 @@
 ﻿using Common.Domain.Enums;
+using TrackHub.Router.Infrastructure.GpsGate.Models;
+using TrackHubRouter.Domain.Models;
 
-namespace TrackHub.Router.Infrastructure.Traccar.Mappers;
+namespace TrackHub.Router.Infrastructure.GpsGate.Mappers;
 
 internal static class DeviceMapper
 {
@@ -8,12 +10,12 @@ internal static class DeviceMapper
     const DeviceType DefaultDeviceType = DeviceType.Cellular;
     const TransporterType DefaultTransporterType = TransporterType.Truck;
 
-    // Maps a Device object and a DeviceVm object to an DeviceVm object
+    // Maps a Device object and a DeviceTransporterVm object to an DeviceVm object
     public static DeviceVm MapToDeviceVm(this Device device, DeviceTransporterVm deviceDto)
         => new(
             deviceDto.TransporterId,
             device.Id,
-            device.UniqueId,
+            device.IMEI,
             device.Name,
             (short)DefaultDeviceType,
             (short)DefaultTransporterType
@@ -24,13 +26,13 @@ internal static class DeviceMapper
         => new(
             null,
             device.Id,
-            device.UniqueId,
+            device.IMEI,
             device.Name,
             (short)DefaultDeviceType,
             (short)DefaultTransporterType
         );
 
-    // Maps a collection of Device objects to a collection of DeviceVm objects using a dictionary of DeviceVm objects
+    // Maps a collection of Device objects and a dictionary of DeviceTransporterVm objects to a collection of DeviceVm objects
     public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<Device> devices, IDictionary<int, DeviceTransporterVm> devicesDictionary)
     {
         foreach (var device in devices)
@@ -46,7 +48,7 @@ internal static class DeviceMapper
         }
     }
 
-    // Maps a collection of Device objects to a collection of ExternalDeviceVm objects
+    // Maps a collection of Device objects to a collection of DeviceVm objects
     public static IEnumerable<DeviceVm> MapToDeviceVm(this IEnumerable<Device> devices)
     {
         foreach (var device in devices)
