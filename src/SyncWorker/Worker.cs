@@ -1,6 +1,5 @@
 using MediatR;
 using TrackHubRouter.Application.Positions.Commands.Sync;
-using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.SyncWorker;
 
