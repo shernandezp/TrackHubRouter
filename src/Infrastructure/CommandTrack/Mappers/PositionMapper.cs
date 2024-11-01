@@ -2,7 +2,6 @@
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Mappers;
 
-// This class provides mapping functions to convert Position and DevicePosition objects to PositionVm objects
 internal static class PositionMapper
 {
 

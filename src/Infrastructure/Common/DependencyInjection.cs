@@ -8,6 +8,7 @@ using TrackHubRouter.Application.Positions.Registry;
 using TrackHubRouter.Domain.Interfaces.Operator;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using CommandTrack = TrackHub.Router.Infrastructure.CommandTrack;
+using GeoTab = TrackHub.Router.Infrastructure.Geotab;
 using Traccar = TrackHub.Router.Infrastructure.Traccar;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,14 @@ public static class DependencyInjection
                     services.AddScoped<IExternalDeviceReader, CommandTrack.DeviceReader>();
                     services.AddScoped<IPositionReader, CommandTrack.PositionReader>();
                     services.AddScoped<IConnectivityTester, CommandTrack.ConnectivityTester>();
+                }
+            },
+            {
+                ProtocolType.GeoTab.ToString(), services =>
+                {
+                    services.AddScoped<IExternalDeviceReader, GeoTab.DeviceReader>();
+                    services.AddScoped<IPositionReader, GeoTab.PositionReader>();
+                    services.AddScoped<IConnectivityTester, GeoTab.ConnectivityTester>();
                 }
             },
             {

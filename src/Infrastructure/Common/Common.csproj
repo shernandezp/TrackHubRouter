@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.csproj" />
     <ProjectReference Include="..\CommandTrack\CommandTrack.csproj" />
+    <ProjectReference Include="..\Geotab\Geotab.csproj" />
     <ProjectReference Include="..\Traccar\Traccar.csproj" />
   </ItemGroup>
 
