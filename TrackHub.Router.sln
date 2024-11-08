@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 		Directory.Packages.props = Directory.Packages.props
 		global.json = global.json
+		README.en.md = README.en.md
+		README.es.md = README.es.md
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -39,9 +41,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure.UnitTests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncWorker", "src\SyncWorker\SyncWorker.csproj", "{71970AD1-CC5A-4378-8B60-5373AFD523A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GpsGate", "src\Infrastructure\GpsGate\GpsGate.csproj", "{6A00885C-0164-404F-9985-24135CECE49B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GpsGate", "src\Infrastructure\GpsGate\GpsGate.csproj", "{6A00885C-0164-404F-9985-24135CECE49B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geotab", "src\Infrastructure\Geotab\Geotab.csproj", "{A1348A16-C2D8-49D2-8EAB-05CBC869BE62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Geotab", "src\Infrastructure\Geotab\Geotab.csproj", "{A1348A16-C2D8-49D2-8EAB-05CBC869BE62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
