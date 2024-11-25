@@ -4,7 +4,7 @@
 |--------------------------|-------------------------------------------------------|-------------------------------------------------------------------------------|
 | Hot Chocolate            | GraphQL server for .NET                               | [Hot Chocolate Documentation](https://chillicream.com/docs/hotchocolate/v13)  |
 | GraphQL.Client           | HTTP client for GraphQL                               | [OpenIDDict Documentation](https://openiddict.com/)                           |
-| .NET Core 8              | Development platform for modern applications          | [.NET Core 8 Documentation](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8/overview) |
+| .NET Core                | Development platform for modern applications          | [.NET Core Documentation](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview) |
 
 # Router API for TrackHub
 

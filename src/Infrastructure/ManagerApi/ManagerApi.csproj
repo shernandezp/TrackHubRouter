@@ -1,18 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <RootNamespace>TrackHub.Router.Infrastructure.ManagerApi</RootNamespace>
     <AssemblyName>TrackHub.Router.Infrastructure.ManagerApi</AssemblyName>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="GraphQL.Client" />
     <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" />
     <PackageReference Include="TrackHubCommon.Infrastructure" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.csproj" />
   </ItemGroup>
-
 </Project>
