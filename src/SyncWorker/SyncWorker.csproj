@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
-
   <PropertyGroup>
     <RootNamespace>TrackHubRouter.SyncWorker</RootNamespace>
     <AssemblyName>TrackHubRouter.SyncWorker</AssemblyName>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\Infrastructure\ManagerApi\ManagerApi.csproj" />
   </ItemGroup>
-  
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="FluentValidation.AspNetCore" />

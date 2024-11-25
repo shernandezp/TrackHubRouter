@@ -1,20 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <RootNamespace>TrackHubRouter.Web</RootNamespace>
     <AssemblyName>TrackHubRouter.Web</AssemblyName>
   </PropertyGroup>
-
   <PropertyGroup>
     <NoWarn>$(NoWarn);AD0001</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\Infrastructure\ManagerApi\ManagerApi.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" />
     <PackageReference Include="TrackHubCommon.Web" />
@@ -23,13 +19,10 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="FluentValidation.AspNetCore" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
-
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
-
 </Project>
