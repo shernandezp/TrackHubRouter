@@ -1,5 +1,4 @@
 ﻿using TrackHubRouter.Application.Positions.Events;
-using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.Positions.Commands.Sync;
 

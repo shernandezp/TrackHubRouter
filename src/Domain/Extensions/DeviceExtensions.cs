@@ -23,7 +23,7 @@ public static class DeviceExtensions
     {
         var stringBuilder = new StringBuilder();
         bool isFirst = true;
-        foreach (var id in ids)
+        foreach (var id in ids.Where(x => x != 0))
         {
             if (!isFirst)
             {

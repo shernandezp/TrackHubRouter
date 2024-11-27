@@ -12,12 +12,17 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            try
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                await SyncData(stoppingToken);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error syncing data.");
+            }
+
             await Task.Delay(10000, stoppingToken);
-            await SyncData(stoppingToken);
         }
     }
 

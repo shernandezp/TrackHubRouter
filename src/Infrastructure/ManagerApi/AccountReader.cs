@@ -46,7 +46,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                         new
                         {
                             key = "StoreLastPosition",
-                            value = false
+                            value = true
                         }
                     }
                 }
