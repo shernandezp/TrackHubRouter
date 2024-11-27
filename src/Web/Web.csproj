@@ -5,6 +5,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <NoWarn>$(NoWarn);AD0001</NoWarn>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />

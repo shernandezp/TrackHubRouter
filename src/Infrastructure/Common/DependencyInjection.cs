@@ -60,6 +60,7 @@ public static class DependencyInjection
             }
         }
 
+        services.AddSingleton<IExecutionIntervalManager, ExecutionIntervalManager>();
         services.AddScoped<ICredentialHttpClientFactory, CredentialHttpClientFactory>();
         services.AddScoped<IHttpClientService, HttpClientService>();
         services.AddScoped<IRefreshTokenHelper, RefreshTokenHelper>();
