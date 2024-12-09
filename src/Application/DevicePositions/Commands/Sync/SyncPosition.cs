@@ -1,6 +1,6 @@
-﻿using TrackHubRouter.Application.Positions.Events;
+﻿using TrackHubRouter.Application.DevicePositions.Events;
 
-namespace TrackHubRouter.Application.Positions.Commands.Sync;
+namespace TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
 public readonly record struct SyncPositionCommand() : IRequest<bool>;
 

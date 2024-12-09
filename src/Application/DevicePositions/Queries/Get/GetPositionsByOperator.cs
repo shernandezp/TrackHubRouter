@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Application.Positions.Events;
+using TrackHubRouter.Application.DevicePositions.Events;
 
-namespace TrackHubRouter.Application.Positions.Queries.Get;
+namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
 public readonly record struct GetPositionsByOperatorQuery(OperatorVm @operator) : IRequest<bool>;
 

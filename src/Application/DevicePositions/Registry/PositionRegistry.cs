@@ -1,4 +1,4 @@
-﻿namespace TrackHubRouter.Application.Positions.Registry;
+﻿namespace TrackHubRouter.Application.DevicePositions.Registry;
 
 public class PositionRegistry(IServiceScopeFactory scopeFactory) : IPositionRegistry
 {

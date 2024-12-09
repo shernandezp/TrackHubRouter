@@ -14,11 +14,11 @@
     <PackageVersion Include="TrackHubCommon.Domain" Version="1.0.7" />
     <PackageVersion Include="TrackHubCommon.Infrastructure" Version="1.0.7" />
     <PackageVersion Include="TrackHubCommon.Web" Version="1.0.7" />
-    <PackageVersion Include="FluentAssertions" Version="6.12.2" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-    <PackageVersion Include="HotChocolate.AspNetCore" Version="14.1.0" />
-    <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="14.1.0" />
+    <PackageVersion Include="HotChocolate.AspNetCore" Version="14.2.0" />
+    <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="14.2.0" />
     <PackageVersion Include="MediatR" Version="12.4.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
     <PackageVersion Include="Microsoft.AspNetCore.HeaderPropagation" Version="9.0.0" />

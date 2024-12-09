@@ -5,9 +5,9 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Application.Positions.Events;
+using TrackHubRouter.Application.DevicePositions.Events;
 
-namespace TrackHubRouter.Application.Positions.Queries.Get;
+namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
