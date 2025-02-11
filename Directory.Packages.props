@@ -8,34 +8,34 @@
     <PackageVersion Include="Geotab.Checkmate.ObjectModel" Version="11.43.302" />
     <PackageVersion Include="GraphQL.Client" Version="6.1.0" />
     <PackageVersion Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.1" />
     <PackageVersion Include="Moq" Version="4.20.72" />
-    <PackageVersion Include="TrackHubCommon.Application" Version="1.0.7" />
-    <PackageVersion Include="TrackHubCommon.Domain" Version="1.0.7" />
-    <PackageVersion Include="TrackHubCommon.Infrastructure" Version="1.0.7" />
-    <PackageVersion Include="TrackHubCommon.Web" Version="1.0.7" />
-    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+    <PackageVersion Include="TrackHubCommon.Application" Version="1.0.10" />
+    <PackageVersion Include="TrackHubCommon.Domain" Version="1.0.10" />
+    <PackageVersion Include="TrackHubCommon.Infrastructure" Version="1.0.10" />
+    <PackageVersion Include="TrackHubCommon.Web" Version="1.0.10" />
+    <PackageVersion Include="FluentAssertions" Version="8.0.1" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
-    <PackageVersion Include="HotChocolate.AspNetCore" Version="14.2.0" />
-    <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="14.2.0" />
+    <PackageVersion Include="HotChocolate.AspNetCore" Version="15.0.3" />
+    <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="15.0.3" />
     <PackageVersion Include="MediatR" Version="12.4.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
-    <PackageVersion Include="Microsoft.AspNetCore.HeaderPropagation" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.HeaderPropagation" Version="9.0.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="8.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="NSwag.AspNetCore" Version="14.1.0" />
     <PackageVersion Include="NSwag.MSBuild" Version="14.1.0" />
     <PackageVersion Include="ZymLabs.NSwag.FluentValidation.AspNetCore" Version="0.6.3" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
-    <PackageVersion Include="NUnit" Version="4.2.2" />
-    <PackageVersion Include="NUnit.Analyzers" Version="4.4.0" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="NUnit" Version="4.3.2" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.6.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0" />
   </ItemGroup>
 </Project>

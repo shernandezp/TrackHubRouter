@@ -15,7 +15,7 @@ public class GetDevicesQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader,
     IDeviceRegistry deviceRegistry,
-    IDeviceReader deviceReader)
+    IDeviceTransporterReader deviceReader)
     : IRequestHandler<GetDevicesQuery, IEnumerable<DeviceVm>>
 {
 

@@ -12,7 +12,7 @@ public class GetPositionsByOperatorQueryHandler(
         IPublisher publisher,
         IConfiguration configuration,
         IPositionRegistry positionRegistry,
-        IDeviceReader deviceReader)
+        IDeviceTransporterReader deviceReader)
         : IRequestHandler<GetPositionsByOperatorQuery, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];

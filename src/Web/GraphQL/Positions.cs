@@ -13,21 +13,17 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.DevicePositions.Queries.Get;
+using TrackHubRouter.Application.Positions.Queries.GetRange;
+using TrackHubRouter.Application.Positions.Queries.GetTrips;
 using TrackHubRouter.Domain.Models;
 
-namespace TrackHubRouter.Web.Endpoints;
+namespace TrackHubRouter.Web.GraphQL;
 
-public class DevicePositions : EndpointGroupBase
+public partial class Query
 {
-    public override void Map(WebApplication app)
-    {
-        app.MapGroup(this)
-            .RequireAuthorization()
-            .MapGet(GetDevicePositions);
-    }
-
-    public async Task<IEnumerable<PositionVm>> GetDevicePositions(ISender sender, [AsParameters] GetPositionsByUserQuery query)
+    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
         => await sender.Send(query);
 
+    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
+        => await sender.Send(query);
 }

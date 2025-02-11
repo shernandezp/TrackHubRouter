@@ -2,134 +2,42 @@
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
-using System.Runtime.CompilerServices;
-using TrackHubRouter.Application.DevicePositions.Events;
-using TrackHubRouter.Domain.Extensions;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.Positions.Queries.GetRange;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
-public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
+public readonly record struct GetPositionsRecordQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To) : IRequest<IEnumerable<PositionVm>>;
 
-public class GetPositionsByUserQueryHandler(
-        IPublisher publisher,
+public class GetPositionsRecordQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceReader deviceReader,
-        ITransporterPositionReader transporterPositionReader)
-        : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
+        IDeviceTransporterReader deviceReader)
+        : PositionBaseHandler, IRequestHandler<GetPositionsRecordQuery, IEnumerable<PositionVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
     /// <summary>
-    /// Retrieves the operators, protocols, and device positions asynchronously
+    /// Retrieves the operator, and device positions asynchronously
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Returns the collection of PositionVm</returns>
-    public async Task<IEnumerable<PositionVm>> Handle(GetPositionsByUserQuery request, CancellationToken cancellationToken)
-    {
-        var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
-        var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
-
-        var allPositions = new List<PositionVm>();
-        await foreach (var positionsCollection in GetDevicePositionAsync(operators, protocols, cancellationToken))
-        {
-            allPositions.AddRange(positionsCollection);
-        }
-
-        //Most recent position for each transporter if multiple positions are available
-        return allPositions
-            .GroupBy(p => p.TransporterId)
-            .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())
-            .ToList();
-    }
-
-    /// <summary>
-    /// Retrieves the device positions asynchronously
-    /// </summary>
-    /// <param name="operators"></param>
-    /// <param name="protocols"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>returns the collection of PositionVm</returns>
-    private async IAsyncEnumerable<IEnumerable<PositionVm>> GetDevicePositionAsync(
-        IEnumerable<OperatorVm> operators,
-        IEnumerable<ProtocolType> protocols,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var tasks = positionRegistry.GetReaders(protocols)
-            .Select(reader
-                => FetchAndProcessPositionsAsync(reader, operators, cancellationToken));
-        var fetchTasks = Task.WhenAll(tasks);
-
-        var results = await fetchTasks;
-        foreach (var positions in results)
-        {
-            if (positions.Any())
-            {
-                yield return positions;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Fetches and processes the positions asynchronously
-    /// </summary>
-    /// <param name="reader"></param>
-    /// <param name="operators"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>returns the collection of PositionVm</returns>
-    private async Task<IEnumerable<PositionVm>> FetchAndProcessPositionsAsync(
-        IPositionReader reader,
-        IEnumerable<OperatorVm> operators,
-        CancellationToken cancellationToken)
+    public async Task<IEnumerable<PositionVm>> Handle(GetPositionsRecordQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol);
-        if (@operator.Credential is not null)
-        {
-            await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
-            var positions = await TryGetPositionsAsync(reader, devices, @operator.OperatorId, cancellationToken);
-            if (positions.Any())
-            {
-                await publisher.Publish(new ValidateSync.Notification(@operator.AccountId, positions), cancellationToken);
-            }
-            return positions;
-        }
-        return [];
-    }
+        var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        return await GetDevicePositionAsync(
+            positionRegistry,
+            deviceReader,
+            EncryptionKey,
+            @operator, 
+            request.From, 
+            request.To, 
+            request.TransporterId, 
+            cancellationToken);
 
-    private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
-        IPositionReader reader,
-        IEnumerable<DeviceTransporterVm> devices,
-        Guid operatorId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await reader.GetDevicePositionAsync(devices, cancellationToken);
-        }
-        catch
-        {
-            return await GetFallbackPositionsAsync(operatorId, cancellationToken);
-        }
-    }
-
-    private async Task<IEnumerable<PositionVm>> GetFallbackPositionsAsync(
-        Guid operatorId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await transporterPositionReader.GetTransporterPositionAsync(operatorId, cancellationToken);
-        }
-        catch
-        {
-            return [];
-        }
     }
 
 }

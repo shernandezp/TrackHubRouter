@@ -1,4 +1,19 @@
-﻿using System.Runtime.CompilerServices;
+﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License").
+//  You may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
+using System.Runtime.CompilerServices;
 using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
@@ -17,7 +32,7 @@ public class GetPositionsByUserQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceReader deviceReader,
+        IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader)
         : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
 {
@@ -86,35 +101,35 @@ public class GetPositionsByUserQueryHandler(
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
     {
-        Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol);
-        if (@operator.Credential is not null)
+        return await TryGetPositionsAsync(reader, @operator, cancellationToken);
+    }
+
+    private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
+        IPositionReader reader,
+        OperatorVm @operator,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
+            if (@operator.Credential is null)
+                throw new ArgumentNullException(nameof(@operator), "Credential is null");
+            Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
+
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
-            var positions = await TryGetPositionsAsync(reader, devices, @operator.OperatorId, cancellationToken);
+            var credential = @operator.Credential.Value.Decrypt(EncryptionKey);
+            await reader.Init(credential, cancellationToken);
+            var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
             if (positions.Any())
             {
                 await publisher.Publish(new ValidateSync.Notification(@operator.AccountId, positions), cancellationToken);
             }
             return positions;
         }
-        return [];
-    }
-
-    private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
-        IPositionReader reader,
-        IEnumerable<DeviceTransporterVm> devices,
-        Guid operatorId,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await reader.GetDevicePositionAsync(devices, cancellationToken);
-        }
         catch
         {
-            return await GetFallbackPositionsAsync(operatorId, cancellationToken);
+            //TODO: Log exception
+            return await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
         }
     }
 
@@ -128,6 +143,7 @@ public class GetPositionsByUserQueryHandler(
         }
         catch
         {
+            //TODO: Log exception
             return [];
         }
     }

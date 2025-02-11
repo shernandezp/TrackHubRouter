@@ -4,8 +4,8 @@ namespace ManagerApi;
 
 // This class represents a device reader that implements the IDeviceReader interface.
 // It is responsible for retrieving devices by operator from the GraphQL service.
-public class DeviceReader(IGraphQLClientFactory graphQLClient) 
-    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceReader
+public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient) 
+    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceTransporterReader
 {
 
     /// <summary>
@@ -20,7 +20,7 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient)
         {
             Query = @"
                 query($operatorId: UUID!) {
-                    deviceByUserByOperator(query: { operatorId: $operatorId })
+                    deviceTransporterByUserByOperator(query: { operatorId: $operatorId })
                     {
                         transporterId,
                         identifier,
@@ -68,5 +68,32 @@ public class DeviceReader(IGraphQLClientFactory graphQLClient)
             }
         };
         return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Retrieves device transporter by id asynchronously.
+    /// </summary>
+    /// <param name="transporterId">The ID of the transporter.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DeviceVm object representing the device.</returns>
+    public async Task<DeviceTransporterVm> GetDevicesTransporterAsync(Guid transporterId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+                query($transporterId: UUID!) {
+                    deviceTransporterById(query: { transporterId: $transporterId })
+                    {
+                        transporterId,
+                        identifier,
+                        serial,
+                        name,
+                        transporterType,
+                        transporterTypeId
+                    }
+                }",
+            Variables = new { transporterId }
+        };
+        return await QueryAsync<DeviceTransporterVm>(request, cancellationToken);
     }
 }
