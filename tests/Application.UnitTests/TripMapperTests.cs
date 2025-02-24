@@ -1,6 +1,6 @@
 ﻿using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Application.Positions.Mappers;
-using FluentAssertions;
+using TrackHubRouter.Domain.Enumerators;
 
 namespace Application.UnitTests;
 [TestFixture]
@@ -19,7 +19,7 @@ public class TripMapperTests
         var result = positions.GroupPositionsIntoTrips(_maxDistance, _maxTimeGap);
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -34,9 +34,12 @@ public class TripMapperTests
         // Act
         var result = positions.GroupPositionsIntoTrips(_maxDistance, _maxTimeGap);
 
-        // Assert
-        result.Count().Should().Be(1);
-        result.First().Points.Count.Should().Be(1);
+        using (Assert.EnterMultipleScope())
+        {
+            // Assert
+            Assert.That(result.Count(), Is.EqualTo(1));
+            Assert.That(result.First().Points, Has.Count.EqualTo(2));
+        }
     }
 
     [Test]
@@ -53,8 +56,11 @@ public class TripMapperTests
         var result = positions.GroupPositionsIntoTrips(_maxDistance, _maxTimeGap);
 
         // Assert
-        result.Count().Should().Be(1);
-        result.First().Points.Count.Should().Be(2);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Count(), Is.EqualTo(1));
+            Assert.That(result.First().Points, Has.Count.EqualTo(2));
+        }
     }
 
     [Test]
@@ -63,19 +69,19 @@ public class TripMapperTests
         // Arrange
         var positions = new List<PositionVm>
             {
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 10 },
+                new() { DeviceDateTime = DateTime.UtcNow, Latitude = 0.001, Longitude = 0.001, Speed = 10 },
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.002, Longitude = 0.002, Speed = 9 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.011, Longitude = 0.011, Speed = 10 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.012, Longitude = 0.012, Speed = 9 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.011, Longitude = 0.011, Speed = 10 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.012, Longitude = 0.012, Speed = 9 },
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(60), Latitude = 0.013, Longitude = 0.013, Speed = 20 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.014, Longitude = 0.014, Speed = 20 }
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(61), Latitude = 0.014, Longitude = 0.014, Speed = 20 }
             };
 
         // Act
         var result = positions.GroupPositionsIntoTrips(_maxDistance, _maxTimeGap);
 
         // Assert
-        result.Count().Should().Be(3);
+        Assert.That(result.Count(), Is.EqualTo(3));
     }
 
     [Test]
@@ -84,17 +90,29 @@ public class TripMapperTests
         // Arrange
         var positions = new List<PositionVm>
             {
+                // first trip - moving
                 new() { DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0, Speed = 0 },
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 1 },
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.002, Longitude = 0.002, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 1 }
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 1 },
+                // second trip - stop
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(60), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(61), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(62), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                // third trip - moving
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(120), Latitude = 0.004, Longitude = 0.004, Speed = 10 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(121), Latitude = 0.005, Longitude = 0.005, Speed = 11 },
             };
 
         // Act
         var result = positions.GroupPositionsIntoTrips(_maxDistance, _maxTimeGap);
 
-        // Assert
-        result.Count().Should().Be(1);
+        using (Assert.EnterMultipleScope())
+        {
+            // Assert
+            Assert.That(result.Count(), Is.EqualTo(3));
+            Assert.That(result.Count(x => x.Type == (short)TripTypeEnum.MOVING), Is.EqualTo(2));
+        }
     }
 
     [Test]
@@ -156,7 +174,11 @@ public class TripMapperTests
             Console.WriteLine($"Trip ID: {trip.TripId}, Points: {trip.Points.Count}, Duration: {trip.Duration}, Total Distance: {trip.TotalDistance}");
         }
 
-        // Assert
-        result.Count().Should().Be(3);
+        using (Assert.EnterMultipleScope())
+        {
+            // Assert
+            Assert.That(result.Count(), Is.EqualTo(3));
+            Assert.That(result.Count(x => x.Type == (short)TripTypeEnum.MOVING), Is.EqualTo(3));
+        }
     }
 }

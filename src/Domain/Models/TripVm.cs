@@ -7,4 +7,5 @@ public struct TripVm
     public double TotalDistance { get; set; }
     public TimeSpan Duration { get; set; }
     public double AverageSpeed { get; set; }
+    public short Type { get; set; }
 }
