@@ -13,68 +13,63 @@ public static class TripMapper
     /// <param name="maxTimeGap">The maximum time gap between points in a trip.</param>
     /// <param name="minSpeedThreshold">The minimum speed threshold to consider a trip as moving.</param>
     /// <returns>A collection of trips.</returns>
-    public static IEnumerable<TripVm> GroupPositionsIntoTrips(this IEnumerable<PositionVm> positions, double maxDistance, TimeSpan maxTimeGap, double minSpeedThreshold = 0.1)
+    public static IEnumerable<TripVm> GroupPositionsIntoTrips(
+        this IEnumerable<PositionVm> positions, 
+        bool ignitionBased, 
+        double stoppedGap,
+        double maxDistance, 
+        TimeSpan maxTimeGap)
     {
+        if (!positions.Any())
+        {
+            return [];
+        }
+        var points = positions.CalculatePoints(ignitionBased, stoppedGap);
         var trips = new List<TripVm>();
         var currentTrip = CreateNewTrip();
-        PositionVm? lastPosition = null;
+        TripPointVm? previousPoint = null;
 
-        foreach (var position in positions.OrderBy(p => p.DeviceDateTime))
+        foreach (var point in points)
         {
-            if (lastPosition != null && !IsDuplicate(lastPosition.Value, position))
+            if (previousPoint != null && !IsDuplicate(previousPoint.Value, point))
             {
-                var distance = CalculateDistance(lastPosition.Value, position);
-                var timeGap = position.DeviceDateTime - lastPosition.Value.DeviceDateTime;
+                var distance = CalculateDistance(previousPoint.Value, point);
+                var timeDiff = point.DeviceDateTime - previousPoint.Value.DeviceDateTime;
 
-                if (distance > maxDistance || timeGap > maxTimeGap)
+                if (previousPoint.Value.Movement != point.Movement || distance > maxDistance || timeDiff > maxTimeGap)
                 {
-                    FinalizeTrip(currentTrip, trips, minSpeedThreshold);
-                    currentTrip = CreateNewTrip(position);
+                    // End the current trip and start a new one
+                    FinalizeTrip(currentTrip, trips, previousPoint.Value.Movement);
+                    currentTrip = CreateNewTrip(point);
                 }
                 else
                 {
-                    currentTrip.Points.Add(position);
+                    currentTrip.Points.Add(point);
                     currentTrip.TotalDistance += distance;
                 }
             }
-            if (lastPosition == null) currentTrip.Points.Add(position);
-            lastPosition = position;
+            if (previousPoint == null) currentTrip.Points.Add(point);
+            previousPoint = point;
         }
-
-        FinalizeTrip(currentTrip, trips, minSpeedThreshold);
-
-        if (trips.Count == 0 && positions.Any())
-        {
-            var singlePositionTrip = new TripVm
-            {
-                TripId = Guid.NewGuid(),
-                Points = [positions.First(), positions.Last()],
-                TotalDistance = 0,
-                Duration = positions.Last().DeviceDateTime - positions.First().DeviceDateTime,
-                AverageSpeed = positions.First().Speed,
-                Type = 1
-            };
-            trips.Add(singlePositionTrip);
-        }
+        // Add the last trip if it has more than one position
+        FinalizeTrip(currentTrip, trips, points.Last().Movement);
 
         return trips;
     }
 
     /// <summary>
-    /// Creates a new trip with an optional initial position.
+    /// Creates a new trip with an optional initial point.
     /// </summary>
-    /// <param name="initialPosition">The initial position of the trip.</param>
+    /// <param name="initialPosition">The initial point of the trip.</param>
     /// <returns>A new trip.</returns>
-    private static TripVm CreateNewTrip(PositionVm? initialPosition = null)
-    {
-        return new TripVm
+    private static TripVm CreateNewTrip(TripPointVm? initialPoint = null)
+        => new()
         {
             TripId = Guid.NewGuid(),
-            Points = initialPosition != null ? [initialPosition.Value] : [],
+            Points = initialPoint != null ? [initialPoint.Value] : [],
             TotalDistance = 0,
             Type = (short)TripTypeEnum.MOVING
         };
-    }
 
     /// <summary>
     /// Finalizes the trip by calculating its duration and average speed, and determining its type.
@@ -82,28 +77,30 @@ public static class TripMapper
     /// <param name="trip">The trip to finalize.</param>
     /// <param name="trips">The list of trips to add the finalized trip to.</param>
     /// <param name="minSpeedThreshold">The minimum speed threshold to consider a trip as moving.</param>
-    private static void FinalizeTrip(TripVm trip, List<TripVm> trips, double minSpeedThreshold)
+    private static void FinalizeTrip(TripVm trip, List<TripVm> trips, bool movement)
     {
-        if (trip.Points.Count > 1)
+        trip.Duration = trip.Points.Last().DeviceDateTime - trip.Points.First().DeviceDateTime;
+        trip.From = trip.Points.First().DeviceDateTime;
+        trip.To = trip.Points.Last().DeviceDateTime;
+        trip.AverageSpeed = trip.Points.Average(p => p.Speed);
+        if (!movement)
         {
-            trip.Duration = trip.Points.Last().DeviceDateTime - trip.Points.First().DeviceDateTime;
-            trip.AverageSpeed = trip.Points.Average(p => p.Speed);
-            if (IsStop(trip.Points, minSpeedThreshold))
+            trip.Type = (short)TripTypeEnum.STOP;
+            if (trip.Points.Count > 1)
             {
-                trip.Type = (short)TripTypeEnum.STOP;
                 trip.Points = [trip.Points.First(), trip.Points.Last()];
             }
-            trips.Add(trip);
         }
+        trips.Add(trip);
     }
 
     /// <summary>
-    /// Calculates the distance between two positions using the Haversine formula.
+    /// Calculates the distance between two points using the Haversine formula.
     /// </summary>
-    /// <param name="p1">The first position.</param>
-    /// <param name="p2">The second position.</param>
-    /// <returns>The distance between the two positions in kilometers.</returns>
-    private static double CalculateDistance(PositionVm p1, PositionVm p2)
+    /// <param name="p1">The first point.</param>
+    /// <param name="p2">The second point.</param>
+    /// <returns>The distance between the two points in kilometers.</returns>
+    private static double CalculateDistance(TripPointVm p1, TripPointVm p2)
     {
         const double r = 6371e3; // Earth's radius in meters
         var lat1 = p1.Latitude * Math.PI / 180;
@@ -120,26 +117,73 @@ public static class TripMapper
     }
 
     /// <summary>
-    /// Checks if two positions are duplicates.
+    /// Checks if two points are duplicates.
     /// </summary>
-    /// <param name="p1">The first position.</param>
-    /// <param name="p2">The second position.</param>
-    /// <returns>True if the positions are duplicates, otherwise false.</returns>
-    private static bool IsDuplicate(PositionVm p1, PositionVm p2)
-    {
-        return p1.Latitude == p2.Latitude &&
-               p1.Longitude == p2.Longitude &&
-               p1.DeviceDateTime == p2.DeviceDateTime;
-    }
+    /// <param name="p1">The first point.</param>
+    /// <param name="p2">The second point.</param>
+    /// <returns>True if the points are duplicates, otherwise false.</returns>
+    private static bool IsDuplicate(TripPointVm p1, TripPointVm p2)
+        => p1.Latitude == p2.Latitude &&
+           p1.Longitude == p2.Longitude &&
+           p1.DeviceDateTime == p2.DeviceDateTime;
 
     /// <summary>
-    /// Determines if a trip is a stop based on the speed of its points.
+    /// Calculates the points of a trip based on ignition status or speed.
     /// </summary>
-    /// <param name="points">The points of the trip.</param>
-    /// <param name="minSpeedThreshold">The minimum speed threshold to consider a trip as moving.</param>
-    /// <returns>True if the trip is a stop, otherwise false.</returns>
-    private static bool IsStop(IEnumerable<PositionVm> points, double minSpeedThreshold)
+    /// <param name="positions"></param>
+    /// <param name="ignitionBased"></param>
+    /// <param name="stoppedGap"></param>
+    /// <returns></returns>
+    private static List<TripPointVm> CalculatePoints(this IEnumerable<PositionVm> positions, bool ignitionBased, double stoppedGap)
     {
-        return points.All(p => p.Speed <= minSpeedThreshold);
+        var points = new List<TripPointVm>();
+        var stoppedTime = TimeSpan.Zero;
+        PositionVm? previousPosition = null;
+
+        foreach (var position in positions.OrderBy(p => p.DeviceDateTime))
+        {
+            if (ignitionBased)
+            {
+                // Add point based on ignition status
+                points.Add(position.CastPoint(position.Attributes?.Ignition ?? false));
+                continue;
+            }
+
+            if (previousPosition != null)
+            {
+                // Update stopped time if the vehicle is not moving
+                stoppedTime = UpdateStoppedTime(position, previousPosition.Value, stoppedTime);
+                // Add point based on whether the vehicle should be considered moving
+                points.Add(position.CastPoint(ShouldConsiderMoving(position, stoppedTime, stoppedGap)));
+            }
+            else
+            {
+                // Add the first point based on speed
+                points.Add(position.CastPoint(position.Speed > 0));
+            }
+
+            previousPosition = position;
+        }
+
+        return points;
     }
+
+    private static TimeSpan UpdateStoppedTime(PositionVm current, PositionVm previous, TimeSpan stoppedTime)
+        => current.Speed > 0
+            ? TimeSpan.Zero
+            : stoppedTime + (current.DeviceDateTime - previous.DeviceDateTime);
+
+    private static bool ShouldConsiderMoving(PositionVm position, TimeSpan stoppedTime, double stoppedGap)
+        => position.Speed > 0 || stoppedTime.TotalMinutes < stoppedGap;
+
+    public static TripPointVm CastPoint(this PositionVm position, bool movement)
+        => new (
+            position.Latitude, 
+            position.Longitude, 
+            position.DeviceDateTime, 
+            position.Speed, 
+            position.Course, 
+            position.EventId, 
+            movement);
+
 }

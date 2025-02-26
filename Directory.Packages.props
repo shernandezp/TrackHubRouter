@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
-    <PackageVersion Include="Geotab.Checkmate.ObjectModel" Version="11.43.302" />
+    <PackageVersion Include="Geotab.Checkmate.ObjectModel" Version="11.62.237" />
     <PackageVersion Include="GraphQL.Client" Version="6.1.0" />
     <PackageVersion Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />

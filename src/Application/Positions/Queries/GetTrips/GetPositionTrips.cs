@@ -53,8 +53,8 @@ public class GetPositionTripsQueryHandler(
             request.To, 
             request.TransporterId, 
             cancellationToken);
-        //TODO: Get distance and time threshold from transporter type
-        return positions.GroupPositionsIntoTrips(1, TimeSpan.FromMinutes(30));
+        //TODO: Get ignitionBased, stoppedGap , distance and time threshold from transporter type
+        return positions.GroupPositionsIntoTrips(false, 10, 10, TimeSpan.FromMinutes(120));
 
     }
 
