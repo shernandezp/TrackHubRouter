@@ -96,9 +96,9 @@ public class TripMapperTests
         var positions = new List<PositionVm>
             {
                 // first trip - moving
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 1 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.002, Longitude = 0.002, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 1 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 10 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.002, Longitude = 0.002, Speed = 11 },
+                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 12 },
                 // second trip - stop
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(60), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
                 new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(61), Latitude = 0.003, Longitude = 0.003, Speed = 0 },

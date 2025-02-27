@@ -139,6 +139,8 @@ public static class TripMapper
         var points = new List<TripPointVm>();
         var stoppedTime = TimeSpan.Zero;
         PositionVm? previousPosition = null;
+        var prevStatus = false;
+        var currentStatus = false;
 
         foreach (var position in positions.OrderBy(p => p.DeviceDateTime))
         {
@@ -154,14 +156,16 @@ public static class TripMapper
                 // Update stopped time if the vehicle is not moving
                 stoppedTime = UpdateStoppedTime(position, previousPosition.Value, stoppedTime);
                 // Add point based on whether the vehicle should be considered moving
-                points.Add(position.CastPoint(ShouldConsiderMoving(position, stoppedTime, stoppedGap)));
+                currentStatus = ShouldConsiderMoving(position, prevStatus, stoppedTime, stoppedGap);
+                points.Add(position.CastPoint(currentStatus));
             }
             else
             {
                 // Add the first point based on speed
                 points.Add(position.CastPoint(position.Speed > 0));
+                prevStatus = position.Speed > 0;
             }
-
+            prevStatus = currentStatus;
             previousPosition = position;
         }
 
@@ -173,8 +177,8 @@ public static class TripMapper
             ? TimeSpan.Zero
             : stoppedTime + (current.DeviceDateTime - previous.DeviceDateTime);
 
-    private static bool ShouldConsiderMoving(PositionVm position, TimeSpan stoppedTime, double stoppedGap)
-        => position.Speed > 0 || stoppedTime.TotalMinutes < stoppedGap;
+    private static bool ShouldConsiderMoving(PositionVm position, bool prevStatus, TimeSpan stoppedTime, double stoppedGap)
+        => position.Speed > 0 || (stoppedTime.TotalMinutes < stoppedGap && prevStatus);
 
     public static TripPointVm CastPoint(this PositionVm position, bool movement)
         => new (
