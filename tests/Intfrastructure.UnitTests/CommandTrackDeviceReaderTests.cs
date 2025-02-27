@@ -3,7 +3,6 @@ using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHub.Router.Infrastructure.CommandTrack.Models;
 using TrackHubRouter.Domain.Models;
-using FluentAssertions;
 using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Tests;
@@ -15,7 +14,6 @@ public class DeviceReaderTests
     private Mock<IHttpClientService> _httpClientServiceMock;
     private Mock<ICredentialWriter> _credentialWriterMock;
     private DeviceReader _deviceReader;
-    private IDictionary<string, string>? _header;
 
     [SetUp]
     public void Setup()
@@ -24,7 +22,6 @@ public class DeviceReaderTests
         _httpClientServiceMock = new Mock<IHttpClientService>();
         _credentialWriterMock = new Mock<ICredentialWriter>();
         _deviceReader = new DeviceReader(_httpClientFactoryMock.Object, _httpClientServiceMock.Object, _credentialWriterMock.Object);
-        _header = new Dictionary<string, string> { { "", "" } };
     }
 
     [Test]
@@ -42,7 +39,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDeviceAsync(deviceDto, CancellationToken.None);
 
         // Assert
-        expectedDeviceVm.Should().Be(result);
+        Assert.That(result, Is.EqualTo(expectedDeviceVm));
     }
 
     [Test]
@@ -60,7 +57,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(devices, CancellationToken.None);
 
         // Assert
-        expectedDeviceVms.Should().BeEquivalentTo(result);
+        Assert.That(result, Is.EqualTo(expectedDeviceVms));
     }
 
     [Test]
@@ -77,7 +74,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(devices, CancellationToken.None);
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -94,7 +91,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(devices, CancellationToken.None);
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 
     [Test]
@@ -109,6 +106,6 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(CancellationToken.None);
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 }

@@ -1,6 +1,5 @@
 using Application.UnitTests;
 using Common.Domain.Enums;
-using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using TrackHubRouter.Application.Devices.Queries.GetByOperator;
@@ -71,8 +70,8 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         var result = await _handler.Handle(new GetDevicesByOperatorQuery(operatorId), CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        devices.Count.Should().Be(result.Count());
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count(), Is.EqualTo(devices.Count));
     }
 
     [Test]
@@ -108,7 +107,7 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         var result = await _handler.Handle(new GetDevicesByOperatorQuery(operatorId), CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.Empty);
     }
 }

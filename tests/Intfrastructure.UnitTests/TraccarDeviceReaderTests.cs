@@ -2,7 +2,6 @@ using Moq;
 using TrackHubRouter.Domain.Interfaces;
 using TrackHubRouter.Domain.Models;
 using TrackHub.Router.Infrastructure.Traccar.Models;
-using FluentAssertions;
 using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.Traccar.Tests;
@@ -38,7 +37,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDeviceAsync(deviceDto, cancellationToken);
 
         // Assert
-        expectedDeviceVm.Should().Be(result);
+        Assert.That(result, Is.EqualTo(expectedDeviceVm));
     }
 
     [Test]
@@ -61,7 +60,7 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(devices, cancellationToken);
 
         // Assert
-        expectedDeviceVms.Should().BeEquivalentTo(result);
+        Assert.That(result, Is.EqualTo(expectedDeviceVms));
     }
 
     [Test]
@@ -78,6 +77,6 @@ public class DeviceReaderTests
         var result = await _deviceReader.GetDevicesAsync(cancellationToken);
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 }

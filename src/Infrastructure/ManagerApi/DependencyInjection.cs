@@ -21,7 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAccountReader, AccountReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
-        services.AddScoped<IDeviceReader, DeviceReader>();
+        services.AddScoped<IDeviceTransporterReader, DeviceTransporterReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();
         services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<IPositionWriter, PositionWriter>();

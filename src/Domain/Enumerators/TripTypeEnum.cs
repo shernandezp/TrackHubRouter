@@ -13,17 +13,10 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Positions.Queries.GetRange;
-using TrackHubRouter.Application.Positions.Queries.GetTrips;
-using TrackHubRouter.Domain.Models;
+namespace TrackHubRouter.Domain.Enumerators;
 
-namespace TrackHubRouter.Web.GraphQL;
-
-public partial class Query
+public enum TripTypeEnum
 {
-    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
-        => await sender.Send(query);
-
-    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
-        => await sender.Send(query);
+    STOP = 1,
+    MOVING = 2
 }

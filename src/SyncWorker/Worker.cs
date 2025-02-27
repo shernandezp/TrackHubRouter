@@ -1,5 +1,5 @@
 using MediatR;
-using TrackHubRouter.Application.Positions.Commands.Sync;
+using TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
 namespace TrackHubRouter.SyncWorker;
 

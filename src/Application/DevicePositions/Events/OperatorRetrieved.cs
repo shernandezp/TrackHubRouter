@@ -1,7 +1,7 @@
-﻿using TrackHubRouter.Application.Positions.Queries.Get;
+﻿using TrackHubRouter.Application.DevicePositions.Queries.Get;
 using TrackHubRouter.Domain.Models;
 
-namespace TrackHubRouter.Application.Positions.Events;
+namespace TrackHubRouter.Application.DevicePositions.Events;
 
 public sealed class OperatorRetrieved
 {

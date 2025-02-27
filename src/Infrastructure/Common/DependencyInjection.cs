@@ -4,7 +4,7 @@ using TrackHub.Router.Infrastructure.Common;
 using TrackHub.Router.Infrastructure.Common.Helpers;
 using TrackHubRouter.Application.Devices.Registry;
 using TrackHubRouter.Application.PingOperator;
-using TrackHubRouter.Application.Positions.Registry;
+using TrackHubRouter.Application.DevicePositions.Registry;
 using TrackHubRouter.Domain.Interfaces.Operator;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using CommandTrack = TrackHub.Router.Infrastructure.CommandTrack;

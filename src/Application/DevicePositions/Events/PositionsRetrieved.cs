@@ -1,6 +1,6 @@
 ﻿using TrackHubRouter.Domain.Models;
 
-namespace TrackHubRouter.Application.Positions.Events;
+namespace TrackHubRouter.Application.DevicePositions.Events;
 
 public sealed class PositionsRetrieved
 {
