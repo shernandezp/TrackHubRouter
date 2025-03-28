@@ -20,14 +20,13 @@ public abstract class PositionBaseHandler
         OperatorVm @operator,
         DateTimeOffset from,
         DateTimeOffset to,
-        Guid transporterId,
+        DeviceTransporterVm device,
         CancellationToken cancellationToken)
     {
         var reader = positionRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
         if (@operator.Credential is not null)
         {
             await reader.Init(@operator.Credential.Value.Decrypt(encryptionKey), cancellationToken);
-            var device = await deviceReader.GetDevicesTransporterAsync(transporterId, cancellationToken);
             var positions = await reader.GetPositionAsync(from, to, device, cancellationToken);
             return positions;
         }
