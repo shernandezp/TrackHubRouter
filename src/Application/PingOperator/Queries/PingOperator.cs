@@ -7,7 +7,7 @@ using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.PingOperator.Queries;
 
-[Authorize(Resource = Resources.Credentials, Action = Actions.Read)]
+[Authorize(Resource = Resources.Credentials, Action = Actions.Custom)]
 public readonly record struct PingOperatorQuery(Guid OperatorId) : IRequest<bool>;
 
 // This class handles the PingOperatorQuery and implements the IRequestHandler interface
