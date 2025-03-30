@@ -16,6 +16,8 @@
 using System.Reflection;
 using Ardalis.GuardClauses;
 using Common.Application;
+using Common.Web.Transformers;
+using Scalar.AspNetCore;
 using TrackHubRouter.Web.GraphQL;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +37,8 @@ builder.Services
     .AddAuthorization()
     .AddQueryType<Query>();
 
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+
 builder.Services.AddCors(options => options
     .AddPolicy("AllowFrontend",
         builder => builder
@@ -52,6 +56,10 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+
+//Add Scalar API
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.UseHeaderPropagation();
 
