@@ -15,7 +15,7 @@ public static class TripMapper
     /// <returns>A collection of trips.</returns>
     public static IEnumerable<TripVm> GroupPositionsIntoTrips(
         this IEnumerable<PositionVm> positions, 
-        bool ignitionBased, 
+        bool accBased, 
         double stoppedGap,
         double maxDistance, 
         TimeSpan maxTimeGap)
@@ -24,7 +24,7 @@ public static class TripMapper
         {
             return [];
         }
-        var points = positions.CalculatePoints(ignitionBased, stoppedGap);
+        var points = positions.CalculatePoints(accBased, stoppedGap);
         var trips = new List<TripVm>();
         var currentTrip = CreateNewTrip();
         TripPointVm? previousPoint = null;
@@ -128,13 +128,13 @@ public static class TripMapper
            p1.DeviceDateTime == p2.DeviceDateTime;
 
     /// <summary>
-    /// Calculates the points of a trip based on ignition status or speed.
+    /// Calculates the points of a trip based on the acc status or speed.
     /// </summary>
     /// <param name="positions"></param>
-    /// <param name="ignitionBased"></param>
+    /// <param name="accBased"></param>
     /// <param name="stoppedGap"></param>
     /// <returns></returns>
-    private static List<TripPointVm> CalculatePoints(this IEnumerable<PositionVm> positions, bool ignitionBased, double stoppedGap)
+    private static List<TripPointVm> CalculatePoints(this IEnumerable<PositionVm> positions, bool accBased, double stoppedGap)
     {
         var points = new List<TripPointVm>();
         var stoppedTime = TimeSpan.Zero;
@@ -144,7 +144,7 @@ public static class TripMapper
 
         foreach (var position in positions.OrderBy(p => p.DeviceDateTime))
         {
-            if (ignitionBased)
+            if (accBased)
             {
                 // Add point based on ignition status
                 points.Add(position.CastPoint(position.Attributes?.Ignition ?? false));

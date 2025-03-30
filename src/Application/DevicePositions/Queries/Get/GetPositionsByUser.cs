@@ -56,10 +56,9 @@ public class GetPositionsByUserQueryHandler(
         }
 
         //Most recent position for each transporter if multiple positions are available
-        return allPositions
+        return [.. allPositions
             .GroupBy(p => p.TransporterId)
-            .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())
-            .ToList();
+            .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())];
     }
 
     /// <summary>

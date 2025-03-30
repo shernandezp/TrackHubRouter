@@ -28,14 +28,15 @@ public class GetPositionsRecordQueryHandler(
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
         return await GetDevicePositionAsync(
             positionRegistry,
             deviceReader,
             EncryptionKey,
             @operator, 
             request.From, 
-            request.To, 
-            request.TransporterId, 
+            request.To,
+            device, 
             cancellationToken);
 
     }

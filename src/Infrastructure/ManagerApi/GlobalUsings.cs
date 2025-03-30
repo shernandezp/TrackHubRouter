@@ -1,4 +1,5 @@
-﻿global using Common.Application.Interfaces;
+﻿global using TrackHubRouter.Domain.Interfaces.Manager;
+global using Common.Application.Interfaces;
 global using Common.Domain.Constants;
 global using Common.Infrastructure;
 global using GraphQL;

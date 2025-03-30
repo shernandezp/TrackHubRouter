@@ -1,6 +1,4 @@
-﻿using TrackHubRouter.Domain.Interfaces.Manager;
-
-namespace ManagerApi;
+﻿namespace TrackHub.Router.Infrastructure.ManagerApi;
 
 // This class represents a device reader that implements the IDeviceReader interface.
 // It is responsible for retrieving devices by operator from the GraphQL service.

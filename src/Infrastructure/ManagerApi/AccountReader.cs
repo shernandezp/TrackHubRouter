@@ -1,6 +1,4 @@
-﻿using TrackHubRouter.Domain.Interfaces.Manager;
-
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+﻿namespace TrackHub.Router.Infrastructure.ManagerApi;
 
 public class AccountReader(IGraphQLClientFactory graphQLClient) 
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IAccountReader

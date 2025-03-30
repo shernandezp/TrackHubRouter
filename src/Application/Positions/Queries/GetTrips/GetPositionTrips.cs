@@ -29,7 +29,8 @@ public class GetPositionTripsQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceTransporterReader deviceReader)
+        IDeviceTransporterReader deviceReader,
+        ITransporterTypeReader transporterTypeReader)
         : PositionBaseHandler, IRequestHandler<GetPositionTripsQuery, IEnumerable<TripVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -44,6 +45,7 @@ public class GetPositionTripsQueryHandler(
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
         var positions = await GetDevicePositionAsync(
             positionRegistry,
             deviceReader,
@@ -51,10 +53,11 @@ public class GetPositionTripsQueryHandler(
             @operator, 
             request.From, 
             request.To, 
-            request.TransporterId, 
+            device, 
             cancellationToken);
-        //TODO: Get ignitionBased, stoppedGap , distance and time threshold from transporter type
-        return positions.GroupPositionsIntoTrips(false, 10, 10, TimeSpan.FromMinutes(120));
+
+        var transporterType = await transporterTypeReader.GetTransporterTypeAsync(device.TransporterTypeId, cancellationToken);
+        return positions.GroupPositionsIntoTrips(transporterType.AccBased, transporterType.StoppedGap, transporterType.MaxDistance, TimeSpan.FromMinutes(transporterType.MaxTimeGap));
 
     }
 
