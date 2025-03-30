@@ -4,6 +4,7 @@
 |--------------------------|-------------------------------------------------------|-------------------------------------------------------------------------------|
 | Hot Chocolate            | GraphQL server for .NET                               | [Hot Chocolate Documentation](https://chillicream.com/docs/hotchocolate/v13)  |
 | GraphQL.Client           | HTTP client for GraphQL                               | [OpenIDDict Documentation](https://openiddict.com/)                           |
+| Scalar.AspNetCore        | Integrate Scalar API for Net Core apps                | [Scalar Documentation](https://guides.scalar.com/scalar/scalar-api-references/net-integration) |
 | .NET Core                | Development platform for modern applications          | [.NET Core Documentation](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview) |
 
 # Router API for TrackHub
@@ -11,6 +12,7 @@
 ## Key Features
 
 The Routing API is an essential component of TrackHub, designed to streamline and unify data integration from multiple external GPS provider services (referred to as "Operators"). It enables TrackHub to aggregate location data consistently and reliably, regardless of the source provider, by returning a standardized format that meets TrackHub’s unique requirements.
+It also provides a REST endpoint for third-party applications to access the data of all units.
 
 ## Functionality
 
@@ -36,8 +38,6 @@ To enhance reliability, the project includes a Synchronization Service that regu
 ## Future Updates
 
 - **Expanding support for additional GPS providers**: Incorporate new protocols and providers to broaden compatibility.
-- **Enabling third-party access to TrackHub through REST endpoints**: Provide secure access to TrackHub data for third-party applications.
-- **Geofencing capabilities**: Enable the service to reference device positions based on defined geofences, allowing for more precise monitoring and location-based alerts.
 
 ## License
 
