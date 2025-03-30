@@ -4,6 +4,7 @@
 |---------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------|
 | Hot Chocolate             | Servidor GraphQL para .Net        | [Documentación Hot Chocolate](https://chillicream.com/docs/hotchocolate/v13)                           |
 | GraphQL.Client            | Cliente Http para GraphQL        | [Documentación OpenIDDict](https://openiddict.com/)                           |
+| Scalar.AspNetCore         | Integración de Scalar API para Net Core    | [Documentación Scalar](https://guides.scalar.com/scalar/scalar-api-references/net-integration)                    |
 | .NET Core                 | Plataforma de desarrollo para aplicaciones modernas     | [Documentación .NET Core](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview) |
 
 # API de Ruteo para TrackHub
@@ -11,6 +12,7 @@
 ## Características Clave
 
 La API de ruteo es un componente esencial de TrackHub, diseñado para agilizar y unificar la integración de datos provenientes de múltiples servicios de proveedores externos de GPS (denominados "Operadores"). Permite a TrackHub agregar datos de ubicación de manera consistente y confiable, independientemente del proveedor de origen, al devolver un formato estandarizado que cumple con los requisitos únicos de TrackHub.
+También proporciona un endpoint REST para que aplicaciones de terceros accedan a los datos de todas las unidades.
 
 ## Funcionalidad
 
@@ -36,8 +38,6 @@ Para mejorar la confiabilidad, el proyecto incluye un Servicio de Sincronizació
 ## Futuras Actualizaciones
 
 - **Ampliación del soporte a proveedores de GPS adicionales**: Incorporar nuevos protocolos y proveedores para ampliar la compatibilidad.
-- **Habilitación del acceso de terceros a TrackHub mediante endpoints REST**: Proporcionar acceso seguro a los datos de TrackHub para aplicaciones de terceros.
-- **Capacidades de Geocercas**: Permitir que el servicio haga referencia a las posiciones de los dispositivos basadas en geocercas definidas, lo que permitirá un monitoreo más preciso y alertas basadas en ubicación.
 
 ## Licencia
 
