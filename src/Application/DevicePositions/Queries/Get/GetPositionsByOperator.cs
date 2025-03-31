@@ -6,7 +6,7 @@ using TrackHubRouter.Application.DevicePositions.Events;
 
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
-public readonly record struct GetPositionsByOperatorQuery(OperatorVm @operator) : IRequest<bool>;
+public readonly record struct GetPositionsByOperatorQuery(OperatorVm Operator) : IRequest<bool>;
 
 public class GetPositionsByOperatorQueryHandler(
         IPublisher publisher,
@@ -26,11 +26,11 @@ public class GetPositionsByOperatorQueryHandler(
     public async Task<bool> Handle(GetPositionsByOperatorQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        if (request.@operator.Credential is not null)
+        if (request.Operator.Credential is not null)
         {
-            var reader = positionRegistry.GetReader((ProtocolType)request.@operator.ProtocolTypeId);
-            await reader.Init(request.@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDeviceTransporterAsync(request.@operator.OperatorId, cancellationToken);
+            var reader = positionRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
+            await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
+            var devices = await deviceReader.GetDeviceTransporterAsync(request.Operator.OperatorId, cancellationToken);
             var positions = await TryGetPositionsAsync(reader, devices, cancellationToken);
             if (positions.Any())
             {
