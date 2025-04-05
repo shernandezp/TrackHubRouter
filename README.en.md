@@ -31,6 +31,11 @@ Based on configurations set in the administration panel, the Routing API:
 | GpsGate       | [GpsGate Documentation](https://support.gpsgate.com/hc/en-us/articles/360016602140-REST-API-Documentation)      | ⚠️ Partially Implemented  | ❌ Not Tested |
 | Traccar       | [Traccar Documentation](https://www.traccar.org/api-reference/)      | ✅ Implemented            | ✅ Tested |
 
+## REST API
+To facilitate integration with third parties, TrackHub provides a REST API with methods to retrieve unit information. This API leverages the Router API as middleware to access GPS location data for all units.
+
+![Image](https://github.com/shernandezp/TrackHub/blob/main/src/assets/images/api.png?raw=true)
+
 ## Synchronization Service
 
 To enhance reliability, the project includes a Synchronization Service that regularly updates device information in the local database. This service ensures that TrackHub displays the latest known position for each device, even if an external provider experiences connectivity issues or is temporarily offline.

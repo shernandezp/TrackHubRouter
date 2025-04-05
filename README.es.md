@@ -35,6 +35,11 @@ Basándose en las configuraciones establecidas en el panel de administración, l
 
 Para mejorar la confiabilidad, el proyecto incluye un Servicio de Sincronización que actualiza regularmente la información de los dispositivos en la base de datos local. Este servicio asegura que TrackHub muestre la última posición conocida de cada dispositivo, incluso si un proveedor externo experimenta problemas de conectividad o está temporalmente fuera de línea.
 
+## REST API
+Para facilitar la integración con terceros, TrackHub proporciona una API REST con métodos para recuperar información de las unidades. Esta API utiliza el Router API como middleware para acceder a los datos de ubicación GPS de todas las unidades.
+
+![Image](https://github.com/shernandezp/TrackHub/blob/main/src/assets/images/api.png?raw=true)
+
 ## Futuras Actualizaciones
 
 - **Ampliación del soporte a proveedores de GPS adicionales**: Incorporar nuevos protocolos y proveedores para ampliar la compatibilidad.
