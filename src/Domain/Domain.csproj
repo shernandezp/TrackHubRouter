@@ -5,6 +5,5 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="TrackHubCommon.Domain" />
-    <PackageReference Include="MediatR" />
   </ItemGroup>
 </Project>

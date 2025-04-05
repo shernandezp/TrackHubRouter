@@ -1,5 +1,4 @@
-﻿using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Records;
+﻿using TrackHubRouter.Domain.Records;
 
 namespace ManagerApi;
 
