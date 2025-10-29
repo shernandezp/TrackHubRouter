@@ -1,4 +1,4 @@
-using MediatR;
+using Common.Mediator;
 using TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
 namespace TrackHubRouter.SyncWorker;

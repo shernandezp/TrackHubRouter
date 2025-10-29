@@ -18,6 +18,6 @@ internal readonly record struct DevicePosition(
     bool Ignition,
     double? Satellites,
     double? Mileage,
-    double? HobbsMeter,
+    double? Hourmeter,
     double? Temperature
     );

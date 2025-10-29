@@ -66,7 +66,7 @@ internal static class PositionMapper
                 Satellites = position.Satellites.HasValue ? (int?)position.Satellites.Value : null,
                 Mileage = position.Mileage,
                 Temperature = position.Temperature,
-                HobbsMeter = position.HobbsMeter
+                Hourmeter = position.Hourmeter
             }
         );
 

@@ -30,7 +30,7 @@ public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactor
 {
     public async Task<PositionVm> GetDevicePositionAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
-        var url = $"DataConnectAPI/api/Device/{deviceDto.Name}";
+        var url = $"DataConnectAPI/api/Device/{deviceDto.Identifier}";
         var position = await HttpClientService.GetAsync<DevicePosition>(url, Header, cancellationToken);
         return position.MapToPositionVm(deviceDto);
     }

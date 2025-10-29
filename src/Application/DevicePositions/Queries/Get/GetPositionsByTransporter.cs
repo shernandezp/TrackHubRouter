@@ -17,47 +17,63 @@ using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Application.Positions.Mappers;
 using TrackHubRouter.Domain.Models;
+using TrackHubRouter.Domain.Extensions;
 
-namespace TrackHubRouter.Application.Positions.Queries.GetTrips;
+namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
-public readonly record struct GetPositionTripsQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To) : IRequest<IEnumerable<TripVm>>;
+public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) : IRequest<PositionVm>;
 
-public class GetPositionTripsQueryHandler(
+public class GetPositionByTransporterQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceTransporterReader deviceReader,
-        ITransporterTypeReader transporterTypeReader)
-        : PositionBaseHandler, IRequestHandler<GetPositionTripsQuery, IEnumerable<TripVm>>
+        IDeviceTransporterReader deviceReader)
+        : IRequestHandler<GetPositionByTransporterQuery, PositionVm>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
     /// <summary>
-    /// Retrieves and position trips asynchronously
+    /// Get the position of a device by its transporter id.
     /// </summary>
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
-    /// <returns>Returns the collection of TripVm</returns>
-    public async Task<IEnumerable<TripVm>> Handle(GetPositionTripsQuery request, CancellationToken cancellationToken)
+    /// <returns></returns>
+    public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
         var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
-        var positions = await GetDevicePositionAsync(
-            positionRegistry,
+        return await GetDevicePositionAsync(
             EncryptionKey,
-            @operator, 
-            request.From, 
-            request.To, 
-            device, 
+            @operator,
+            device,
             cancellationToken);
+    }
 
-        var transporterType = await transporterTypeReader.GetTransporterTypeAsync(device.TransporterTypeId, cancellationToken);
-        return positions.GroupPositionsIntoTrips(transporterType.AccBased, transporterType.StoppedGap, transporterType.MaxDistance, TimeSpan.FromMinutes(transporterType.MaxTimeGap));
-
+    /// <summary>
+    /// Get the position of a device by its transporter id.
+    /// </summary>
+    /// <param name="encryptionKey"></param>
+    /// <param name="operator"></param>
+    /// <param name="device"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    private async Task<PositionVm> GetDevicePositionAsync(
+        string encryptionKey,
+        OperatorVm @operator,
+        DeviceTransporterVm device,
+        CancellationToken cancellationToken)
+    {
+        var reader = positionRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
+        if (@operator.Credential is not null)
+        {
+            await reader.Init(@operator.Credential.Value.Decrypt(encryptionKey), cancellationToken);
+            var position = await reader.GetDevicePositionAsync(device, cancellationToken);
+            return position;
+        }
+        return default;
     }
 
 }

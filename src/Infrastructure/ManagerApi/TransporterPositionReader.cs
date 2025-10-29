@@ -1,6 +1,4 @@
-﻿using TrackHubRouter.Domain.Interfaces.Manager;
-
-namespace ManagerApi;
+﻿namespace TrackHub.Router.Infrastructure.ManagerApi;
 
 public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ITransporterPositionReader
@@ -32,7 +30,7 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
                             satellites
                             mileage
                             ignition
-                            hobbsMeter
+                            hourmeter
                         }
                         altitude
                         address
