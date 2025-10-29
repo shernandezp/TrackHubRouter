@@ -31,7 +31,6 @@ public class GetPositionsRecordQueryHandler(
         var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
         return await GetDevicePositionAsync(
             positionRegistry,
-            deviceReader,
             EncryptionKey,
             @operator, 
             request.From, 

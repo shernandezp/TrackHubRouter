@@ -23,4 +23,7 @@ public partial class Query
     public async Task<IEnumerable<PositionVm>> GetDevicePositionsByUser([Service] ISender sender)
         => await sender.Send(new GetPositionsByUserQuery());
 
+    public async Task<PositionVm> GetDevicePositionByTransporter([Service] ISender sender, [AsParameters] GetPositionByTransporterQuery query)
+        => await sender.Send(query);
+
 }
