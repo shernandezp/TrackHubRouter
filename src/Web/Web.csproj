@@ -4,8 +4,7 @@
     <AssemblyName>TrackHubRouter.Web</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
-    <NoWarn>$(NoWarn);AD0001</NoWarn>
-    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
