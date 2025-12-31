@@ -6,7 +6,9 @@ namespace TrackHub.Router.Infrastructure.Traccar;
 
 
 // This class represents a reader for Traccar api - devices.
-public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory, IHttpClientService httpClientService)
+public sealed class DeviceReader(
+    ICredentialHttpClientFactory httpClientFactory, 
+    IHttpClientService httpClientService)
     : TraccarReaderBase(httpClientFactory, httpClientService)
 {
 

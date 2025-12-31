@@ -1,6 +1,4 @@
-﻿using TrackHubRouter.Domain.Interfaces.Manager;
-
-namespace ManagerApi;
+﻿namespace ManagerApi;
 
 // This class represents the implementation of the IOperatorReader interface
 // It is responsible for reading operator data from the GraphQL service

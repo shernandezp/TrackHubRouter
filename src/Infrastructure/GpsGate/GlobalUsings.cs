@@ -13,14 +13,5 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Infrastructure.GpsGate.Models;
-
-internal readonly record struct Device(
-    int Id,
-    string Name,
-    string IMEI,
-    double Latitude,
-    double Longitude,
-    double? Altitude,
-    DateTimeOffset? TimeStamp
-    );
+global using TrackHubRouter.Domain.Models;
+global using TrackHub.Router.Infrastructure.GpsGate.Models;

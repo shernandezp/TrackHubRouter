@@ -21,7 +21,9 @@ using TrackHubRouter.Domain.Interfaces;
 namespace TrackHub.Router.Infrastructure.Traccar;
 
 // This class represents a reader for retrieving position information from Traccar.
-public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory, IHttpClientService httpClientService) : TraccarReaderBase(httpClientFactory, httpClientService)
+public sealed class PositionReader(
+    ICredentialHttpClientFactory httpClientFactory, 
+    IHttpClientService httpClientService) : TraccarReaderBase(httpClientFactory, httpClientService)
 {
     /// <summary>
     /// Retrieves the position of a single device asynchronously.

@@ -9,6 +9,7 @@ using TrackHubRouter.Domain.Interfaces.Operator;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using CommandTrack = TrackHub.Router.Infrastructure.CommandTrack;
 using GeoTab = TrackHub.Router.Infrastructure.Geotab;
+using GpsGate = TrackHub.Router.Infrastructure.GpsGate;
 using Traccar = TrackHub.Router.Infrastructure.Traccar;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -48,6 +49,18 @@ public static class DependencyInjection
                     services.AddScoped<IExternalDeviceReader, Traccar.Adapters.DeviceReaderAdapter>(provider
                         => new Traccar.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Traccar.DeviceReader>()));
                     services.AddScoped<IConnectivityTester, Traccar.ConnectivityTester>();
+                }
+            },
+            {
+                ProtocolType.GpsGate.ToString(), services =>
+                {
+                    services.AddScoped<GpsGate.DeviceReader>();
+                    services.AddScoped<GpsGate.PositionReader>();
+                    services.AddScoped<IPositionReader, GpsGate.Adapters.PositionReaderAdapter>(provider
+                        => new GpsGate.Adapters.PositionReaderAdapter(provider.GetRequiredService<GpsGate.PositionReader>()));
+                    services.AddScoped<IExternalDeviceReader, GpsGate.Adapters.DeviceReaderAdapter>(provider
+                        => new GpsGate.Adapters.DeviceReaderAdapter(provider.GetRequiredService<GpsGate.DeviceReader>()));
+                    services.AddScoped<IConnectivityTester, GpsGate.ConnectivityTester>();
                 }
             }
         };
