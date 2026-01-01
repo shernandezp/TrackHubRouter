@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,35 +13,29 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHub.Router.Infrastructure.CommandTrack.Models;
+using TrackHub.Router.Infrastructure.GpsGate.Models;
 using TrackHub.Router.Infrastructure.Tests;
 
-namespace TrackHub.Router.Infrastructure.CommandTrack.Tests;
+namespace TrackHub.Router.Infrastructure.GpsGate.Tests;
 
 [TestFixture]
 public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
 {
-    private Mock<ICredentialWriter> _credentialWriterMock = null!;
-
     protected override DeviceReader CreateDeviceReader(
         ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService)
-    {
-        _credentialWriterMock = new Mock<ICredentialWriter>();
-        return new DeviceReader(httpClientFactory, httpClientService, _credentialWriterMock.Object);
-    }
+        => new(httpClientFactory, httpClientService);
 
     [Test]
     public async Task GetDeviceAsync_WithValidDeviceDto_ReturnsDeviceVm()
     {
         // Arrange
         var deviceDto = CreateDeviceTransporterVm(1);
-        var devicePosition = new DevicePosition();
-        var expectedDeviceVm = CreateExpectedDeviceVm(0, null, null, Guid.Empty);
+        var device = new Device(1, "Device1", "IMEI123", 0, 0, null, null);
+        var expectedDeviceVm = CreateExpectedDeviceVm(1, "IMEI123", "Device1");
 
-        HttpClientServiceMock.Setup(x => x.GetAsync<DevicePosition>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), TestCancellationToken))
-            .ReturnsAsync(devicePosition);
+        HttpClientServiceMock.Setup(x => x.GetAsync<Device>(It.IsAny<string>(), null, TestCancellationToken))
+            .ReturnsAsync(device);
 
         // Act
         var result = await DeviceReader.GetDeviceAsync(deviceDto, TestCancellationToken);
@@ -55,17 +49,18 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
     {
         // Arrange
         var devices = CreateDeviceTransporterVmList(1, 2);
-        var devicePositions = new List<DevicePosition>();
-        var expectedDeviceVms = new List<DeviceVm>();
+        var device1 = new Device(1, "Device1", "IMEI123", 0, 0, null, null);
+        var device2 = new Device(2, "Device2", "IMEI456", 0, 0, null, null);
+        var deviceResults = new List<Device> { device1, device2 };
 
-        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), TestCancellationToken))
-            .ReturnsAsync(devicePositions);
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>(It.IsAny<string>(), null, TestCancellationToken))
+            .ReturnsAsync(deviceResults);
 
         // Act
         var result = await DeviceReader.GetDevicesAsync(devices, TestCancellationToken);
 
         // Assert
-        AssertEquals(result, expectedDeviceVms);
+        AssertIsNotEmpty(result);
     }
 
     [Test]
@@ -73,10 +68,9 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
     {
         // Arrange
         var devices = CreateDeviceTransporterVmList(1, 2);
-        var emptyDevices = new List<DevicePosition>();
 
-        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), TestCancellationToken))
-            .ReturnsAsync(emptyDevices);
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>(It.IsAny<string>(), null, TestCancellationToken))
+            .ReturnsAsync((IEnumerable<Device>?)null);
 
         // Act
         var result = await DeviceReader.GetDevicesAsync(devices, TestCancellationToken);
@@ -90,10 +84,10 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
     {
         // Arrange
         var devices = new List<DeviceTransporterVm>();
-        var devicePositions = new List<DevicePosition>();
+        var deviceResults = new List<Device>();
 
-        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), TestCancellationToken))
-            .ReturnsAsync(devicePositions);
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>(It.IsAny<string>(), null, TestCancellationToken))
+            .ReturnsAsync(deviceResults);
 
         // Act
         var result = await DeviceReader.GetDevicesAsync(devices, TestCancellationToken);
@@ -106,10 +100,8 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
     public async Task GetDevicesAsync_WithNoPositions_ReturnsEmptyList()
     {
         // Arrange
-        var emptyDevices = new List<DevicePosition>();
-        
-        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<DevicePosition>>(It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), TestCancellationToken))
-            .ReturnsAsync(emptyDevices);
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>(It.IsAny<string>(), null, TestCancellationToken))
+            .ReturnsAsync((IEnumerable<Device>?)null);
 
         // Act
         var result = await DeviceReader.GetDevicesAsync(TestCancellationToken);
@@ -118,4 +110,3 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
         AssertIsEmpty(result);
     }
 }
-

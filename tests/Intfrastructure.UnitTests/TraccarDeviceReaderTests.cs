@@ -13,85 +13,69 @@
 //  limitations under the License.
 //
 
-using Moq;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Models;
 using TrackHub.Router.Infrastructure.Traccar.Models;
-using Common.Domain.Enums;
+using TrackHub.Router.Infrastructure.Tests;
 
 namespace TrackHub.Router.Infrastructure.Traccar.Tests;
 
 [TestFixture]
-public class DeviceReaderTests
+public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
 {
-    private Mock<ICredentialHttpClientFactory> _httpClientFactoryMock;
-    private Mock<IHttpClientService> _httpClientServiceMock;
-    private DeviceReader _deviceReader;
-
-    [SetUp]
-    public void Setup()
-    {
-        _httpClientFactoryMock = new Mock<ICredentialHttpClientFactory>();
-        _httpClientServiceMock = new Mock<IHttpClientService>();
-        _deviceReader = new DeviceReader(_httpClientFactoryMock.Object, _httpClientServiceMock.Object);
-    }
+    protected override DeviceReader CreateDeviceReader(
+        ICredentialHttpClientFactory httpClientFactory,
+        IHttpClientService httpClientService)
+        => new(httpClientFactory, httpClientService);
 
     [Test]
     public async Task GetDeviceAsync_ValidDevice_ReturnsDeviceVm()
     {
         // Arrange
-        var deviceDto = new DeviceTransporterVm { Identifier = 1 };
-        var cancellationToken = CancellationToken.None;
+        var deviceDto = CreateDeviceTransporterVm(1);
         var device = new Device();
-        var expectedDeviceVm = new DeviceVm { DeviceId = Guid.Empty, DeviceTypeId = (short)DeviceType.Cellular, TransporterTypeId = (short)TransporterType.Truck };
+        var expectedDeviceVm = CreateExpectedDeviceVm(0, null, null, Guid.Empty);
 
-        _httpClientServiceMock.Setup(x => x.GetAsync<Device>("api/devices?id=1", null, cancellationToken))
+        HttpClientServiceMock.Setup(x => x.GetAsync<Device>("api/devices?id=1", null, TestCancellationToken))
             .ReturnsAsync(device);
 
         // Act
-        var result = await _deviceReader.GetDeviceAsync(deviceDto, cancellationToken);
+        var result = await DeviceReader.GetDeviceAsync(deviceDto, TestCancellationToken);
 
         // Assert
-        Assert.That(result, Is.EqualTo(expectedDeviceVm));
+        AssertEquals(result, expectedDeviceVm);
     }
 
     [Test]
     public async Task GetDevicesAsync_ValidDevices_ReturnsDeviceVms()
     {
         // Arrange
-        var devices = new List<DeviceTransporterVm>
-        {
-            new () { Identifier = 1 },
-            new () { Identifier = 2 }
-        };
-        var cancellationToken = CancellationToken.None;
+        var devices = CreateDeviceTransporterVmList(1, 2);
         var resultDevices = new List<Device>();
         var expectedDeviceVms = new List<DeviceVm>();
 
-        _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>("api/devices?id=1,2", null, cancellationToken))
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>("api/devices?id=1,2", null, TestCancellationToken))
             .ReturnsAsync(resultDevices);
 
         // Act
-        var result = await _deviceReader.GetDevicesAsync(devices, cancellationToken);
+        var result = await DeviceReader.GetDevicesAsync(devices, TestCancellationToken);
 
         // Assert
-        Assert.That(result, Is.EqualTo(expectedDeviceVms));
+        AssertEquals(result, expectedDeviceVms);
     }
 
     [Test]
     public async Task GetDevicesAsync_NoDevices_ReturnsEmptyList()
     {
         // Arrange
-        var cancellationToken = CancellationToken.None;
         var positions = new List<Device>();
 
-        _httpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>("api/devices?all=true", null, cancellationToken))
+        HttpClientServiceMock.Setup(x => x.GetAsync<IEnumerable<Device>>("api/devices?all=true", null, TestCancellationToken))
             .ReturnsAsync(positions);
 
         // Act
-        var result = await _deviceReader.GetDevicesAsync(cancellationToken);
+        var result = await DeviceReader.GetDevicesAsync(TestCancellationToken);
 
         // Assert
-        Assert.That(result, Is.Empty);
+        AssertIsEmpty(result);
     }
 }
+
