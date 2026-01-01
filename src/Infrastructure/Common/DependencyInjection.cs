@@ -1,20 +1,26 @@
-﻿using Common.Domain.Enums;
+﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License").
+//  You may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
+
+using Common.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Infrastructure.Common;
 using TrackHub.Router.Infrastructure.Common.Helpers;
 using TrackHubRouter.Application.Devices.Registry;
 using TrackHubRouter.Application.PingOperator;
 using TrackHubRouter.Application.DevicePositions.Registry;
-using TrackHubRouter.Domain.Interfaces.Operator;
 using TrackHubRouter.Domain.Interfaces.Registry;
-using CommandTrack = TrackHub.Router.Infrastructure.CommandTrack;
-using GeoTab = TrackHub.Router.Infrastructure.Geotab;
-using GpsGate = TrackHub.Router.Infrastructure.GpsGate;
-using Traccar = TrackHub.Router.Infrastructure.Traccar;
-using Wialon = TrackHub.Router.Infrastructure.Wialon;
-using Samsara = TrackHub.Router.Infrastructure.Samsara;
-using Navixy = TrackHub.Router.Infrastructure.Navixy;
-using Flespi = TrackHub.Router.Infrastructure.Flespi;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -25,96 +31,18 @@ public static class DependencyInjection
         var protocols = configuration.GetSection("AppSettings:Protocols").Get<IEnumerable<string>>();
         Guard.Against.Null(protocols, message: $"Client configuration for Protocols not loaded");
 
-        var protocolRegistrations = new Dictionary<string, Action<IServiceCollection>>
+        var protocolsWithAdapters = new HashSet<string>
         {
-            {
-                ProtocolType.CommandTrack.ToString(), services =>
-                {
-                    services.AddScoped<IExternalDeviceReader, CommandTrack.DeviceReader>();
-                    services.AddScoped<IPositionReader, CommandTrack.PositionReader>();
-                    services.AddScoped<IConnectivityTester, CommandTrack.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.GeoTab.ToString(), services =>
-                {
-                    services.AddScoped<IExternalDeviceReader, GeoTab.DeviceReader>();
-                    services.AddScoped<IPositionReader, GeoTab.PositionReader>();
-                    services.AddScoped<IConnectivityTester, GeoTab.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.Traccar.ToString(), services =>
-                {
-                    services.AddScoped<Traccar.DeviceReader>();
-                    services.AddScoped<Traccar.PositionReader>();
-                    services.AddScoped<IPositionReader, Traccar.Adapters.PositionReaderAdapter>(provider
-                        => new Traccar.Adapters.PositionReaderAdapter(provider.GetRequiredService<Traccar.PositionReader>()));
-                    services.AddScoped<IExternalDeviceReader, Traccar.Adapters.DeviceReaderAdapter>(provider
-                        => new Traccar.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Traccar.DeviceReader>()));
-                    services.AddScoped<IConnectivityTester, Traccar.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.GpsGate.ToString(), services =>
-                {
-                    services.AddScoped<GpsGate.DeviceReader>();
-                    services.AddScoped<GpsGate.PositionReader>();
-                    services.AddScoped<IPositionReader, GpsGate.Adapters.PositionReaderAdapter>(provider
-                        => new GpsGate.Adapters.PositionReaderAdapter(provider.GetRequiredService<GpsGate.PositionReader>()));
-                    services.AddScoped<IExternalDeviceReader, GpsGate.Adapters.DeviceReaderAdapter>(provider
-                        => new GpsGate.Adapters.DeviceReaderAdapter(provider.GetRequiredService<GpsGate.DeviceReader>()));
-                    services.AddScoped<IConnectivityTester, GpsGate.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.Wialon.ToString(), services =>
-                {
-                    services.AddScoped<IExternalDeviceReader, Wialon.DeviceReader>();
-                    services.AddScoped<IPositionReader, Wialon.PositionReader>();
-                    services.AddScoped<IConnectivityTester, Wialon.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.Samsara.ToString(), services =>
-                {
-                    services.AddScoped<Samsara.DeviceReader>();
-                    services.AddScoped<Samsara.PositionReader>();
-                    services.AddScoped<IPositionReader, Samsara.Adapters.PositionReaderAdapter>(provider
-                        => new Samsara.Adapters.PositionReaderAdapter(provider.GetRequiredService<Samsara.PositionReader>()));
-                    services.AddScoped<IExternalDeviceReader, Samsara.Adapters.DeviceReaderAdapter>(provider
-                        => new Samsara.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Samsara.DeviceReader>()));
-                    services.AddScoped<IConnectivityTester, Samsara.ConnectivityTester>();
-                }
-            },
-            {
-                ProtocolType.Navixy.ToString(), services =>
-                {
-                    services.AddScoped<IExternalDeviceReader, Navixy.DeviceReader>();
-                    services.AddScoped<IPositionReader, Navixy.PositionReader>();
-                    services.AddScoped<IConnectivityTester, Navixy.ConnectivityTester>();
-                }
-            },
-            {
-                 ProtocolType.Flespi.ToString(), services =>
-                 {
-                     services.AddScoped<Flespi.DeviceReader>();
-                     services.AddScoped<Flespi.PositionReader>();
-                     services.AddScoped<IPositionReader, Flespi.Adapters.PositionReaderAdapter>(provider
-                         => new Flespi.Adapters.PositionReaderAdapter(provider.GetRequiredService<Flespi.PositionReader>()));
-                     services.AddScoped<IExternalDeviceReader, Flespi.Adapters.DeviceReaderAdapter>(provider
-                         => new Flespi.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Flespi.DeviceReader>()));
-                     services.AddScoped<IConnectivityTester, Flespi.ConnectivityTester>();
-                 }
-             }
+            ProtocolType.Traccar.ToString(),
+            ProtocolType.GpsGate.ToString(),
+            ProtocolType.Samsara.ToString(),
+            ProtocolType.Flespi.ToString()
         };
 
         foreach (var protocol in protocols)
         {
-            if (protocolRegistrations.TryGetValue(protocol, out var registerServices))
-            {
-                registerServices(services);
-            }
+            var hasAdapters = protocolsWithAdapters.Contains(protocol);
+            services.RegisterProtocol(protocol, hasAdapters);
         }
 
         services.AddSingleton<IExecutionIntervalManager, ExecutionIntervalManager>();
