@@ -27,9 +27,13 @@ Basándose en las configuraciones establecidas en el panel de administración, l
 | Operador      | Enlace a la Documentación                           | Estado de Implementación | Probado   |
 |---------------|----------------------------------------------------|--------------------------|-----------|
 | CommandTrack  | [Documentación de CommandTrack](https://www.c2ls.co/home/documentacion-de-la-api/) | ✅ Implementado           | ✅ Probado |
+| Flespi        | [Documentación de Flespi](https://flespi.io/docs/)       | ✅ Implementado            | ❌ No Probado |
 | GeoTab        | [Documentación de GeoTab](https://developers.geotab.com/myGeotab/guides/codeBase/usingInDotnet)      | ✅ Implementado           | ❌ No Probado |
 | GpsGate       | [Documentación de GpsGate](https://support.gpsgate.com/hc/en-us/articles/360016602140-REST-API-Documentation)     | ⚠️ Implementación Parcial | ❌ No Probado |
+| Navixy        | [Documentación de Navixy](https://www.navixy.com/docs/navixy-api/user-api/getting-started)       | ✅ Implementado            | ❌ No Probado |
+| Samsara       | [Documentación deSamsara](https://developers.samsara.com/docs/tms-integration)       | ✅ Implementado            | ❌ No Probado |
 | Traccar       | [Documentación de Traccar](https://www.traccar.org/api-reference/)     | ✅ Implementado           | ✅ Probado |
+| Wialon        | [Documentación de Wialon](https://help.wialon.com/en/api/user-guide)       | ✅ Implementado            | ❌ No Probado |
 
 ## Servicio de Sincronización
 

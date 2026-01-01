@@ -11,6 +11,10 @@ using CommandTrack = TrackHub.Router.Infrastructure.CommandTrack;
 using GeoTab = TrackHub.Router.Infrastructure.Geotab;
 using GpsGate = TrackHub.Router.Infrastructure.GpsGate;
 using Traccar = TrackHub.Router.Infrastructure.Traccar;
+using Wialon = TrackHub.Router.Infrastructure.Wialon;
+using Samsara = TrackHub.Router.Infrastructure.Samsara;
+using Navixy = TrackHub.Router.Infrastructure.Navixy;
+using Flespi = TrackHub.Router.Infrastructure.Flespi;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -62,7 +66,47 @@ public static class DependencyInjection
                         => new GpsGate.Adapters.DeviceReaderAdapter(provider.GetRequiredService<GpsGate.DeviceReader>()));
                     services.AddScoped<IConnectivityTester, GpsGate.ConnectivityTester>();
                 }
-            }
+            },
+            {
+                ProtocolType.Wialon.ToString(), services =>
+                {
+                    services.AddScoped<IExternalDeviceReader, Wialon.DeviceReader>();
+                    services.AddScoped<IPositionReader, Wialon.PositionReader>();
+                    services.AddScoped<IConnectivityTester, Wialon.ConnectivityTester>();
+                }
+            },
+            {
+                ProtocolType.Samsara.ToString(), services =>
+                {
+                    services.AddScoped<Samsara.DeviceReader>();
+                    services.AddScoped<Samsara.PositionReader>();
+                    services.AddScoped<IPositionReader, Samsara.Adapters.PositionReaderAdapter>(provider
+                        => new Samsara.Adapters.PositionReaderAdapter(provider.GetRequiredService<Samsara.PositionReader>()));
+                    services.AddScoped<IExternalDeviceReader, Samsara.Adapters.DeviceReaderAdapter>(provider
+                        => new Samsara.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Samsara.DeviceReader>()));
+                    services.AddScoped<IConnectivityTester, Samsara.ConnectivityTester>();
+                }
+            },
+            {
+                ProtocolType.Navixy.ToString(), services =>
+                {
+                    services.AddScoped<IExternalDeviceReader, Navixy.DeviceReader>();
+                    services.AddScoped<IPositionReader, Navixy.PositionReader>();
+                    services.AddScoped<IConnectivityTester, Navixy.ConnectivityTester>();
+                }
+            },
+            {
+                 ProtocolType.Flespi.ToString(), services =>
+                 {
+                     services.AddScoped<Flespi.DeviceReader>();
+                     services.AddScoped<Flespi.PositionReader>();
+                     services.AddScoped<IPositionReader, Flespi.Adapters.PositionReaderAdapter>(provider
+                         => new Flespi.Adapters.PositionReaderAdapter(provider.GetRequiredService<Flespi.PositionReader>()));
+                     services.AddScoped<IExternalDeviceReader, Flespi.Adapters.DeviceReaderAdapter>(provider
+                         => new Flespi.Adapters.DeviceReaderAdapter(provider.GetRequiredService<Flespi.DeviceReader>()));
+                     services.AddScoped<IConnectivityTester, Flespi.ConnectivityTester>();
+                 }
+             }
         };
 
         foreach (var protocol in protocols)

@@ -27,9 +27,13 @@ Based on configurations set in the administration panel, the Routing API:
 | Operator      | Documentation Link                                    | Implementation Status   | Tested    |
 |---------------|-------------------------------------------------------|--------------------------|-----------|
 | CommandTrack  | [CommandTrack Documentation](https://www.c2ls.co/home/documentacion-de-la-api/) | ✅ Implemented            | ✅ Tested |
+| Flespi        | [Flespi Documentation](https://flespi.io/docs/)       | ✅ Implemented            | ❌ Not Tested |
 | GeoTab        | [GeoTab Documentation](https://developers.geotab.com/myGeotab/guides/codeBase/usingInDotnet)       | ✅ Implemented            | ❌ Not Tested |
 | GpsGate       | [GpsGate Documentation](https://support.gpsgate.com/hc/en-us/articles/360016602140-REST-API-Documentation)      | ⚠️ Partially Implemented  | ❌ Not Tested |
+| Navixy        | [Navixy Documentation](https://www.navixy.com/docs/navixy-api/user-api/getting-started)       | ✅ Implemented            | ❌ Not Tested |
+| Samsara       | [Samsara Documentation](https://developers.samsara.com/docs/tms-integration)       | ✅ Implemented            | ❌ Not Tested |
 | Traccar       | [Traccar Documentation](https://www.traccar.org/api-reference/)      | ✅ Implemented            | ✅ Tested |
+| Wialon        | [Wialon Documentation](https://help.wialon.com/en/api/user-guide)       | ✅ Implemented            | ❌ Not Tested |
 
 ## REST API
 To facilitate integration with third parties, TrackHub provides a REST API with methods to retrieve unit information. This API leverages the Router API as middleware to access GPS location data for all units.
