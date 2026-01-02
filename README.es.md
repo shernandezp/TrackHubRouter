@@ -1,13 +1,74 @@
-﻿## Componentes y Recursos Utilizados
+﻿# API de Ruteo para TrackHub
+
+## Características Principales
+
+- **Integración GPS Multi-Proveedor**: Interfaz unificada para más de 8 proveedores de rastreo GPS (CommandTrack, Traccar, Flespi, GeoTab, GpsGate, Navixy, Samsara, Wialon)
+- **Normalización de Datos**: Transforma diversos formatos de datos de proveedores en un esquema estandarizado de TrackHub
+- **APIs GraphQL y REST**: Consultas flexibles vía GraphQL e integración con terceros vía endpoints REST
+- **Rastreo de Posición en Tiempo Real**: Recuperación en vivo de posiciones de dispositivos a través de todos los operadores conectados
+- **Servicio de Sincronización en Segundo Plano**: Sincronización automática de datos para mantener caché local de posiciones de dispositivos
+- **Arquitectura Escalable**: Fácil adición de nuevas integraciones de proveedores GPS mediante diseño modular
+- **Resiliencia Sin Conexión**: Caché local de posiciones asegura disponibilidad de datos durante interrupciones del proveedor
+
+---
+
+## Inicio Rápido
+
+### Requisitos Previos
+
+- .NET 10.0 SDK
+- PostgreSQL 14+
+- TrackHub Authority Server ejecutándose (para autenticación)
+- Al menos una cuenta de proveedor GPS (ej., Traccar, CommandTrack)
+
+### Instalación
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/shernandezp/TrackHubRouter.git
+   cd TrackHubRouter
+   ```
+
+2. **Configurar la base de datos y servicios** en `appsettings.json`:
+   ```json
+   {
+     "ConnectionStrings": {
+       "ManagerConnection": "Host=localhost;Database=trackhub_manager;Username=postgres;Password=yourpassword",
+       "SecurityConnection": "Host=localhost;Database=trackhub_security;Username=postgres;Password=yourpassword"
+     },
+     "GraphQL": {
+       "ManagerEndpoint": "https://localhost:5001/graphql"
+     }
+   }
+   ```
+
+3. **Configurar credenciales del operador** en TrackHub Manager:
+   - Agregue sus credenciales del proveedor GPS a través de la API de Manager o la interfaz web
+   - Proveedores soportados: CommandTrack, Traccar, Flespi, GeoTab, GpsGate, Navixy, Samsara, Wialon
+
+4. **Iniciar la aplicación**:
+   ```bash
+   dotnet run --project src/Web
+   ```
+
+5. **Acceder a las APIs**:
+   - Playground GraphQL: `https://localhost:5001/graphql`
+   - Documentación REST API: `https://localhost:5001/scalar`
+
+---
+
+## Componentes y Recursos Utilizados
 
 | Componente                | Descripción                                             | Documentación                                                                 |
 |---------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------|
 | Hot Chocolate             | Servidor GraphQL para .Net        | [Documentación Hot Chocolate](https://chillicream.com/docs/hotchocolate/v13)                           |
-| GraphQL.Client            | Cliente Http para GraphQL        | [Documentación OpenIDDict](https://openiddict.com/)                           |
+| GraphQL.Client            | Cliente Http para GraphQL        | [Documentación GraphQL.Client](https://github.com/graphql-dotnet/graphql-client)                           |
 | Scalar.AspNetCore         | Integración de Scalar API para Net Core    | [Documentación Scalar](https://guides.scalar.com/scalar/scalar-api-references/net-integration)                    |
 | .NET Core                 | Plataforma de desarrollo para aplicaciones modernas     | [Documentación .NET Core](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview) |
 
-# API de Ruteo para TrackHub
+---
+
+## Descripción General
 
 ## Características Clave
 
