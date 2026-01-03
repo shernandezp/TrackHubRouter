@@ -24,6 +24,7 @@ using Ardalis.GuardClauses;
 namespace TrackHubRouter.Application.Devices.Queries.Get;
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
 public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesQueryHandler(

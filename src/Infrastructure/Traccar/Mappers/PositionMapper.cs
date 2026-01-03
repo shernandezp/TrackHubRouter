@@ -31,10 +31,10 @@ internal static class PositionMapper
             deviceDto.TransporterType,
             position.Latitude,
             position.Longitude,
-            position.Altitude,
+            Math.Round(position.Altitude),
             position.DeviceTime,
             position.ServerTime,
-            position.Speed,
+            Math.Round(position.Speed), //It assumes speed is in km/h
             position.Course,
             null,
             position.Address,

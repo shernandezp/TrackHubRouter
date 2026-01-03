@@ -25,6 +25,7 @@ using TrackHubRouter.Application.DevicePositions.Events;
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
 public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsByUserQueryHandler(

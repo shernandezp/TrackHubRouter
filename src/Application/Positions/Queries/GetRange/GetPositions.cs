@@ -22,6 +22,7 @@ using TrackHubRouter.Domain.Models;
 namespace TrackHubRouter.Application.Positions.Queries.GetRange;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
 public readonly record struct GetPositionsRecordQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To) : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsRecordQueryHandler(
