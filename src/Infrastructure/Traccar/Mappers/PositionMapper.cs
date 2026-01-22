@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ internal static class PositionMapper
             deviceDto.TransporterType,
             position.Latitude,
             position.Longitude,
-            position.Altitude,
+            Math.Round(position.Altitude),
             position.DeviceTime,
             position.ServerTime,
-            position.Speed,
+            Math.Round(position.Speed), //It assumes speed is in km/h
             position.Course,
             null,
             position.Address,

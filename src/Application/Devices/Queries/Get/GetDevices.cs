@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ using Ardalis.GuardClauses;
 namespace TrackHubRouter.Application.Devices.Queries.Get;
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
 public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesQueryHandler(

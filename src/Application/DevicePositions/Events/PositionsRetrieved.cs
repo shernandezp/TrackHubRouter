@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,21 +13,30 @@
 //  limitations under the License.
 //
 
+using TrackHubRouter.Domain.Interfaces.Geofence;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.DevicePositions.Events;
 
 public sealed class PositionsRetrieved
 {
-    public readonly record struct Notification(IEnumerable<PositionVm> Positions) : INotification
+    public readonly record struct Notification(IEnumerable<PositionVm> Positions, AccountSettingsVm Settings) : INotification
     {
-        public class EventHandler(IPositionWriter positionWriter) : INotificationHandler<Notification>
+        public class EventHandler(IPositionWriter positionWriter, IGeofenceWriter geofenceWriter) : INotificationHandler<Notification>
         {
             public async Task Handle(Notification notification, CancellationToken cancellationToken)
             {
                 try
                 {
                     await positionWriter.AddOrUpdatePositionAsync(notification.Positions, cancellationToken);
+                    if (notification.Settings.EnableGeofencing)
+                    {
+                        var result = await geofenceWriter.ProcessPositionsAsync(notification.Positions, notification.Settings.AccountId, cancellationToken);
+                        if (notification.Settings.EnableTripManagement && (result.EventsCreated > 0 || result.EventsUpdated > 0)) 
+                        {
+                            //Trip Management processing can be added here in the future
+                        }
+                    }
                 }
                 catch
                 {

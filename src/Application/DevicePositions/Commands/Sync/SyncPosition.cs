@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
                 foreach (var @operator in operators)
                 {
                     var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
-                    await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential), cancellationToken);
+                    await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
                 }
                 intervalManager.UpdateLastExecutionTime(account.AccountId);
             }

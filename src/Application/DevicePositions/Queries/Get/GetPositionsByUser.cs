@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -20,15 +20,14 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Application.DevicePositions.Events;
 
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
 public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsByUserQueryHandler(
-        IPublisher publisher,
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
@@ -118,12 +117,7 @@ public class GetPositionsByUserQueryHandler(
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             var credential = @operator.Credential.Value.Decrypt(EncryptionKey);
             await reader.Init(credential, cancellationToken);
-            var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
-            if (positions.Any())
-            {
-                await publisher.Publish(new ValidateSync.Notification(@operator.AccountId, positions), cancellationToken);
-            }
-            return positions;
+            return await reader.GetDevicePositionAsync(devices, cancellationToken);
         }
         catch
         {

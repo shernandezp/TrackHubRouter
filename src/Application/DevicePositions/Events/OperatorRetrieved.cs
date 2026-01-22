@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ namespace TrackHubRouter.Application.DevicePositions.Events;
 
 public sealed class OperatorRetrieved
 {
-    public readonly record struct Notification(OperatorVm Operator) : INotification
+    public readonly record struct Notification(OperatorVm Operator, AccountSettingsVm Settings) : INotification
     {
         public class EventHandler(ISender sender) : INotificationHandler<Notification>
         {
             public async Task Handle(Notification notification, CancellationToken cancellationToken)
-                => await sender.Send(new GetPositionsByOperatorQuery(notification.Operator), cancellationToken);
+                => await sender.Send(new GetPositionsByOperatorQuery(notification.Operator, notification.Settings), cancellationToken);
             
         }
     }

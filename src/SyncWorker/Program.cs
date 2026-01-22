@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ var builder = Host.CreateApplicationBuilder(args);
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext(false);
+builder.Services.AddGeofenceManagerContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWorkerServices();

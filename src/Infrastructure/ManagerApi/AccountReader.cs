@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -18,23 +18,6 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class AccountReader(IGraphQLClientFactory graphQLClient) 
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IAccountReader
 {
-    public async Task<AccountSettingsVm> GetAccountSettingsAsync(Guid operatorId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
-                    query($id: UUID!) {
-                        accountSettings(query: { id: $id })
-                        {
-                            storingInterval
-                            storeLastPosition
-                            accountId
-                        }
-                    }",
-            Variables = new { id = operatorId }
-        };
-        return await QueryAsync<AccountSettingsVm>(request, cancellationToken);
-    }
 
     public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
     {
@@ -48,6 +31,8 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                             accountId
                             storeLastPosition
                             storingInterval
+                            enableGeofencing
+                            enableTripManagement
                       }
                 }",
             Variables = new
