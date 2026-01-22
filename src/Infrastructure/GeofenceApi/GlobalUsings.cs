@@ -13,12 +13,9 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
-
-public readonly record struct AccountSettingsVm(
-    Guid AccountId,
-    bool StoreLastPosition,
-    int StoringInterval,
-    bool EnableGeofencing,
-    bool EnableTripManagement
-    );
+global using TrackHubRouter.Domain.Interfaces.Geofence;
+global using Common.Application.Interfaces;
+global using Common.Domain.Constants;
+global using Common.Infrastructure;
+global using GraphQL;
+global using TrackHubRouter.Domain.Models;

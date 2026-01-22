@@ -21,7 +21,7 @@ using TrackHubRouter.Application.DevicePositions.Events;
 
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
-public readonly record struct GetPositionsByOperatorQuery(OperatorVm Operator) : IRequest<bool>;
+public readonly record struct GetPositionsByOperatorQuery(OperatorVm Operator, AccountSettingsVm Settings) : IRequest<bool>;
 
 public class GetPositionsByOperatorQueryHandler(
         IPublisher publisher,
@@ -49,7 +49,7 @@ public class GetPositionsByOperatorQueryHandler(
             var positions = await TryGetPositionsAsync(reader, devices, cancellationToken);
             if (positions.Any())
             {
-                await publisher.Publish(new PositionsRetrieved.Notification(positions), cancellationToken);
+                await publisher.Publish(new PositionsRetrieved.Notification(positions, request.Settings), cancellationToken);
             }
         }
         return true;

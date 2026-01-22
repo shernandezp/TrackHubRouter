@@ -20,7 +20,6 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Application.DevicePositions.Events;
 
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
@@ -29,7 +28,6 @@ namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsByUserQueryHandler(
-        IPublisher publisher,
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
@@ -119,12 +117,7 @@ public class GetPositionsByUserQueryHandler(
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             var credential = @operator.Credential.Value.Decrypt(EncryptionKey);
             await reader.Init(credential, cancellationToken);
-            var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
-            if (positions.Any())
-            {
-                await publisher.Publish(new ValidateSync.Notification(@operator.AccountId, positions), cancellationToken);
-            }
-            return positions;
+            return await reader.GetDevicePositionAsync(devices, cancellationToken);
         }
         catch
         {

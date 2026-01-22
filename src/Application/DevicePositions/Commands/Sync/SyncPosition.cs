@@ -36,7 +36,7 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
                 foreach (var @operator in operators)
                 {
                     var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
-                    await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential), cancellationToken);
+                    await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
                 }
                 intervalManager.UpdateLastExecutionTime(account.AccountId);
             }

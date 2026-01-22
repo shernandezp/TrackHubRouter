@@ -21,6 +21,7 @@ var builder = Host.CreateApplicationBuilder(args);
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext(false);
+builder.Services.AddGeofenceManagerContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWorkerServices();

@@ -13,12 +13,15 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+using TrackHub.Router.Infrastructure.GeofenceApi;
 
-public readonly record struct AccountSettingsVm(
-    Guid AccountId,
-    bool StoreLastPosition,
-    int StoringInterval,
-    bool EnableGeofencing,
-    bool EnableTripManagement
-    );
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddGeofenceManagerContext(this IServiceCollection services)
+    {
+        services.AddScoped<IGeofenceWriter, GeofenceWriter>();
+        return services;
+    }
+}

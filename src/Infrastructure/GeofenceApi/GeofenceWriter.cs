@@ -13,42 +13,38 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+namespace TrackHub.Router.Infrastructure.GeofenceApi;
 
-public class PositionWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IPositionWriter
+public class GeofenceWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Geofence)), IGeofenceWriter
 {
-    public async Task<bool> AddOrUpdatePositionAsync(IEnumerable<PositionVm> positions, CancellationToken token)
+    public async Task<GeofenceProcessingResultVm> ProcessPositionsAsync(IEnumerable<PositionVm> positions, Guid accountId, CancellationToken token)
     {
         var request = new GraphQLRequest
         {
             Query = @"
-                mutation($command: BulkTransporterPositionCommandInput!) {
-                    bulkTransporterPosition(command: $command)
+                mutation($command: ProcessPositionsCommandInput!) {
+                    processPositions(command: $command) {
+                        processedCount
+                        eventsUpdated
+                        eventsCreated
+                    }
                 }",
             Variables = new
             {
                 command = new
                 {
+                    accountId,
                     positions = positions.Select(p => new
                     {
                         transporterId = p.TransporterId,
-                        speed = p.Speed,
                         longitude = p.Longitude,
-                        state = p.State,
                         latitude = p.Latitude,
-                        eventId = p.EventId,
-                        deviceDateTime = p.DeviceDateTime,
-                        course = p.Course,
-                        country = p.Country,
-                        city = p.City,
-                        altitude = p.Altitude,
-                        address = p.Address,
-                        attributes = p.Attributes
+                        deviceDateTime = p.DeviceDateTime
                     }).ToArray()
                 }
             }
         };
 
-        return await MutationAsync<bool>(request, token);
+        return await MutationAsync<GeofenceProcessingResultVm>(request, token);
     }
 }

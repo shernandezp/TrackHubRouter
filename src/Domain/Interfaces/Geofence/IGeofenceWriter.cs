@@ -13,12 +13,9 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHubRouter.Domain.Interfaces.Geofence;
 
-public readonly record struct AccountSettingsVm(
-    Guid AccountId,
-    bool StoreLastPosition,
-    int StoringInterval,
-    bool EnableGeofencing,
-    bool EnableTripManagement
-    );
+public interface IGeofenceWriter
+{
+    Task<GeofenceProcessingResultVm> ProcessPositionsAsync(IEnumerable<PositionVm> positions, Guid accountId, CancellationToken token);
+}

@@ -20,12 +20,12 @@ namespace TrackHubRouter.Application.DevicePositions.Events;
 
 public sealed class OperatorRetrieved
 {
-    public readonly record struct Notification(OperatorVm Operator) : INotification
+    public readonly record struct Notification(OperatorVm Operator, AccountSettingsVm Settings) : INotification
     {
         public class EventHandler(ISender sender) : INotificationHandler<Notification>
         {
             public async Task Handle(Notification notification, CancellationToken cancellationToken)
-                => await sender.Send(new GetPositionsByOperatorQuery(notification.Operator), cancellationToken);
+                => await sender.Send(new GetPositionsByOperatorQuery(notification.Operator, notification.Settings), cancellationToken);
             
         }
     }
