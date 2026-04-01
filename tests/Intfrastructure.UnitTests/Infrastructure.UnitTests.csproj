@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Application\Application.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\CommandTrack\CommandTrack.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Protack\Protrack.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Traccar\Traccar.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Flespi\Flespi.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Geotab\Geotab.csproj" />
