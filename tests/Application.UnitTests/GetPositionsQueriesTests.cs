@@ -16,6 +16,7 @@
 using Application.UnitTests;
 using Moq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TrackHubRouter.Application.DevicePositions.Queries.Get;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using TrackHubRouter.Domain.Interfaces.Manager;
@@ -157,7 +158,8 @@ public class GetPositionsQueriesTests : TestsContext
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
-            _transporterPositionReaderMock.Object);
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
 
         // Act
         var result = await handler.Handle(new GetPositionsByUserQuery(), CancellationToken.None);

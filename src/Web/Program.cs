@@ -35,6 +35,8 @@ builder.Services.AddWebServices();
 builder.Services
     .AddGraphQLServer()
     .AddAuthorization()
+    .AddMaxExecutionDepthRule(15)
+    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
     .AddQueryType<Query>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());

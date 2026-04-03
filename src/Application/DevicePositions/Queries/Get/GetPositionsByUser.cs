@@ -18,6 +18,7 @@ using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
 
@@ -32,7 +33,8 @@ public class GetPositionsByUserQueryHandler(
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
-        ITransporterPositionReader transporterPositionReader)
+        ITransporterPositionReader transporterPositionReader,
+        ILogger<GetPositionsByUserQueryHandler> logger)
         : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -119,9 +121,9 @@ public class GetPositionsByUserQueryHandler(
             await reader.Init(credential, cancellationToken);
             return await reader.GetDevicePositionAsync(devices, cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
-            //TODO: Log exception
+            logger.LogError(ex, "Error retrieving positions for user");
             return await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
         }
     }
@@ -134,9 +136,9 @@ public class GetPositionsByUserQueryHandler(
         {
             return await transporterPositionReader.GetTransporterPositionAsync(operatorId, cancellationToken);
         }
-        catch
+        catch (Exception ex)
         {
-            //TODO: Log exception
+            logger.LogError(ex, "Error retrieving fallback positions for operator {OperatorId}", operatorId);
             return [];
         }
     }
