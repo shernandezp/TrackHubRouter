@@ -33,11 +33,21 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
             if (intervalManager.ShouldExecuteTask(account))
             {
                 var operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, cancellationToken);
-                foreach (var @operator in operators)
+                using var semaphore = new SemaphoreSlim(10);
+                var tasks = operators.Select(async @operator =>
                 {
-                    var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
-                    await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
-                }
+                    await semaphore.WaitAsync(cancellationToken);
+                    try
+                    {
+                        var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
+                        await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+                await Task.WhenAll(tasks);
                 intervalManager.UpdateLastExecutionTime(account.AccountId);
             }
         }

@@ -13,13 +13,14 @@
 //  limitations under the License.
 //
 
+using System.Collections.Concurrent;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Common;
 
 public class ExecutionIntervalManager : IExecutionIntervalManager
 {
-    private readonly Dictionary<Guid, DateTimeOffset> _lastExecutionTimes = [];
+    private readonly ConcurrentDictionary<Guid, DateTimeOffset> _lastExecutionTimes = new();
 
     public bool ShouldExecuteTask(AccountSettingsVm account)
     {
