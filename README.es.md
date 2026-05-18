@@ -1,4 +1,4 @@
-﻿# API de Ruteo para TrackHub
+# API de Ruteo para TrackHub
 
 ## Características Principales
 
@@ -112,3 +112,4 @@ Para facilitar la integración con terceros, TrackHub proporciona una API REST c
 ## Licencia
 
 Este proyecto está bajo la Licencia Apache 2.0. Consulta el archivo [LICENSE](https://www.apache.org/licenses/LICENSE-2.0) para más información.
+

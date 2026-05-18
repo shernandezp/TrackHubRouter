@@ -31,9 +31,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                             accountId
                             storeLastPosition
                             storingInterval
-                            enableGeofencing
-                            enableTripManagement
-                      }
+                       }
                 }",
             Variables = new
             {
@@ -50,6 +48,57 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                 }
             }
         };
-        return await QueryAsync<IEnumerable<AccountSettingsVm>>(request, cancellationToken);
+        var accounts = await QueryAsync<IEnumerable<AccountSettingsVm>>(request, cancellationToken);
+        var accountTasks = accounts.Select(account => AddAccountFeaturesAsync(account, cancellationToken));
+        return await Task.WhenAll(accountTasks);
     }
+
+    private async Task<AccountSettingsVm> AddAccountFeaturesAsync(AccountSettingsVm account, CancellationToken cancellationToken)
+    {
+        var features = await GetAccountFeaturesAsync(account.AccountId, cancellationToken);
+        return new AccountSettingsVm(
+            account.AccountId,
+            account.StoreLastPosition,
+            account.StoringInterval,
+            IsFeatureEnabled(features, FeatureKeys.Geofencing),
+            IsFeatureEnabled(features, FeatureKeys.TripManagement));
+    }
+
+    private async Task<IReadOnlyCollection<AccountFeatureStateVm>> GetAccountFeaturesAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+                query($accountId: UUID!) {
+                    accountFeatures(accountId: $accountId) {
+                        featureKey
+                        enabled
+                        effectiveFrom
+                        effectiveTo
+                    }
+                }",
+            Variables = new
+            {
+                accountId
+            }
+        };
+
+        return await QueryAsync<IReadOnlyCollection<AccountFeatureStateVm>>(request, cancellationToken);
+    }
+
+    private static bool IsFeatureEnabled(IEnumerable<AccountFeatureStateVm> features, string featureKey)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return features.Any(feature =>
+            feature.FeatureKey == featureKey
+            && feature.Enabled
+            && (!feature.EffectiveFrom.HasValue || feature.EffectiveFrom <= now)
+            && (!feature.EffectiveTo.HasValue || feature.EffectiveTo >= now));
+    }
+
+    private readonly record struct AccountFeatureStateVm(
+        string FeatureKey,
+        bool Enabled,
+        DateTimeOffset? EffectiveFrom,
+        DateTimeOffset? EffectiveTo);
 }

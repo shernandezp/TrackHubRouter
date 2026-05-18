@@ -1,4 +1,4 @@
-﻿# TrackHub Router API
+# TrackHub Router API
 
 ## Key Features
 
@@ -11,6 +11,7 @@
 - **Offline Resilience**: Local position cache ensures data availability during provider outages
 
 ---
+
 
 ## Quick Start
 
@@ -112,3 +113,5 @@ To enhance reliability, the project includes a Synchronization Service that regu
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE file](https://www.apache.org/licenses/LICENSE-2.0) for more information.
+
+
