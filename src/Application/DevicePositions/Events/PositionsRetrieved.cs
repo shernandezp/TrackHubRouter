@@ -29,10 +29,10 @@ public sealed class PositionsRetrieved
                 try
                 {
                     await positionWriter.AddOrUpdatePositionAsync(notification.Positions, cancellationToken);
-                    if (notification.Settings.EnableGeofencing)
+                    if (notification.Settings.GeofencingEnabled)
                     {
                         var result = await geofenceWriter.ProcessPositionsAsync(notification.Positions, notification.Settings.AccountId, cancellationToken);
-                        if (notification.Settings.EnableTripManagement && (result.EventsCreated > 0 || result.EventsUpdated > 0)) 
+                        if (notification.Settings.TripManagementEnabled && (result.EventsCreated > 0 || result.EventsUpdated > 0)) 
                         {
                             //Trip Management processing can be added here in the future
                         }

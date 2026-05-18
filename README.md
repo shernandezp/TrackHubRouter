@@ -11,12 +11,6 @@ We believe in the strength of community collaboration to create effective and ac
 ![Image](https://github.com/shernandezp/TrackHub.AuthorityServer/blob/master/src/Web/wwwroot/images/logo.png)
 
 
-## Platform Foundation Enhancements
-
-- Treats synchronized positions and provider data as account-scoped operational data.
-- Uses Manager and Security integrations for account context, credentials, service-client authorization, and feature-aware downstream modules.
-- Keeps provider credentials in authorized integration flows and avoids exposing secret material through general read models.
-
 ---
 
 ## Project Repositories
@@ -32,6 +26,7 @@ We believe in the strength of community collaboration to create effective and ac
 | **Reporting API**           | [https://github.com/shernandezp/TrackHub.Reporting](https://github.com/shernandezp/TrackHub.Reporting)    |
 | **TrackHub Web**            | [https://github.com/shernandezp/TrackHub](https://github.com/shernandezp/TrackHub)          |
 | **TrackHub Mobile**         | [https://github.com/shernandezp/TrackHubMobile](https://github.com/shernandezp/TrackHubMobile)       |
+
 
 
 

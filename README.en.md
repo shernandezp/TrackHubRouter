@@ -13,14 +13,6 @@
 ---
 
 
-## Platform Foundation Enhancements
-
-- Treats synchronized positions and provider data as account-scoped operational data.
-- Uses Manager and Security integrations for account context, credentials, service-client authorization, and feature-aware downstream modules.
-- Keeps provider credentials in authorized integration flows and avoids exposing secret material through general read models.
-
----
-
 ## Quick Start
 
 ### Prerequisites
@@ -121,4 +113,5 @@ To enhance reliability, the project includes a Synchronization Service that regu
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE file](https://www.apache.org/licenses/LICENSE-2.0) for more information.
+
 

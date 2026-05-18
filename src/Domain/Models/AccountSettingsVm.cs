@@ -19,6 +19,6 @@ public readonly record struct AccountSettingsVm(
     Guid AccountId,
     bool StoreLastPosition,
     int StoringInterval,
-    bool EnableGeofencing,
-    bool EnableTripManagement
+    bool GeofencingEnabled,
+    bool TripManagementEnabled
     );

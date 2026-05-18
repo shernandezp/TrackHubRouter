@@ -12,15 +12,6 @@
 
 ---
 
-
-## Mejoras de Plataforma Base
-
-- Trata posiciones sincronizadas y datos de proveedores como datos operacionales asociados a una cuenta.
-- Usa integraciones con Manager y Security para contexto de cuenta, credenciales, autorizacion de clientes de servicio y modulos posteriores con feature flags.
-- Mantiene credenciales de proveedores en flujos de integracion autorizados y evita exponer secretos en modelos generales de lectura.
-
----
-
 ## Inicio Rápido
 
 ### Requisitos Previos
