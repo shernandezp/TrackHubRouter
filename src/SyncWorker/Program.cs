@@ -18,6 +18,8 @@ using TrackHubRouter.SyncWorker;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+builder.AddTrackHubSerilog();
+
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext(false);
