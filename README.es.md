@@ -1,4 +1,4 @@
-﻿# API de Ruteo para TrackHub
+# API de Ruteo para TrackHub
 
 ## Características Principales
 
@@ -9,6 +9,15 @@
 - **Servicio de Sincronización en Segundo Plano**: Sincronización automática de datos para mantener caché local de posiciones de dispositivos
 - **Arquitectura Escalable**: Fácil adición de nuevas integraciones de proveedores GPS mediante diseño modular
 - **Resiliencia Sin Conexión**: Caché local de posiciones asegura disponibilidad de datos durante interrupciones del proveedor
+
+---
+
+
+## Mejoras de Plataforma Base
+
+- Trata posiciones sincronizadas y datos de proveedores como datos operacionales asociados a una cuenta.
+- Usa integraciones con Manager y Security para contexto de cuenta, credenciales, autorizacion de clientes de servicio y modulos posteriores con feature flags.
+- Mantiene credenciales de proveedores en flujos de integracion autorizados y evita exponer secretos en modelos generales de lectura.
 
 ---
 
@@ -112,3 +121,4 @@ Para facilitar la integración con terceros, TrackHub proporciona una API REST c
 ## Licencia
 
 Este proyecto está bajo la Licencia Apache 2.0. Consulta el archivo [LICENSE](https://www.apache.org/licenses/LICENSE-2.0) para más información.
+

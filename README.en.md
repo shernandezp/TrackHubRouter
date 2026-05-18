@@ -1,4 +1,4 @@
-﻿# TrackHub Router API
+# TrackHub Router API
 
 ## Key Features
 
@@ -9,6 +9,15 @@
 - **Background Synchronization Service**: Automatic data sync to maintain local cache of device positions
 - **Scalable Architecture**: Easy addition of new GPS provider integrations through modular design
 - **Offline Resilience**: Local position cache ensures data availability during provider outages
+
+---
+
+
+## Platform Foundation Enhancements
+
+- Treats synchronized positions and provider data as account-scoped operational data.
+- Uses Manager and Security integrations for account context, credentials, service-client authorization, and feature-aware downstream modules.
+- Keeps provider credentials in authorized integration flows and avoids exposing secret material through general read models.
 
 ---
 
@@ -112,3 +121,4 @@ To enhance reliability, the project includes a Synchronization Service that regu
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE file](https://www.apache.org/licenses/LICENSE-2.0) for more information.
+
