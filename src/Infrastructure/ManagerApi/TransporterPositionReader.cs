@@ -55,4 +55,13 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
         };
         return await QueryAsync<IEnumerable<PositionVm>>(request, cancellationToken);
     }
+
+    public async Task<PositionVm?> GetTransporterPositionAsync(Guid operatorId, Guid transporterId, CancellationToken cancellationToken)
+    {
+        var positions = await GetTransporterPositionAsync(operatorId, cancellationToken);
+        return positions
+            .Where(p => p.TransporterId == transporterId)
+            .Select(p => (PositionVm?)p)
+            .FirstOrDefault();
+    }
 }

@@ -43,14 +43,15 @@ public class GetPositionsByOperatorQueryHandler(
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is not null)
         {
+            var startedAt = DateTimeOffset.UtcNow;
+            var correlationId = Guid.NewGuid().ToString();
             var reader = positionRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
             await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             var devices = await deviceReader.GetDeviceTransporterAsync(request.Operator.OperatorId, cancellationToken);
             var positions = await TryGetPositionsAsync(reader, devices, cancellationToken);
-            if (positions.Any())
-            {
-                await publisher.Publish(new PositionsRetrieved.Notification(positions, request.Settings), cancellationToken);
-            }
+            await publisher.Publish(
+                new PositionsRetrieved.Notification(positions, request.Settings, request.Operator, startedAt, correlationId),
+                cancellationToken);
         }
         return true;
     }

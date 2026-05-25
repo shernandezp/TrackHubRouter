@@ -14,45 +14,167 @@
 //
 
 using Common.Mediator;
+using TrackHubRouter.Application.DevicePositions.Commands.Health;
 using TrackHubRouter.Application.DevicePositions.Commands.Sync;
+using TrackHubRouter.Domain.Interfaces.Manager;
 
 namespace TrackHubRouter.SyncWorker;
 
 public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : BackgroundService
 {
+    private static readonly TimeSpan PositionInterval = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan DeviceSyncCheckInterval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan HealthCheckInterval = TimeSpan.FromMinutes(1);
+
     private readonly ILogger<Worker> _logger = logger;
     private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var positionLoop = RunLoopAsync("position-sync", PositionInterval, RunPositionSyncAsync, stoppingToken);
+        var deviceLoop = RunLoopAsync("device-sync", DeviceSyncCheckInterval, RunDeviceSyncAsync, stoppingToken);
+        var healthLoop = RunLoopAsync("operator-health", HealthCheckInterval, RunHealthCheckAsync, stoppingToken);
+
+        await Task.WhenAll(positionLoop, deviceLoop, healthLoop);
+    }
+
+    private async Task RunLoopAsync(string name, TimeSpan interval, Func<CancellationToken, Task> action, CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await SyncData(stoppingToken);
+                _logger.LogDebug("Worker loop {Loop} tick at {Time}.", name, DateTimeOffset.UtcNow);
+                await action(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error syncing data.");
+                _logger.LogError(ex, "Worker loop {Loop} iteration failed.", name);
             }
 
-            await Task.Delay(10000, stoppingToken);
+            try
+            {
+                await Task.Delay(interval, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
         }
     }
 
-    private async Task SyncData(CancellationToken stoppingToken)
+    private async Task RunPositionSyncAsync(CancellationToken stoppingToken)
     {
         using var scope = _serviceProvider.CreateScope();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-        try
+        await sender.Send(new SyncPositionCommand(), stoppingToken);
+    }
+
+    private async Task RunDeviceSyncAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var accountReader = scope.ServiceProvider.GetRequiredService<IAccountReader>();
+        var operatorReader = scope.ServiceProvider.GetRequiredService<IOperatorReader>();
+
+        var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled))
         {
-            await sender.Send(new SyncPositionCommand(), stoppingToken);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error syncing data. {ex.Message}");
+            IEnumerable<Domain.Models.OperatorVm> operators;
+            try
+            {
+                operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load operators for account {AccountId}.", account.AccountId);
+                continue;
+            }
+
+            foreach (var op in operators.Where(o => o.Enabled))
+            {
+                var intervalMinutes = Math.Max(1, op.SyncIntervalMinutes);
+                // R0.9: gate on persisted LastDeviceSyncAt so multiple Router instances
+                // do not duplicate scheduled syncs.
+                var last = op.LastDeviceSyncAt ?? DateTimeOffset.MinValue;
+
+                if (now - last < TimeSpan.FromMinutes(intervalMinutes))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
+                    if (!hydrated.Enabled || hydrated.Credential is null)
+                    {
+                        continue;
+                    }
+
+                    await sender.Send(new SyncOperatorDevicesCommand(hydrated, account, "AUTOMATIC"), stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Scheduled device sync failed for operator {OperatorId}.", op.OperatorId);
+                }
+            }
         }
     }
 
+    private async Task RunHealthCheckAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+        var accountReader = scope.ServiceProvider.GetRequiredService<IAccountReader>();
+        var operatorReader = scope.ServiceProvider.GetRequiredService<IOperatorReader>();
+
+        var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled && a.GpsOperatorHealthEnabled))
+        {
+            IEnumerable<Domain.Models.OperatorVm> operators;
+            try
+            {
+                operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load operators for health check on account {AccountId}.", account.AccountId);
+                continue;
+            }
+
+            foreach (var op in operators.Where(o => o.Enabled))
+            {
+                // R0.9: gate on persisted LastHealthCheckAt so horizontally-scaled
+                // Router instances do not duplicate health checks.
+                var last = op.LastHealthCheckAt ?? DateTimeOffset.MinValue;
+                if (now - last < HealthCheckInterval)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
+                    if (!hydrated.Enabled || hydrated.Credential is null)
+                    {
+                        continue;
+                    }
+                    await sender.Send(new RecordOperatorHealthCommand(hydrated, account), stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Operator {OperatorId} health check failed.", op.OperatorId);
+                }
+            }
+        }
+    }
 }
+

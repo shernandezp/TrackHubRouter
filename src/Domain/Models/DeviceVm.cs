@@ -20,5 +20,8 @@ public readonly record struct DeviceVm(
     string Serial,
     string Name,
     short DeviceTypeId,
-    short TransporterTypeId
+    short TransporterTypeId,
+    string? ProviderDisplayName = null,
+    string? ProviderMetadataHash = null,
+    string? ProviderStatus = null
     );

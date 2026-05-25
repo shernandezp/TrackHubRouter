@@ -58,7 +58,8 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         {
             OperatorId = operatorId,
             ProtocolTypeId = (int)ProtocolType.CommandTrack,
-            Credential = TestCredentialTokenVm
+            Credential = TestCredentialTokenVm,
+            Enabled = true
         };
         var devices = new List<DeviceVm>
         {
@@ -112,7 +113,8 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         {
             OperatorId = operatorId,
             ProtocolTypeId = (int)ProtocolType.CommandTrack,
-            Credential = null
+            Credential = null,
+            Enabled = true
         };
 
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>()))
@@ -124,5 +126,30 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         // Assert
         Assert.That(result, Is.Not.Null);
         Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task Handle_WithDisabledOperator_ReturnsEmptyDevices()
+    {
+        // Arrange
+        var operatorId = Guid.NewGuid();
+        var @operator = new OperatorVm
+        {
+            OperatorId = operatorId,
+            ProtocolTypeId = (int)ProtocolType.CommandTrack,
+            Credential = TestCredentialTokenVm,
+            Enabled = false
+        };
+
+        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(@operator);
+
+        // Act
+        var result = await _handler.Handle(new GetDevicesByOperatorQuery(operatorId), CancellationToken.None);
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.Empty);
+        _deviceRegistryMock.Verify(x => x.GetReader(It.IsAny<ProtocolType>()), Times.Never);
     }
 }

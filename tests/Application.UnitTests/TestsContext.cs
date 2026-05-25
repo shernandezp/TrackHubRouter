@@ -13,6 +13,9 @@
 //  limitations under the License.
 //
 
+using Common.Domain.Constants;
+using Moq;
+using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 
 namespace Application.UnitTests;
@@ -27,4 +30,61 @@ public abstract class TestsContext
         Key = "TJeYWbqXtz7bn+j3VolgkVY2LXze37E80K3wC2zNWpSHG6IEuaYEh6UD+2DAdie7XKP3kk3i5pvQc/hDxNwfZQ==",
         Uri = "https://www.example.com/"
     };
+
+    /// <summary>
+    /// Creates an <see cref="IAccountReader"/> mock that returns a single GPS-integration-enabled account
+    /// for the given accountId. Use when the handler under test expects the gating helper to succeed.
+    /// </summary>
+    protected static Mock<IAccountReader> AccountReaderForEnabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountReader>();
+        var accounts = accountIds.Select(id => new AccountSettingsVm(
+            id,
+            StoreLastPosition: false,
+            StoringInterval: 0,
+            GeofencingEnabled: false,
+            TripManagementEnabled: false,
+            GpsIntegrationEnabled: true,
+            GpsOperatorHealthEnabled: true,
+            GpsPositionHistoryEnabled: false)).ToList();
+        mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accounts);
+        mock.Setup(x => x.IsFeatureEnabledAsync(
+                It.Is<Guid>(id => accountIds.Contains(id)),
+                FeatureKeys.GpsIntegration,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mock.Setup(x => x.IsFeatureEnabledAsync(
+                It.Is<Guid>(id => !accountIds.Contains(id)),
+                FeatureKeys.GpsIntegration,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="IAccountReader"/> mock that returns visible accounts with GPS provider integration disabled.
+    /// Use when validating read-only latest-position fallbacks that must not call live provider integration.
+    /// </summary>
+    protected static Mock<IAccountReader> AccountReaderForDisabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountReader>();
+        var accounts = accountIds.Select(id => new AccountSettingsVm(
+            id,
+            StoreLastPosition: false,
+            StoringInterval: 0,
+            GeofencingEnabled: false,
+            TripManagementEnabled: false,
+            GpsIntegrationEnabled: false,
+            GpsOperatorHealthEnabled: false,
+            GpsPositionHistoryEnabled: false)).ToList();
+        mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accounts);
+        mock.Setup(x => x.IsFeatureEnabledAsync(
+                It.Is<Guid>(id => accountIds.Contains(id)),
+                FeatureKeys.GpsIntegration,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
 }

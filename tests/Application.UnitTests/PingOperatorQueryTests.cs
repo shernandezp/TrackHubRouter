@@ -16,9 +16,9 @@
 using Moq;
 using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Application.PingOperator.Queries;
+using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 using Common.Domain.Enums;
 using Application.UnitTests;
@@ -89,5 +89,33 @@ public class PingOperatorQueryTests : TestsContext
 
         // Assert
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task Handle_DisabledOperator_ReturnsFalseWithoutPingingProvider()
+    {
+        // Arrange
+        var operatorId = Guid.NewGuid();
+        var operatorVm = new OperatorVm
+        {
+            OperatorId = operatorId,
+            ProtocolTypeId = (int)ProtocolType.CommandTrack,
+            Credential = TestCredentialTokenVm,
+            Enabled = false
+        };
+
+        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
+
+        var handler = new PingOperatorQueryHandler(
+            _configurationMock.Object,
+            _operatorReaderMock.Object,
+            _connectivityRegistryMock.Object);
+
+        // Act
+        var result = await handler.Handle(new PingOperatorQuery(operatorId), CancellationToken.None);
+
+        // Assert
+        Assert.That(result, Is.False);
+        _connectivityRegistryMock.Verify(x => x.GetTester(It.IsAny<ProtocolType>()), Times.Never);
     }
 }

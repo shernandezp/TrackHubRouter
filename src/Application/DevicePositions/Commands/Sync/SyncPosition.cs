@@ -26,20 +26,30 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
 {
 
     public async Task<bool> Handle(SyncPositionCommand request, CancellationToken cancellationToken)
-    { 
+    {
         var accounts = await reader.GetAccountsToSyncAsync(cancellationToken);
         foreach (var account in accounts)
         {
+            if (!account.GpsIntegrationEnabled)
+            {
+                continue;
+            }
             if (intervalManager.ShouldExecuteTask(account))
             {
                 var operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, cancellationToken);
                 using var semaphore = new SemaphoreSlim(10);
-                var tasks = operators.Select(async @operator =>
+                var tasks = operators
+                    .Where(o => o.Enabled)
+                    .Select(async @operator =>
                 {
                     await semaphore.WaitAsync(cancellationToken);
                     try
                     {
                         var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
+                        if (!operatorCredential.Enabled)
+                        {
+                            return;
+                        }
                         await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
                     }
                     finally

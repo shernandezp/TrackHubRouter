@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
 
@@ -27,9 +28,12 @@ public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) 
 
 public class GetPositionByTransporterQueryHandler(
         IConfiguration configuration,
+        IAccountReader accountReader,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
-        IDeviceTransporterReader deviceReader)
+        IDeviceTransporterReader deviceReader,
+        ITransporterPositionReader transporterPositionReader,
+        ILogger<GetPositionByTransporterQueryHandler> logger)
         : IRequestHandler<GetPositionByTransporterQuery, PositionVm>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -42,14 +46,17 @@ public class GetPositionByTransporterQueryHandler(
     /// <returns></returns>
     public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
-        var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
-        return await GetDevicePositionAsync(
-            EncryptionKey,
-            @operator,
-            device,
+        var providerEnabledAccounts = await Application.Gating.GpsFeatureGate.GetProviderIntegrationEnabledAccountIdsAsync(
+            accountReader,
+            [@operator.AccountId],
             cancellationToken);
+        if (!Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(@operator, providerEnabledAccounts))
+        {
+            return await GetFallbackPositionAsync(@operator.OperatorId, request.TransporterId, cancellationToken);
+        }
+
+        return await TryGetDevicePositionAsync(@operator, request.TransporterId, cancellationToken);
     }
 
     /// <summary>
@@ -60,20 +67,49 @@ public class GetPositionByTransporterQueryHandler(
     /// <param name="device"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task<PositionVm> GetDevicePositionAsync(
-        string encryptionKey,
+    private async Task<PositionVm> TryGetDevicePositionAsync(
         OperatorVm @operator,
-        DeviceTransporterVm device,
+        Guid transporterId,
         CancellationToken cancellationToken)
     {
-        var reader = positionRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
-        if (@operator.Credential is not null)
+        try
         {
-            await reader.Init(@operator.Credential.Value.Decrypt(encryptionKey), cancellationToken);
-            var position = await reader.GetDevicePositionAsync(device, cancellationToken);
-            return position;
+            Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
+            var device = await deviceReader.GetDevicesTransporterAsync(transporterId, cancellationToken);
+            var reader = positionRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
+            if (@operator.Credential is not null)
+            {
+                await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
+                var position = await reader.GetDevicePositionAsync(device, cancellationToken);
+                if (position.TransporterId != Guid.Empty)
+                {
+                    return position;
+                }
+            }
         }
-        return default;
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error retrieving position for transporter {TransporterId}", transporterId);
+        }
+
+        return await GetFallbackPositionAsync(@operator.OperatorId, transporterId, cancellationToken);
+    }
+
+    private async Task<PositionVm> GetFallbackPositionAsync(
+        Guid operatorId,
+        Guid transporterId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await transporterPositionReader.GetTransporterPositionAsync(operatorId, transporterId, cancellationToken)
+                ?? default;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error retrieving fallback position for transporter {TransporterId}", transporterId);
+            return default;
+        }
     }
 
 }

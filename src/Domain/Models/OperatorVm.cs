@@ -19,5 +19,12 @@ public readonly record struct OperatorVm(
     Guid OperatorId,
     int ProtocolTypeId,
     Guid AccountId,
-    CredentialTokenVm? Credential
+    CredentialTokenVm? Credential,
+    bool Enabled = true,
+    int SyncIntervalMinutes = 60,
+    DateTimeOffset? LastDeviceSyncAt = null,
+    DateTimeOffset? LastPositionSyncAt = null,
+    string? HealthStatus = null,
+    DateTimeOffset? LastHealthCheckAt = null,
+    DateTimeOffset? LastManualSyncAt = null
     );

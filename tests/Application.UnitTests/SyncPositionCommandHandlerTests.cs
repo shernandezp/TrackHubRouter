@@ -70,7 +70,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false);
+        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
 
         var operatorId1 = Guid.NewGuid();
         var operatorId2 = Guid.NewGuid();
@@ -111,7 +111,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false);
+        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
 
         _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([account]);
@@ -125,5 +125,50 @@ public class SyncPositionCommandHandlerTests : TestsContext
         Assert.That(result, Is.True);
         _publisherMock.Verify(x => x.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()), Times.Never);
         _intervalManagerMock.Verify(x => x.UpdateLastExecutionTime(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_GpsIntegrationDisabled_SkipsAccount()
+    {
+        var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: false);
+
+        _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([account]);
+
+        var result = await _handler.Handle(new SyncPositionCommand(), CancellationToken.None);
+
+        Assert.That(result, Is.True);
+        _intervalManagerMock.Verify(x => x.ShouldExecuteTask(It.IsAny<AccountSettingsVm>()), Times.Never);
+        _publisherMock.Verify(x => x.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_OperatorDisabled_DoesNotPublishForThatOperator()
+    {
+        var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
+        var enabledId = Guid.NewGuid();
+        var disabledId = Guid.NewGuid();
+
+        var operators = new[]
+        {
+            new OperatorVm(enabledId, 1, accountId, null, Enabled: true),
+            new OperatorVm(disabledId, 1, accountId, null, Enabled: false)
+        };
+
+        _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([account]);
+        _intervalManagerMock.Setup(x => x.ShouldExecuteTask(account)).Returns(true);
+        _operatorReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(operators);
+        _operatorReaderMock.Setup(x => x.GetOperatorAsync(enabledId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new OperatorVm(enabledId, 1, accountId, null, Enabled: true));
+
+        var result = await _handler.Handle(new SyncPositionCommand(), CancellationToken.None);
+
+        Assert.That(result, Is.True);
+        _publisherMock.Verify(x => x.Publish(It.IsAny<OperatorRetrieved.Notification>(), It.IsAny<CancellationToken>()), Times.Once);
+        _operatorReaderMock.Verify(x => x.GetOperatorAsync(disabledId, It.IsAny<CancellationToken>()), Times.Never);
     }
 }
