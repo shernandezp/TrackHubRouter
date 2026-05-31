@@ -25,7 +25,9 @@ public readonly record struct SyncOperatorDevicesCommand(
     OperatorVm Operator,
     AccountSettingsVm Account,
     string TriggerType,
-    string? CorrelationId = null) : IRequest<bool>;
+    string? CorrelationId = null,
+    bool ResetDeviceCatalog = false,
+    bool AutoAssignNewDevices = true) : IRequest<bool>;
 
 public class SyncOperatorDevicesCommandHandler(
     IConfiguration configuration,
@@ -57,28 +59,33 @@ public class SyncOperatorDevicesCommandHandler(
             var reader = deviceRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
             await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             devices = (await reader.GetDevicesAsync(cancellationToken))?.ToArray() ?? [];
-
-            if (devices.Length > 0)
+            if (request.ResetDeviceCatalog)
             {
-                var dtos = devices.Select(d => new SynchronizedDeviceDto(
-                    AccountId: request.Account.AccountId,
-                    OperatorId: request.Operator.OperatorId,
-                    Serial: d.Serial,
-                    Name: d.Name,
-                    Identifier: d.Identifier,
-                    ProviderDisplayName: d.ProviderDisplayName ?? d.Name,
-                    DeviceTypeId: d.DeviceTypeId,
-                    Description: null,
-                    ProviderMetadataHash: d.ProviderMetadataHash,
-                    ProviderStatus: d.ProviderStatus));
-
-                await deviceSyncWriter.SynchronizeAsync(
-                    request.Account.AccountId,
-                    request.Operator.OperatorId,
-                    dtos,
-                    correlationId,
-                    cancellationToken);
+                await deviceSyncWriter.ResetAsync(request.Account.AccountId, request.Operator.OperatorId, cancellationToken);
             }
+
+            var dtos = devices.Select(d => new SynchronizedDeviceDto(
+                AccountId: request.Account.AccountId,
+                OperatorId: request.Operator.OperatorId,
+                Serial: d.Serial,
+                Name: d.Name,
+                Identifier: d.Identifier,
+                ProviderDisplayName: d.ProviderDisplayName ?? d.Name,
+                DeviceTypeId: d.DeviceTypeId,
+                Description: null,
+                ProviderMetadataHash: d.ProviderMetadataHash,
+                ProviderStatus: d.ProviderStatus));
+
+            await deviceSyncWriter.SynchronizeAsync(
+                request.Account.AccountId,
+                request.Operator.OperatorId,
+                dtos,
+                correlationId,
+                request.TriggerType,
+                request.AutoAssignNewDevices,
+                cancellationToken);
+
+            return true;
         }
         catch (Exception ex)
         {
@@ -130,6 +137,6 @@ public class SyncOperatorDevicesCommandHandler(
                 request.Operator.OperatorId);
         }
 
-        return result == "SUCCEEDED";
+        return false;
     }
 }

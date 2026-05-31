@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
-public interface IDeviceTransporterReader
+namespace TrackHubRouter.Web.GraphQL;
+
+public partial class Mutation
 {
-    Task<IEnumerable<DeviceTransporterVm>> GetDevicesByOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
-    Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken);
-    Task<DeviceTransporterVm> GetDevicesTransporterAsync(Guid transporterId, CancellationToken cancellationToken);
+    public async Task<bool> TriggerOperatorSync([Service] ISender sender, TriggerOperatorSyncCommand command)
+        => await sender.Send(command);
 }

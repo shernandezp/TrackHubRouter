@@ -103,14 +103,38 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             op.OperatorId,
             It.Is<IEnumerable<SynchronizedDeviceDto>>(d => d.Count() == 2),
             "corr-1",
+            "AUTOMATIC",
+            true,
             It.IsAny<CancellationToken>()), Times.Once);
-        _syncRunWriterMock.Verify(w => w.RecordAsync(
-            It.Is<OperatorSyncRunDto>(r => r.Result == "SUCCEEDED"
-                                            && r.DevicesSeen == 2
-                                            && r.CorrelationId == "corr-1"
-                                            && r.TriggerType == "AUTOMATIC"),
-            It.IsAny<CancellationToken>()), Times.Once);
+        _syncRunWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorSyncRunDto>(), It.IsAny<CancellationToken>()), Times.Never);
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_ResetDeviceCatalog_ResetsAfterProviderReadBeforeUpsert()
+    {
+        var op = OperatorWith(TestCredentialTokenVm);
+        var account = EnabledAccount(op.AccountId);
+        var devices = new[]
+        {
+            new DeviceVm(Guid.NewGuid(), 1, "S1", "Device 1", 0, 0, "Dev1", "hash", "ACTIVE")
+        };
+        _readerMock.Setup(r => r.GetDevicesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(devices);
+
+        var result = await CreateHandler().Handle(
+            new SyncOperatorDevicesCommand(op, account, "MANUAL", "corr-reset", ResetDeviceCatalog: true),
+            CancellationToken.None);
+
+        Assert.That(result, Is.True);
+        _deviceSyncWriterMock.Verify(w => w.ResetAsync(account.AccountId, op.OperatorId, It.IsAny<CancellationToken>()), Times.Once);
+        _deviceSyncWriterMock.Verify(w => w.SynchronizeAsync(
+            account.AccountId,
+            op.OperatorId,
+            It.Is<IEnumerable<SynchronizedDeviceDto>>(d => d.Single().Serial == "S1"),
+            "corr-reset",
+            "MANUAL",
+            true,
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -125,9 +149,10 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             new SyncOperatorDevicesCommand(op, account, "MANUAL"), CancellationToken.None);
 
         Assert.That(result, Is.False);
+        _deviceSyncWriterMock.Verify(w => w.ResetAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _deviceSyncWriterMock.Verify(w => w.SynchronizeAsync(
             It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IEnumerable<SynchronizedDeviceDto>>(),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         _syncRunWriterMock.Verify(w => w.RecordAsync(
             It.Is<OperatorSyncRunDto>(r => r.Result == "FAILED"
                                             && r.ErrorCode == "InvalidOperationException"
@@ -141,7 +166,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
     }
 
     [Test]
-    public async Task Handle_NoDevicesReturned_RecordsSucceededRunAndSkipsUpsert()
+    public async Task Handle_NoDevicesReturned_DelegatesEmptyCatalogToManager()
     {
         var op = OperatorWith(TestCredentialTokenVm);
         var account = EnabledAccount(op.AccountId);
@@ -153,10 +178,13 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
 
         Assert.That(result, Is.True);
         _deviceSyncWriterMock.Verify(w => w.SynchronizeAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IEnumerable<SynchronizedDeviceDto>>(),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _syncRunWriterMock.Verify(w => w.RecordAsync(
-            It.Is<OperatorSyncRunDto>(r => r.Result == "SUCCEEDED" && r.DevicesSeen == 0),
+            account.AccountId,
+            op.OperatorId,
+            It.Is<IEnumerable<SynchronizedDeviceDto>>(d => !d.Any()),
+            It.IsAny<string>(),
+            "AUTOMATIC",
+            true,
             It.IsAny<CancellationToken>()), Times.Once);
+        _syncRunWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorSyncRunDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

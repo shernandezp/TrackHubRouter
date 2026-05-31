@@ -67,7 +67,7 @@ public class GetPositionsQueriesTests : TestsContext
             .ReturnsAsync([new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow }]);
 
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
-        _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
+        _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
         var handler = new GetPositionsByOperatorQueryHandler(
             publisherMock.Object,

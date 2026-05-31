@@ -18,6 +18,7 @@ using Common.Mediator;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TrackHubRouter.Application.DevicePositions.Commands.Sync;
+using TrackHubRouter.Application.DevicePositions.Queries.Get;
 using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 
@@ -76,18 +77,30 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     }
 
     [Test]
-    public async Task Handle_GpsIntegrationDisabled_ReturnsFalse()
+    public async Task Handle_GpsIntegrationDisabled_DispatchesManualDeviceSync()
     {
         var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: false);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
-        SetupAccounts(new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: false));
+        SetupAccounts(account);
         SetupOperator(op);
+        _senderMock.Setup(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var result = await CreateHandler().Handle(
-            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None);
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId, "MANUAL", "corr-42"), CancellationToken.None);
 
-        Assert.That(result, Is.False);
-        _senderMock.Verify(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.That(result, Is.True);
+        _senderMock.Verify(s => s.Send(
+            It.Is<SyncOperatorDevicesCommand>(c =>
+                c.Operator.OperatorId == op.OperatorId
+                && c.Account.AccountId == accountId
+                && c.TriggerType == "MANUAL"
+                && c.CorrelationId == "corr-42"
+                && !c.ResetDeviceCatalog
+                && c.AutoAssignNewDevices),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _senderMock.Verify(s => s.Send(It.IsAny<GetPositionsByOperatorQuery>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -145,6 +158,56 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
                 && c.TriggerType == "MANUAL"
                 && c.CorrelationId == "corr-42"),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_ResetDeviceCatalogWithEnabledFeature_DispatchesDeviceSyncWithReset()
+    {
+        var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true);
+        SetupAccounts(account);
+        var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        SetupOperator(op);
+        _senderMock.Setup(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await CreateHandler().Handle(
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId, "MANUAL", "corr-42", ResetDeviceCatalog: true),
+            CancellationToken.None);
+
+        Assert.That(result, Is.True);
+        _senderMock.Verify(s => s.Send(
+            It.Is<SyncOperatorDevicesCommand>(c =>
+                c.Operator.OperatorId == op.OperatorId
+                && c.ResetDeviceCatalog
+                && c.CorrelationId == "corr-42"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task Handle_ResetDeviceCatalogWithDisabledFeature_DispatchesDeviceSyncWithReset()
+    {
+        var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: false);
+        SetupAccounts(account);
+        var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        SetupOperator(op);
+        _senderMock.Setup(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await CreateHandler().Handle(
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId, "MANUAL", "corr-42", ResetDeviceCatalog: true),
+            CancellationToken.None);
+
+        Assert.That(result, Is.True);
+        _senderMock.Verify(s => s.Send(
+            It.Is<SyncOperatorDevicesCommand>(c =>
+                c.Operator.OperatorId == op.OperatorId
+                && c.Account.AccountId == accountId
+                && c.ResetDeviceCatalog
+                && c.CorrelationId == "corr-42"),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _senderMock.Verify(s => s.Send(It.IsAny<GetPositionsByOperatorQuery>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]

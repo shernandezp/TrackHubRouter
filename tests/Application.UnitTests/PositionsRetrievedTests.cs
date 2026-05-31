@@ -35,7 +35,7 @@ public class PositionsRetrievedTests : TestsContext
     private static PositionsRetrieved.Notification BuildNotification(IEnumerable<PositionVm> positions, AccountSettingsVm account)
     {
         var op = new OperatorVm(Guid.NewGuid(), 1, account.AccountId, null);
-        return new PositionsRetrieved.Notification(positions, account, op, DateTimeOffset.UtcNow, Guid.NewGuid().ToString());
+        return new PositionsRetrieved.Notification(positions, account, op, DateTimeOffset.UtcNow, "AUTOMATIC", Guid.NewGuid().ToString());
     }
 
     [Test]
@@ -88,5 +88,31 @@ public class PositionsRetrievedTests : TestsContext
 
         syncRunMock.Verify(x => x.RecordAsync(It.Is<OperatorSyncRunDto>(d => d.Result == "FAILED" && d.ErrorCode == "InvalidOperationException"), It.IsAny<CancellationToken>()), Times.Once);
         alertMock.Verify(x => x.RecordAsync(It.Is<AlertEventDto>(a => a.EventType == "GpsOperatorPositionSyncFailed"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task EventHandler_RecordsRequestedTriggerType()
+    {
+        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
+        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var op = new OperatorVm(Guid.NewGuid(), 1, account.AccountId, null);
+        var notification = new PositionsRetrieved.Notification(
+            [],
+            account,
+            op,
+            DateTimeOffset.UtcNow,
+            "MANUAL",
+            "corr-42");
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        syncRunMock.Verify(x => x.RecordAsync(
+            It.Is<OperatorSyncRunDto>(d => d.TriggerType == "MANUAL" && d.CorrelationId == "corr-42"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -14,7 +14,8 @@ public interface IOperatorHealthCheckWriter
 
 public interface IDeviceSyncWriter
 {
-    Task SynchronizeAsync(Guid accountId, Guid operatorId, IEnumerable<SynchronizedDeviceDto> devices, string correlationId, CancellationToken cancellationToken);
+    Task ResetAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken);
+    Task SynchronizeAsync(Guid accountId, Guid operatorId, IEnumerable<SynchronizedDeviceDto> devices, string correlationId, string triggerType, bool autoAssignNewDevices, CancellationToken cancellationToken);
 }
 
 public interface IAlertEventWriter

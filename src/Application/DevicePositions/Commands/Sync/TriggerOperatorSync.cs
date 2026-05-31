@@ -21,7 +21,9 @@ public readonly record struct TriggerOperatorSyncCommand(
     Guid AccountId,
     Guid OperatorId,
     string TriggerType = "MANUAL",
-    string? CorrelationId = null) : IRequest<bool>;
+    string? CorrelationId = null,
+    bool ResetDeviceCatalog = false,
+    bool? AutoAssignNewDevices = null) : IRequest<bool>;
 
 public class TriggerOperatorSyncCommandHandler(
     IAccountReader accountReader,
@@ -47,12 +49,6 @@ public class TriggerOperatorSyncCommandHandler(
             return false;
         }
 
-        if (!account.Value.GpsIntegrationEnabled)
-        {
-            logger.LogInformation("Manual sync trigger ignored: GPS integration feature disabled for account {AccountId}.", request.AccountId);
-            return false;
-        }
-
         if (!op.Enabled)
         {
             logger.LogInformation("Manual sync trigger ignored: operator {OperatorId} is disabled.", request.OperatorId);
@@ -66,6 +62,12 @@ public class TriggerOperatorSyncCommandHandler(
             return false;
         }
 
-        return await sender.Send(new SyncOperatorDevicesCommand(op, account.Value, request.TriggerType, request.CorrelationId), cancellationToken);
+        return await sender.Send(new SyncOperatorDevicesCommand(
+            op,
+            account.Value,
+            request.TriggerType,
+            request.CorrelationId,
+            request.ResetDeviceCatalog,
+            request.AutoAssignNewDevices ?? true), cancellationToken);
     }
 }

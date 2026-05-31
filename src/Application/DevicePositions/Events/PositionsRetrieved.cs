@@ -26,6 +26,7 @@ public sealed class PositionsRetrieved
         AccountSettingsVm Settings,
         OperatorVm Operator,
         DateTimeOffset StartedAt,
+        string TriggerType,
         string CorrelationId) : INotification
     {
         public class EventHandler(
@@ -97,7 +98,7 @@ public sealed class PositionsRetrieved
                     await syncRunWriter.RecordAsync(new OperatorSyncRunDto(
                         AccountId: notification.Settings.AccountId,
                         OperatorId: notification.Operator.OperatorId,
-                        TriggerType: "AUTOMATIC",
+                        TriggerType: notification.TriggerType,
                         Result: result,
                         StartedAt: notification.StartedAt,
                         CompletedAt: DateTimeOffset.UtcNow,
@@ -142,4 +143,3 @@ public sealed class PositionsRetrieved
         }
     }
 }
-

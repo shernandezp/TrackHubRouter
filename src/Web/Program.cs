@@ -41,7 +41,8 @@ builder.Services
     .AddMaxExecutionDepthRule(15)
     .AddErrorFilter<TrackHubGraphQLErrorFilter>()
     .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
-    .AddQueryType<Query>();
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
