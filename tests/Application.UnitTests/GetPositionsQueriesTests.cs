@@ -67,7 +67,7 @@ public class GetPositionsQueriesTests : TestsContext
             .ReturnsAsync([new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow }]);
 
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
-        _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
+        _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
         var handler = new GetPositionsByOperatorQueryHandler(
             publisherMock.Object,
@@ -123,17 +123,140 @@ public class GetPositionsQueriesTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(device);
 
+        var accountReader = AccountReaderForDisabled(operatorVm.AccountId);
         var handler = new GetPositionByTransporterQueryHandler(
             _configurationMock.Object,
+            accountReader.Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
-            _deviceReaderMock.Object);
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
 
         // Act
         var result = await handler.Handle(new GetPositionByTransporterQuery(device.TransporterId), CancellationToken.None);
 
         // Assert
         Assert.That(result.TransporterId, Is.EqualTo(device.TransporterId));
+        accountReader.Verify(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPositionByTransporter_WhenGpsIntegrationEnabled_ReturnsCachedPosition()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var transporterId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow };
+
+        _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(operatorVm);
+        _transporterPositionReaderMock
+            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedPosition);
+
+        var handler = new GetPositionByTransporterQueryHandler(
+            _configurationMock.Object,
+            AccountReaderForEnabled(accountId).Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionByTransporterQuery(transporterId), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.TransporterId, Is.EqualTo(transporterId));
+        _positionRegistryMock.Verify(x => x.GetReader(It.IsAny<ProtocolType>()), Times.Never);
+        _deviceReaderMock.Verify(x => x.GetDevicesTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPositionByTransporter_WhenLiveProviderFails_ReturnsCachedPosition()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var transporterId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var device = new DeviceTransporterVm { TransporterId = transporterId };
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-5) };
+
+        var readerMock = new Mock<IPositionReader>();
+        readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
+        readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        readerMock.Setup(x => x.GetDevicePositionAsync(device, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("provider unavailable"));
+
+        _positionRegistryMock.Setup(x => x.GetReader(ProtocolType.CommandTrack)).Returns(readerMock.Object);
+        _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(operatorVm);
+        _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
+        _transporterPositionReaderMock
+            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedPosition);
+
+        var handler = new GetPositionByTransporterQueryHandler(
+            _configurationMock.Object,
+            AccountReaderForDisabled(accountId).Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionByTransporterQuery(transporterId), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.TransporterId, Is.EqualTo(transporterId));
+        readerMock.Verify(x => x.GetDevicePositionAsync(device, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GetPositionByTransporter_WhenLiveProviderReturnsDefault_ReturnsCachedPosition()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var transporterId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var device = new DeviceTransporterVm { TransporterId = transporterId };
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-5) };
+
+        var readerMock = new Mock<IPositionReader>();
+        readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
+        readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        readerMock.Setup(x => x.GetDevicePositionAsync(device, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(default(PositionVm));
+
+        _positionRegistryMock.Setup(x => x.GetReader(ProtocolType.CommandTrack)).Returns(readerMock.Object);
+        _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(operatorVm);
+        _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(device);
+        _transporterPositionReaderMock
+            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, transporterId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cachedPosition);
+
+        var handler = new GetPositionByTransporterQueryHandler(
+            _configurationMock.Object,
+            AccountReaderForDisabled(accountId).Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionByTransporterQuery(transporterId), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.TransporterId, Is.EqualTo(transporterId));
     }
 
     [Test]
@@ -155,6 +278,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var handler = new GetPositionsByUserQueryHandler(
             _configurationMock.Object,
+            AccountReaderForDisabled(operatorVm.AccountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -166,5 +290,114 @@ public class GetPositionsQueriesTests : TestsContext
 
         // Assert
         Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetPositionsByUser_WhenGpsIntegrationDisabled_ReadsProviderOnDemand()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var device = new DeviceTransporterVm { TransporterId = Guid.NewGuid() };
+        var livePosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow };
+
+        var readerMock = new Mock<IPositionReader>();
+        readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
+        readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([livePosition]);
+
+        _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
+        _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
+        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
+
+        var accountReader = AccountReaderForDisabled(accountId);
+        var handler = new GetPositionsByUserQueryHandler(
+            _configurationMock.Object,
+            accountReader.Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionsByUserQuery(), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Single().TransporterId, Is.EqualTo(livePosition.TransporterId));
+        _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Once);
+        _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()), Times.Once);
+        _transporterPositionReaderMock.Verify(x => x.GetTransporterPositionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        accountReader.Verify(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPositionsByUser_WhenGpsIntegrationEnabled_ReturnsCachedPositions()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var cachedPosition = new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow };
+
+        _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
+        _transporterPositionReaderMock
+            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([cachedPosition]);
+
+        var handler = new GetPositionsByUserQueryHandler(
+            _configurationMock.Object,
+            AccountReaderForEnabled(accountId).Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionsByUserQuery(), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Single().TransporterId, Is.EqualTo(cachedPosition.TransporterId));
+        _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Never);
+        _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task GetPositionsByUser_WhenLiveProviderReturnsNoPositions_ReturnsCachedPositions()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
+        var device = new DeviceTransporterVm { TransporterId = Guid.NewGuid() };
+        var cachedPosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-10) };
+
+        var readerMock = new Mock<IPositionReader>();
+        readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
+        readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
+        _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
+        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
+        _transporterPositionReaderMock
+            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([cachedPosition]);
+
+        var handler = new GetPositionsByUserQueryHandler(
+            _configurationMock.Object,
+            AccountReaderForDisabled(accountId).Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterPositionReaderMock.Object,
+            Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
+
+        // Act
+        var result = await handler.Handle(new GetPositionsByUserQuery(), CancellationToken.None);
+
+        // Assert
+        Assert.That(result.Single().TransporterId, Is.EqualTo(cachedPosition.TransporterId));
     }
 }

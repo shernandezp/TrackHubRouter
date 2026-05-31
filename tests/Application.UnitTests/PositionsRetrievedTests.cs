@@ -14,6 +14,7 @@
 //
 
 using Application.UnitTests;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TrackHubRouter.Application.DevicePositions.Events;
 using TrackHubRouter.Domain.Models;
@@ -23,47 +24,95 @@ namespace TrackHubRouter.Application.UnitTests.DevicePositions.Events;
 [TestFixture]
 public class PositionsRetrievedTests : TestsContext
 {
-    [Test]
-    public async Task EventHandler_CallsPositionWriterAndGeofenceWhenEnabled()
+    private static PositionsRetrieved.Notification.EventHandler CreateHandler(
+        Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter> positionWriterMock,
+        Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter> geofenceWriterMock,
+        Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter> syncRunMock,
+        Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter> alertMock)
+        => new(positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
+            Mock.Of<ILogger<PositionsRetrieved.Notification.EventHandler>>());
+
+    private static PositionsRetrieved.Notification BuildNotification(IEnumerable<PositionVm> positions, AccountSettingsVm account)
     {
-        // Arrange
-        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
-        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
-
-        var handler = new PositionsRetrieved.Notification.EventHandler(positionWriterMock.Object, geofenceWriterMock.Object);
-
-        var positions = new[] { new PositionVm { DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, true, true);
-        var notification = new PositionsRetrieved.Notification(positions, account);
-
-        geofenceWriterMock.Setup(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TrackHubRouter.Domain.Models.GeofenceProcessingResultVm(0, 1, 0));
-
-        // Act
-        await handler.Handle(notification, CancellationToken.None);
-
-        // Assert
-        positionWriterMock.Verify(x => x.AddOrUpdatePositionAsync(positions, It.IsAny<CancellationToken>()), Times.Once);
-        geofenceWriterMock.Verify(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()), Times.Once);
+        var op = new OperatorVm(Guid.NewGuid(), 1, account.AccountId, null);
+        return new PositionsRetrieved.Notification(positions, account, op, DateTimeOffset.UtcNow, "AUTOMATIC", Guid.NewGuid().ToString());
     }
 
     [Test]
-    public async Task EventHandler_DoesNotThrow_WhenPositionWriterThrows()
+    public async Task EventHandler_CallsPositionWriterAndGeofenceWhenEnabled_AndRecordsSucceededRun()
     {
-        // Arrange
         var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
         var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
 
-        var handler = new PositionsRetrieved.Notification.EventHandler(positionWriterMock.Object, geofenceWriterMock.Object);
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
-        var positions = new[] { new PositionVm { DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
         var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, true, true);
-        var notification = new PositionsRetrieved.Notification(positions, account);
+        var notification = BuildNotification(positions, account);
 
         positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("test"));
+            .ReturnsAsync(true);
+        geofenceWriterMock.Setup(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TrackHubRouter.Domain.Models.GeofenceProcessingResultVm(0, 1, 0));
 
-        // Act & Assert: should not throw
+        await handler.Handle(notification, CancellationToken.None);
+
+        positionWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
+            It.Is<IEnumerable<PositionVm>>(p => p.Single().TransporterId == positions[0].TransporterId),
+            It.IsAny<CancellationToken>()), Times.Once);
+        geofenceWriterMock.Verify(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()), Times.Once);
+        syncRunMock.Verify(x => x.RecordAsync(It.Is<OperatorSyncRunDto>(d => d.Result == "SUCCEEDED" && d.PositionsAccepted == 1), It.IsAny<CancellationToken>()), Times.Once);
+        alertMock.Verify(x => x.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task EventHandler_RecordsFailedRunAndAlert_WhenPositionWriterThrows()
+    {
+        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
+
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
+        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, true, true);
+        var notification = BuildNotification(positions, account);
+
+        positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+
         Assert.DoesNotThrowAsync(async () => await handler.Handle(notification, CancellationToken.None));
+
+        syncRunMock.Verify(x => x.RecordAsync(It.Is<OperatorSyncRunDto>(d => d.Result == "FAILED" && d.ErrorCode == "InvalidOperationException"), It.IsAny<CancellationToken>()), Times.Once);
+        alertMock.Verify(x => x.RecordAsync(It.Is<AlertEventDto>(a => a.EventType == "GpsOperatorPositionSyncFailed"), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task EventHandler_RecordsRequestedTriggerType()
+    {
+        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
+        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var op = new OperatorVm(Guid.NewGuid(), 1, account.AccountId, null);
+        var notification = new PositionsRetrieved.Notification(
+            [],
+            account,
+            op,
+            DateTimeOffset.UtcNow,
+            "MANUAL",
+            "corr-42");
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        syncRunMock.Verify(x => x.RecordAsync(
+            It.Is<OperatorSyncRunDto>(d => d.TriggerType == "MANUAL" && d.CorrelationId == "corr-42"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

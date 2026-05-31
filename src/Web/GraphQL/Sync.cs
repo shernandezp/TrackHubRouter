@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+using TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
-public readonly record struct OperatorVm(
-    Guid OperatorId,
-    int ProtocolTypeId,
-    Guid AccountId,
-    CredentialTokenVm? Credential,
-    bool Enabled = true,
-    int SyncIntervalMinutes = 60,
-    DateTimeOffset? LastDeviceSyncAt = null,
-    DateTimeOffset? LastPositionSyncAt = null,
-    string? HealthStatus = null,
-    DateTimeOffset? LastHealthCheckAt = null,
-    DateTimeOffset? LastManualSyncAt = null
-    );
+namespace TrackHubRouter.Web.GraphQL;
+
+public partial class Mutation
+{
+    public async Task<bool> TriggerOperatorSync([Service] ISender sender, TriggerOperatorSyncCommand command)
+        => await sender.Send(command);
+}

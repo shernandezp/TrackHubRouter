@@ -37,20 +37,55 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             {
                 filter = new
                 {
-                    filters = new[]
-                    {
-                        new
-                        {
-                            key = "StoreLastPosition",
-                            value = true
-                        }
-                    }
+                    filters = Array.Empty<object>()
                 }
             }
         };
         var accounts = await QueryAsync<IEnumerable<AccountSettingsVm>>(request, cancellationToken);
         var accountTasks = accounts.Select(account => AddAccountFeaturesAsync(account, cancellationToken));
         return await Task.WhenAll(accountTasks);
+    }
+
+    public async Task<AccountSettingsVm?> GetAccountToSyncAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+                query($id: UUID!) {
+                    accountSettings(query: { id: $id }) {
+                        accountId
+                        storeLastPosition
+                        storingInterval
+                   }
+                }",
+            Variables = new
+            {
+                id = accountId
+            }
+        };
+
+        var account = await QueryAsync<AccountSettingsVm>(request, cancellationToken);
+        return account.AccountId == Guid.Empty
+            ? null
+            : await AddAccountFeaturesAsync(account, cancellationToken);
+    }
+
+    public async Task<bool> IsFeatureEnabledAsync(Guid accountId, string featureKey, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = @"
+                query($accountId: UUID!, $featureKey: String!) {
+                    validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
+                }",
+            Variables = new
+            {
+                accountId,
+                featureKey
+            }
+        };
+
+        return await QueryAsync<bool>(request, cancellationToken);
     }
 
     private async Task<AccountSettingsVm> AddAccountFeaturesAsync(AccountSettingsVm account, CancellationToken cancellationToken)
@@ -61,7 +96,10 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             account.StoreLastPosition,
             account.StoringInterval,
             IsFeatureEnabled(features, FeatureKeys.Geofencing),
-            IsFeatureEnabled(features, FeatureKeys.TripManagement));
+            IsFeatureEnabled(features, FeatureKeys.TripManagement),
+            IsFeatureEnabled(features, FeatureKeys.GpsIntegration),
+            IsFeatureEnabled(features, FeatureKeys.GpsOperatorHealth),
+            IsFeatureEnabled(features, FeatureKeys.GpsPositionHistory));
     }
 
     private async Task<IReadOnlyCollection<AccountFeatureStateVm>> GetAccountFeaturesAsync(Guid accountId, CancellationToken cancellationToken)
@@ -70,7 +108,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
         {
             Query = @"
                 query($accountId: UUID!) {
-                    accountFeatures(accountId: $accountId) {
+                    accountFeatures(query: { accountId: $accountId }) {
                         featureKey
                         enabled
                         effectiveFrom

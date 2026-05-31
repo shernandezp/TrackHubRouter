@@ -48,15 +48,15 @@ public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
         return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
     }
 
-    public async Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid operatorId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
             Query = @"
-            query($filter: FiltersInput!) {
-                deviceTransporterMaster(
-                    query: { filter: $filter }
-                    ) {
+            query($accountId: UUID!, $operatorId: UUID!) {
+                assignedDeviceTransportersByOperator(
+                    query: { accountId: $accountId, operatorId: $operatorId }
+                ) {
                         transporterId,
                         identifier,
                         serial,
@@ -67,17 +67,8 @@ public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
             }",
             Variables = new
             {
-                filter = new
-                {
-                    filters = new[]
-                    {
-                        new
-                        {
-                            key = "OperatorId",
-                            value = operatorId
-                        }
-                    }
-                }
+                accountId,
+                operatorId
             }
         };
         return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);

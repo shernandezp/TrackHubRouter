@@ -21,7 +21,11 @@ using TrackHubRouter.Application.DevicePositions.Events;
 
 namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
 
-public readonly record struct GetPositionsByOperatorQuery(OperatorVm Operator, AccountSettingsVm Settings) : IRequest<bool>;
+public readonly record struct GetPositionsByOperatorQuery(
+    OperatorVm Operator,
+    AccountSettingsVm Settings,
+    string TriggerType = "AUTOMATIC",
+    string? CorrelationId = null) : IRequest<bool>;
 
 public class GetPositionsByOperatorQueryHandler(
         IPublisher publisher,
@@ -43,14 +47,24 @@ public class GetPositionsByOperatorQueryHandler(
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is not null)
         {
+            var startedAt = DateTimeOffset.UtcNow;
+            var correlationId = request.CorrelationId ?? Guid.NewGuid().ToString();
             var reader = positionRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
             await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDeviceTransporterAsync(request.Operator.OperatorId, cancellationToken);
+            var devices = await deviceReader.GetDeviceTransporterAsync(
+                request.Settings.AccountId,
+                request.Operator.OperatorId,
+                cancellationToken);
             var positions = await TryGetPositionsAsync(reader, devices, cancellationToken);
-            if (positions.Any())
-            {
-                await publisher.Publish(new PositionsRetrieved.Notification(positions, request.Settings), cancellationToken);
-            }
+            await publisher.Publish(
+                new PositionsRetrieved.Notification(
+                    positions,
+                    request.Settings,
+                    request.Operator,
+                    startedAt,
+                    request.TriggerType,
+                    correlationId),
+                cancellationToken);
         }
         return true;
     }

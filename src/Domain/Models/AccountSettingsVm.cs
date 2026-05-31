@@ -20,5 +20,8 @@ public readonly record struct AccountSettingsVm(
     bool StoreLastPosition,
     int StoringInterval,
     bool GeofencingEnabled,
-    bool TripManagementEnabled
+    bool TripManagementEnabled,
+    bool GpsIntegrationEnabled = false,
+    bool GpsOperatorHealthEnabled = false,
+    bool GpsPositionHistoryEnabled = false
     );

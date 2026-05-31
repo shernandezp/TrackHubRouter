@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<P
 
 public class GetPositionsByUserQueryHandler(
         IConfiguration configuration,
+        IAccountReader accountReader,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
@@ -47,13 +48,35 @@ public class GetPositionsByUserQueryHandler(
     /// <returns>Returns the collection of PositionVm</returns>
     public async Task<IEnumerable<PositionVm>> Handle(GetPositionsByUserQuery request, CancellationToken cancellationToken)
     {
-        var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
-        var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
+        var allOperators = await operatorReader.GetOperatorsAsync(cancellationToken);
+        var operators = allOperators.ToList();
+        if (operators.Count == 0)
+        {
+            return [];
+        }
+
+        var providerEnabledAccounts = await Application.Gating.GpsFeatureGate.GetProviderIntegrationEnabledAccountIdsAsync(
+            accountReader,
+            operators.Select(o => o.AccountId),
+            cancellationToken);
+        var liveOperators = operators
+            .Where(o => Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(o, providerEnabledAccounts))
+            .ToList();
+        var cachedOperators = operators.Except(liveOperators);
 
         var allPositions = new List<PositionVm>();
-        await foreach (var positionsCollection in GetDevicePositionAsync(operators, protocols, cancellationToken))
+        if (liveOperators.Count > 0)
         {
-            allPositions.AddRange(positionsCollection);
+            var protocols = liveOperators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
+            await foreach (var positionsCollection in GetDevicePositionAsync(liveOperators, protocols, cancellationToken))
+            {
+                allPositions.AddRange(positionsCollection);
+            }
+        }
+
+        foreach (var @operator in cachedOperators)
+        {
+            allPositions.AddRange(await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken));
         }
 
         //Most recent position for each transporter if multiple positions are available
@@ -119,9 +142,13 @@ public class GetPositionsByUserQueryHandler(
             var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
             var credential = @operator.Credential.Value.Decrypt(EncryptionKey);
             await reader.Init(credential, cancellationToken);
-            return await reader.GetDevicePositionAsync(devices, cancellationToken);
+            var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
+            var positionsList = positions.ToList();
+            return positionsList.Count > 0
+                ? positionsList
+                : await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error retrieving positions for user");
             return await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
@@ -136,7 +163,7 @@ public class GetPositionsByUserQueryHandler(
         {
             return await transporterPositionReader.GetTransporterPositionAsync(operatorId, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error retrieving fallback positions for operator {OperatorId}", operatorId);
             return [];

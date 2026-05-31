@@ -43,6 +43,10 @@ public static class DependencyInjection
         services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<ITransporterTypeReader, TransporterTypeReader>();
         services.AddScoped<IPositionWriter, PositionWriter>();
+        services.AddScoped<IOperatorSyncRunWriter, OperatorSyncRunWriter>();
+        services.AddScoped<IOperatorHealthCheckWriter, OperatorHealthCheckWriter>();
+        services.AddScoped<IDeviceSyncWriter, DeviceSyncWriter>();
+        services.AddScoped<IAlertEventWriter, AlertEventWriter>();
 
         return services;
     }

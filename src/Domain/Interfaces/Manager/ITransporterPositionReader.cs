@@ -18,4 +18,5 @@ namespace TrackHubRouter.Domain.Interfaces.Manager;
 public interface ITransporterPositionReader
 {
     Task<IEnumerable<PositionVm>> GetTransporterPositionAsync(Guid operatorId, CancellationToken cancellationToken);
+    Task<PositionVm?> GetTransporterPositionAsync(Guid operatorId, Guid transporterId, CancellationToken cancellationToken);
 }

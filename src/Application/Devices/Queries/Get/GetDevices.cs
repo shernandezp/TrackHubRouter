@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -39,7 +39,18 @@ public class GetDevicesQueryHandler(
 
     public async Task<IEnumerable<DeviceVm>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
     {
-        var operators = await operatorReader.GetOperatorsAsync(cancellationToken);
+        var allOperators = await operatorReader.GetOperatorsAsync(cancellationToken);
+        var visibleOperators = allOperators.ToList();
+        if (visibleOperators.Count == 0)
+        {
+            return [];
+        }
+
+        var operators = visibleOperators.Where(o => o.Enabled).ToList();
+        if (operators.Count == 0)
+        {
+            return [];
+        }
         var protocols = operators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
 
         var allDevices = new List<DeviceVm>();
