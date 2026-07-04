@@ -98,7 +98,6 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             IsFeatureEnabled(features, FeatureKeys.Geofencing),
             IsFeatureEnabled(features, FeatureKeys.TripManagement),
             IsFeatureEnabled(features, FeatureKeys.GpsIntegration),
-            IsFeatureEnabled(features, FeatureKeys.GpsOperatorHealth),
             IsFeatureEnabled(features, FeatureKeys.GpsPositionHistory));
     }
 
