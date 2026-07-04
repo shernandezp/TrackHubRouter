@@ -100,7 +100,7 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
             foreach (var op in operators.Where(o => o.Enabled))
             {
                 var intervalMinutes = Math.Max(1, op.SyncIntervalMinutes);
-                // R0.9: gate on persisted LastDeviceSyncAt so multiple Router instances
+                // Gate on persisted LastDeviceSyncAt so multiple Router instances
                 // do not duplicate scheduled syncs.
                 var last = op.LastDeviceSyncAt ?? DateTimeOffset.MinValue;
 
@@ -152,7 +152,7 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
 
             foreach (var op in operators.Where(o => o.Enabled))
             {
-                // R0.9: gate on persisted LastHealthCheckAt so horizontally-scaled
+                // Gate on persisted LastHealthCheckAt so horizontally-scaled
                 // Router instances do not duplicate health checks.
                 var last = op.LastHealthCheckAt ?? DateTimeOffset.MinValue;
                 if (now - last < HealthCheckInterval)
