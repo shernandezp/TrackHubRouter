@@ -17,11 +17,9 @@ namespace TrackHubRouter.Domain.Models;
 
 public readonly record struct AccountSettingsVm(
     Guid AccountId,
-    bool StoreLastPosition,
     int StoringInterval,
     bool GeofencingEnabled,
     bool TripManagementEnabled,
     bool GpsIntegrationEnabled = false,
-    bool GpsOperatorHealthEnabled = false,
     bool GpsPositionHistoryEnabled = false
     );

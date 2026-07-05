@@ -49,7 +49,7 @@ public class PositionsRetrievedTests : TestsContext
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
         var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, true, true);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, true, true);
         var notification = BuildNotification(positions, account);
 
         positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
@@ -78,7 +78,7 @@ public class PositionsRetrievedTests : TestsContext
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
         var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, true, true);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, true, true);
         var notification = BuildNotification(positions, account);
 
         positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
@@ -99,7 +99,7 @@ public class PositionsRetrievedTests : TestsContext
         var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
         var op = new OperatorVm(Guid.NewGuid(), 1, account.AccountId, null);
         var notification = new PositionsRetrieved.Notification(
             [],

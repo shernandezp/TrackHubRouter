@@ -13,10 +13,16 @@
 //  limitations under the License.
 //
 
+using GraphQL.Client.Abstractions;
+
 namespace TrackHub.Router.Infrastructure.ManagerApi;
 
-public class PositionWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IPositionWriter
+public class PositionWriter : GraphQLService, IPositionWriter
 {
+    public PositionWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Manager)) { }
+
+    protected PositionWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
+
     public async Task<bool> AddOrUpdatePositionAsync(IEnumerable<PositionVm> positions, CancellationToken token)
     {
         var request = new GraphQLRequest

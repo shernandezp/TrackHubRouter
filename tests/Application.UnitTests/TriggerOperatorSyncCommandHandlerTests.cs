@@ -80,7 +80,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_GpsIntegrationDisabled_DispatchesManualDeviceSync()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: false);
+        var account = new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: false);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupAccounts(account);
         SetupOperator(op);
@@ -108,7 +108,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     {
         var accountId = Guid.NewGuid();
         var otherAccount = Guid.NewGuid();
-        SetupAccounts(new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true));
+        SetupAccounts(new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true));
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, otherAccount, TestCredentialTokenVm);
         SetupOperator(op);
 
@@ -123,7 +123,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_OperatorDisabled_ReturnsFalse()
     {
         var accountId = Guid.NewGuid();
-        SetupAccounts(new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true));
+        SetupAccounts(new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true));
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm,
             Enabled: false);
         SetupOperator(op);
@@ -139,7 +139,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_HappyPath_DispatchesSyncOperatorDevicesCommand()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true);
         SetupAccounts(account);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupOperator(op);
@@ -164,7 +164,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_ResetDeviceCatalogWithEnabledFeature_DispatchesDeviceSyncWithReset()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true);
         SetupAccounts(account);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupOperator(op);
@@ -188,7 +188,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_ResetDeviceCatalogWithDisabledFeature_DispatchesDeviceSyncWithReset()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: false);
+        var account = new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: false);
         SetupAccounts(account);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupOperator(op);
@@ -214,7 +214,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     public async Task Handle_DownstreamSyncReturnsFalse_ReturnsFalse()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, false, 0, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true);
         SetupAccounts(account);
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupOperator(op);

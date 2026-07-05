@@ -40,12 +40,10 @@ public abstract class TestsContext
         var mock = new Mock<IAccountReader>();
         var accounts = accountIds.Select(id => new AccountSettingsVm(
             id,
-            StoreLastPosition: false,
             StoringInterval: 0,
             GeofencingEnabled: false,
             TripManagementEnabled: false,
             GpsIntegrationEnabled: true,
-            GpsOperatorHealthEnabled: true,
             GpsPositionHistoryEnabled: false)).ToList();
         mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(accounts);
@@ -71,12 +69,10 @@ public abstract class TestsContext
         var mock = new Mock<IAccountReader>();
         var accounts = accountIds.Select(id => new AccountSettingsVm(
             id,
-            StoreLastPosition: false,
             StoringInterval: 0,
             GeofencingEnabled: false,
             TripManagementEnabled: false,
             GpsIntegrationEnabled: false,
-            GpsOperatorHealthEnabled: false,
             GpsPositionHistoryEnabled: false)).ToList();
         mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(accounts);

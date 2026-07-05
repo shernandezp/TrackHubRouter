@@ -39,12 +39,6 @@ public class RecordOperatorHealthCommandHandler(
     public async Task<bool> Handle(RecordOperatorHealthCommand request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        if (!request.Account.GpsOperatorHealthEnabled)
-        {
-            logger.LogInformation("Operator health check skipped: feature disabled for account {AccountId}.", request.Account.AccountId);
-            return false;
-        }
-
         if (request.Operator.Credential is null)
         {
             return false;

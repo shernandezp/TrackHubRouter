@@ -36,6 +36,11 @@ public static class DependencyInjection
                     client => client.Timeout = TimeSpan.FromSeconds(30));
         }
 
+        // Dedicated client for system (client-credentials) calls: never propagates the user's
+        // Authorization header, so the factory applies the Router's own service identity.
+        services.AddHttpClient($"{Clients.Manager}AsService",
+                client => client.Timeout = TimeSpan.FromSeconds(30));
+
         services.AddScoped<IAccountReader, AccountReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
         services.AddScoped<IDeviceTransporterReader, DeviceTransporterReader>();
@@ -43,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<ITransporterTypeReader, TransporterTypeReader>();
         services.AddScoped<IPositionWriter, PositionWriter>();
+        services.AddScoped<IPositionSystemWriter, PositionSystemWriter>();
         services.AddScoped<IOperatorSyncRunWriter, OperatorSyncRunWriter>();
         services.AddScoped<IOperatorHealthCheckWriter, OperatorHealthCheckWriter>();
         services.AddScoped<IDeviceSyncWriter, DeviceSyncWriter>();

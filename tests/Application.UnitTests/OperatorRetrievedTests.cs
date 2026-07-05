@@ -33,7 +33,7 @@ public class OperatorRetrievedTests : TestsContext
         var handler = new OperatorRetrieved.Notification.EventHandler(senderMock.Object);
 
         var operatorVm = new OperatorVm(Guid.NewGuid(), 1, Guid.NewGuid(), null);
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
         var notification = new OperatorRetrieved.Notification(operatorVm, account);
 
         // Act

@@ -33,6 +33,7 @@ public class GetPositionByTransporterQueryHandler(
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
+        IPositionSystemWriter positionSystemWriter,
         ILogger<GetPositionByTransporterQueryHandler> logger)
         : IRequestHandler<GetPositionByTransporterQuery, PositionVm>
 {
@@ -83,6 +84,9 @@ public class GetPositionByTransporterQueryHandler(
                 var position = await reader.GetDevicePositionAsync(device, cancellationToken);
                 if (position.TransporterId != Guid.Empty)
                 {
+                    // On-demand mode: keep the latest-position projection current with the
+                    // provider read, using the Router's service identity (best effort).
+                    await PersistLatestPositionAsync(position, cancellationToken);
                     return position;
                 }
             }
@@ -93,6 +97,25 @@ public class GetPositionByTransporterQueryHandler(
         }
 
         return await GetFallbackPositionAsync(@operator.OperatorId, transporterId, cancellationToken);
+    }
+
+    private async Task PersistLatestPositionAsync(PositionVm position, CancellationToken cancellationToken)
+    {
+        if (position.DeviceDateTime == default
+            || position.Latitude is < -90d or > 90d
+            || position.Longitude is < -180d or > 180d)
+        {
+            return;
+        }
+
+        try
+        {
+            await positionSystemWriter.AddOrUpdatePositionAsync([position], cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Failed to persist on-demand position for transporter {TransporterId}; the read is unaffected.", position.TransporterId);
+        }
     }
 
     private async Task<PositionVm> GetFallbackPositionAsync(

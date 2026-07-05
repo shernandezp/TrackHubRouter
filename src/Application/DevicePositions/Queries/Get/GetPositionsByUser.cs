@@ -35,6 +35,7 @@ public class GetPositionsByUserQueryHandler(
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
+        IPositionSystemWriter positionSystemWriter,
         ILogger<GetPositionsByUserQueryHandler> logger)
         : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
 {
@@ -124,8 +125,14 @@ public class GetPositionsByUserQueryHandler(
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
     {
-        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol);
-        return await TryGetPositionsAsync(reader, @operator, cancellationToken);
+        // Several operators may share the same protocol (e.g. two providers of the same brand);
+        // query each sequentially with its own credential and device catalog.
+        var positions = new List<PositionVm>();
+        foreach (var @operator in operators.Where(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol))
+        {
+            positions.AddRange(await TryGetPositionsAsync(reader, @operator, cancellationToken));
+        }
+        return positions;
     }
 
     private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
@@ -144,9 +151,14 @@ public class GetPositionsByUserQueryHandler(
             await reader.Init(credential, cancellationToken);
             var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
             var positionsList = positions.ToList();
-            return positionsList.Count > 0
-                ? positionsList
-                : await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
+            if (positionsList.Count > 0)
+            {
+                // On-demand mode: the account has no background sync, so the Router API keeps
+                // the latest-position projection current with what it just read from the provider.
+                await PersistLatestPositionsAsync(positionsList, cancellationToken);
+                return positionsList;
+            }
+            return await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -169,5 +181,35 @@ public class GetPositionsByUserQueryHandler(
             return [];
         }
     }
+
+    /// <summary>
+    /// Best-effort upsert of provider-read positions using the Router's service identity.
+    /// Failures are logged and never block the map read.
+    /// </summary>
+    private async Task PersistLatestPositionsAsync(
+        IReadOnlyCollection<PositionVm> positions,
+        CancellationToken cancellationToken)
+    {
+        var validPositions = positions.Where(IsValidPosition).ToArray();
+        if (validPositions.Length == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await positionSystemWriter.AddOrUpdatePositionAsync(validPositions, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Failed to persist on-demand positions; the map read is unaffected.");
+        }
+    }
+
+    private static bool IsValidPosition(PositionVm position)
+        => position.TransporterId != Guid.Empty
+           && position.DeviceDateTime != default
+           && position.Latitude is >= -90d and <= 90d
+           && position.Longitude is >= -180d and <= 180d;
 
 }

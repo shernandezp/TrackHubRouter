@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,11 +13,15 @@
 //  limitations under the License.
 //
 
+using System.Text.Json;
+
 namespace TrackHub.Router.Infrastructure.ManagerApi;
 
-public class AccountReader(IGraphQLClientFactory graphQLClient) 
+public class AccountReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IAccountReader
 {
+    // Fallback cadence (seconds) when the gps.integration feature omits a storing interval.
+    private const int DefaultStoringIntervalSeconds = 360;
 
     public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
     {
@@ -29,8 +33,6 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                         query: { filter: $filter }
                       ) {
                             accountId
-                            storeLastPosition
-                            storingInterval
                        }
                 }",
             Variables = new
@@ -54,8 +56,6 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                 query($id: UUID!) {
                     accountSettings(query: { id: $id }) {
                         accountId
-                        storeLastPosition
-                        storingInterval
                    }
                 }",
             Variables = new
@@ -93,8 +93,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
         var features = await GetAccountFeaturesAsync(account.AccountId, cancellationToken);
         return new AccountSettingsVm(
             account.AccountId,
-            account.StoreLastPosition,
-            account.StoringInterval,
+            ResolveStoringInterval(features),
             IsFeatureEnabled(features, FeatureKeys.Geofencing),
             IsFeatureEnabled(features, FeatureKeys.TripManagement),
             IsFeatureEnabled(features, FeatureKeys.GpsIntegration),
@@ -112,6 +111,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                         enabled
                         effectiveFrom
                         effectiveTo
+                        configurationJson
                     }
                 }",
             Variables = new
@@ -133,9 +133,35 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             && (!feature.EffectiveTo.HasValue || feature.EffectiveTo >= now));
     }
 
+    // Storing cadence is a storage/cost setting owned by the SuperAdministrator and stored in the
+    // gps.integration feature configuration ("storingIntervalSeconds").
+    private static int ResolveStoringInterval(IEnumerable<AccountFeatureStateVm> features)
+    {
+        var integration = features.FirstOrDefault(f => f.FeatureKey == FeatureKeys.GpsIntegration);
+        if (!string.IsNullOrWhiteSpace(integration.ConfigurationJson))
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(integration.ConfigurationJson!);
+                if (doc.RootElement.TryGetProperty("storingIntervalSeconds", out var value)
+                    && value.TryGetInt32(out var seconds)
+                    && seconds > 0)
+                {
+                    return seconds;
+                }
+            }
+            catch (JsonException)
+            {
+                // fall through to default
+            }
+        }
+        return DefaultStoringIntervalSeconds;
+    }
+
     private readonly record struct AccountFeatureStateVm(
         string FeatureKey,
         bool Enabled,
         DateTimeOffset? EffectiveFrom,
-        DateTimeOffset? EffectiveTo);
+        DateTimeOffset? EffectiveTo,
+        string? ConfigurationJson);
 }

@@ -37,6 +37,7 @@ public class GetPositionsQueriesTests : TestsContext
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
     private Mock<ITransporterPositionReader> _transporterPositionReaderMock = null!;
+    private Mock<IPositionSystemWriter> _positionSystemWriterMock = null!;
 
     [SetUp]
     public void SetUp()
@@ -46,6 +47,7 @@ public class GetPositionsQueriesTests : TestsContext
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _operatorReaderMock = new Mock<IOperatorReader>();
         _transporterPositionReaderMock = new Mock<ITransporterPositionReader>();
+        _positionSystemWriterMock = new Mock<IPositionSystemWriter>();
 
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
@@ -59,7 +61,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var operatorId = Guid.NewGuid();
         var operatorVm = new OperatorVm(operatorId, (int)ProtocolType.CommandTrack, Guid.NewGuid(), TestCredentialTokenVm);
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
 
         readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
@@ -90,7 +92,7 @@ public class GetPositionsQueriesTests : TestsContext
         var publisherMock = new Mock<IPublisher>();
 
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, Guid.NewGuid(), null);
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
 
         var handler = new GetPositionsByOperatorQueryHandler(
             publisherMock.Object,
@@ -131,6 +133,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
 
         // Act
@@ -163,6 +166,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
 
         // Act
@@ -207,6 +211,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
 
         // Act
@@ -250,6 +255,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionByTransporterQueryHandler>>());
 
         // Act
@@ -283,6 +289,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
 
         // Act
@@ -319,6 +326,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
 
         // Act
@@ -330,6 +338,10 @@ public class GetPositionsQueriesTests : TestsContext
         _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()), Times.Once);
         _transporterPositionReaderMock.Verify(x => x.GetTransporterPositionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         accountReader.Verify(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()), Times.Never);
+        // On-demand mode: the Router API persists the provider read with its service identity.
+        _positionSystemWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
+            It.Is<IEnumerable<PositionVm>>(p => p.Single().TransporterId == livePosition.TransporterId),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -352,6 +364,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
 
         // Act
@@ -361,6 +374,9 @@ public class GetPositionsQueriesTests : TestsContext
         Assert.That(result.Single().TransporterId, Is.EqualTo(cachedPosition.TransporterId));
         _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Never);
         _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Background-sync mode: the query only reads the cached projection; it never writes.
+        _positionSystemWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
+            It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -392,6 +408,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
+            _positionSystemWriterMock.Object,
             Mock.Of<ILogger<GetPositionsByUserQueryHandler>>());
 
         // Act

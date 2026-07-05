@@ -63,7 +63,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             HealthStatus: previousStatus);
 
     private static AccountSettingsVm EnabledAccount(Guid accountId) =>
-        new(accountId, false, 0, false, false, GpsIntegrationEnabled: true, GpsOperatorHealthEnabled: true);
+        new(accountId, 0, false, false, GpsIntegrationEnabled: true);
 
     [Test]
     public async Task Handle_NoCredential_ReturnsFalseAndRecordsNothing()

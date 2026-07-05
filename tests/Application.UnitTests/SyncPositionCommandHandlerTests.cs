@@ -70,7 +70,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 10, false, false, GpsIntegrationEnabled: true);
 
         var operatorId1 = Guid.NewGuid();
         var operatorId2 = Guid.NewGuid();
@@ -111,7 +111,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     {
         // Arrange
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 10, false, false, GpsIntegrationEnabled: true);
 
         _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([account]);
@@ -131,7 +131,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     public async Task Handle_GpsIntegrationDisabled_SkipsAccount()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: false);
+        var account = new AccountSettingsVm(accountId, 10, false, false, GpsIntegrationEnabled: false);
 
         _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([account]);
@@ -147,7 +147,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
     public async Task Handle_OperatorDisabled_DoesNotPublishForThatOperator()
     {
         var accountId = Guid.NewGuid();
-        var account = new AccountSettingsVm(accountId, true, 10, false, false, GpsIntegrationEnabled: true);
+        var account = new AccountSettingsVm(accountId, 10, false, false, GpsIntegrationEnabled: true);
         var enabledId = Guid.NewGuid();
         var disabledId = Guid.NewGuid();
 

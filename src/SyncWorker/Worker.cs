@@ -137,7 +137,9 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
         var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled && a.GpsOperatorHealthEnabled))
+        // Operator health monitoring is core behavior for every account with provider
+        // integration running in the background; it is not a separately billed feature.
+        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled))
         {
             IEnumerable<Domain.Models.OperatorVm> operators;
             try

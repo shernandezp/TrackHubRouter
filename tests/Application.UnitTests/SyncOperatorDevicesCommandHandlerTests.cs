@@ -66,7 +66,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         new(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId ?? Guid.NewGuid(), credential);
 
     private static AccountSettingsVm EnabledAccount(Guid accountId) =>
-        new(accountId, false, 0, false, false, GpsIntegrationEnabled: true);
+        new(accountId, 0, false, false, GpsIntegrationEnabled: true);
 
     [Test]
     public async Task Handle_NoCredential_ReturnsFalseAndRecordsNothing()
