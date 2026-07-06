@@ -16,7 +16,9 @@
 using Common.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Infrastructure.Common;
+using TrackHub.Router.Infrastructure.Common.Geocoding;
 using TrackHub.Router.Infrastructure.Common.Helpers;
+using TrackHubRouter.Domain.Interfaces.Geocoding;
 using TrackHubRouter.Application.Devices.Registry;
 using TrackHubRouter.Application.PingOperator;
 using TrackHubRouter.Application.DevicePositions.Registry;
@@ -44,6 +46,10 @@ public static class DependencyInjection
             var hasAdapters = protocolsWithAdapters.Contains(protocol);
             services.RegisterProtocol(protocol, hasAdapters);
         }
+
+        services.AddHttpClient(NominatimReverseGeocoder.HttpClientName);
+        services.AddScoped<IReverseGeocoder, NominatimReverseGeocoder>();
+        services.AddScoped<IReverseGeocodingService, ReverseGeocodingService>();
 
         services.AddSingleton<IExecutionIntervalManager, ExecutionIntervalManager>();
         services.AddScoped<ICredentialHttpClientFactory, CredentialHttpClientFactory>();

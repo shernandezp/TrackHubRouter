@@ -57,6 +57,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeofenceApi", "src\Infrastr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protrack", "src\Infrastructure\Protack\Protrack.csproj", "{0A413503-74A3-4D86-B247-957BF3775B5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelemetryApi", "src\Infrastructure\TelemetryApi\TelemetryApi.csproj", "{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -283,6 +285,18 @@ Global
 		{0A413503-74A3-4D86-B247-957BF3775B5D}.Release|x64.Build.0 = Release|Any CPU
 		{0A413503-74A3-4D86-B247-957BF3775B5D}.Release|x86.ActiveCfg = Release|Any CPU
 		{0A413503-74A3-4D86-B247-957BF3775B5D}.Release|x86.Build.0 = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|x64.Build.0 = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Debug|x86.Build.0 = Debug|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|x64.ActiveCfg = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|x64.Build.0 = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|x86.ActiveCfg = Release|Any CPU
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -307,6 +321,7 @@ Global
 		{EC5B8EF3-E56F-F68A-1841-F65F849F8EB1} = {04F3953F-2648-4C08-9E6A-64FB933F3043}
 		{A1C687AC-767C-4DBB-A0A7-AC813C1CB1E0} = {04F3953F-2648-4C08-9E6A-64FB933F3043}
 		{0A413503-74A3-4D86-B247-957BF3775B5D} = {04F3953F-2648-4C08-9E6A-64FB933F3043}
+		{D44396A1-6D0F-4B04-B28B-BE1A96E68C6E} = {04F3953F-2648-4C08-9E6A-64FB933F3043}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3CB609D9-5D54-4C11-A371-DAAC8B74E430}

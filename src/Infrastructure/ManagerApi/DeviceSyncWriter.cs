@@ -16,7 +16,7 @@ public class DeviceSyncWriter(IGraphQLClientFactory graphQLClient)
         await MutationAsync<object>(request, cancellationToken);
     }
 
-    public async Task SynchronizeAsync(
+    public async Task<DeviceSyncCountsVm> SynchronizeAsync(
         Guid accountId,
         Guid operatorId,
         IEnumerable<SynchronizedDeviceDto> devices,
@@ -29,7 +29,13 @@ public class DeviceSyncWriter(IGraphQLClientFactory graphQLClient)
         {
             Query = @"
                 mutation($command: SynchronizeOperatorDevicesCommandInput!) {
-                    synchronizeOperatorDevices(command: $command) { operatorSyncRunId }
+                    synchronizeOperatorDevices(command: $command) {
+                        devicesSeen
+                        devicesAdded
+                        devicesUpdated
+                        devicesRemoved
+                        devicesIgnored
+                    }
                 }",
             Variables = new
             {
@@ -56,6 +62,6 @@ public class DeviceSyncWriter(IGraphQLClientFactory graphQLClient)
                 }
             }
         };
-        await MutationAsync<object>(request, cancellationToken);
+        return await MutationAsync<DeviceSyncCountsVm>(request, cancellationToken);
     }
 }

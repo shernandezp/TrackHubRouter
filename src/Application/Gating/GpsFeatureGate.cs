@@ -13,38 +13,17 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 
 namespace TrackHubRouter.Application.Gating;
 
 /// <summary>
-/// Helpers for gating Router operations on the per-account GPS integration feature flags.
+/// Pure predicate for the provider-vs-stored map read split. The per-account "integration enabled"
+/// decision is owned by <see cref="IAccountModeResolver"/> (spec 01.3 A3); this only turns that set
+/// plus the operator's own enabled flag into the on-demand decision, so there is one source of truth.
 /// </summary>
 public static class GpsFeatureGate
 {
-    public const string GpsIntegrationKey = "gps.integration";
-
-    /// <summary>
-    /// Returns the account ids from the supplied visible accounts that have provider integration enabled.
-    /// </summary>
-    public static async Task<HashSet<Guid>> GetProviderIntegrationEnabledAccountIdsAsync(
-        IAccountReader accountReader,
-        IEnumerable<Guid> accountIds,
-        CancellationToken cancellationToken)
-    {
-        var enabled = new HashSet<Guid>();
-        foreach (var accountId in accountIds.Where(id => id != Guid.Empty).Distinct())
-        {
-            if (await accountReader.IsFeatureEnabledAsync(accountId, GpsIntegrationKey, cancellationToken))
-            {
-                enabled.Add(accountId);
-            }
-        }
-
-        return enabled;
-    }
-
     /// <summary>
     /// Returns true when map reads should contact the provider directly because background sync is not enabled.
     /// </summary>

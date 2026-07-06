@@ -14,6 +14,7 @@
 //
 
 using Microsoft.Extensions.Logging;
+using TrackHubRouter.Domain.Exceptions;
 
 namespace TrackHubRouter.Application.DevicePositions.Commands.Sync;
 
@@ -31,35 +32,31 @@ public class TriggerOperatorSyncCommandHandler(
     ISender sender,
     ILogger<TriggerOperatorSyncCommandHandler> logger) : IRequestHandler<TriggerOperatorSyncCommand, bool>
 {
-    private static readonly TimeSpan ManualSyncCooldown = TimeSpan.FromMinutes(5);
-
     public async Task<bool> Handle(TriggerOperatorSyncCommand request, CancellationToken cancellationToken)
     {
+        // The manual-sync throttle lives at the single point of entry — Manager's
+        // ManualSyncMinIntervalSeconds, which throws TooManyRequestsException (spec 01.3 A2, K3).
+        // The Router's former hardcoded 5-minute cooldown is removed so a trigger accepted by
+        // Manager can never be silently dropped here. The Router still validates operator/account/
+        // enabled and returns typed errors instead of a silent false.
         var op = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
         if (op.AccountId != request.AccountId)
         {
             logger.LogWarning("Manual sync trigger rejected: operator {OperatorId} does not belong to account {AccountId}.", request.OperatorId, request.AccountId);
-            return false;
+            throw new OperatorNotFoundException(request.OperatorId);
         }
 
         var account = await accountReader.GetAccountToSyncAsync(request.AccountId, cancellationToken);
         if (!account.HasValue)
         {
             logger.LogWarning("Manual sync trigger received for unknown or unauthorized account {AccountId}.", request.AccountId);
-            return false;
+            throw new OperatorNotFoundException(request.OperatorId);
         }
 
         if (!op.Enabled)
         {
-            logger.LogInformation("Manual sync trigger ignored: operator {OperatorId} is disabled.", request.OperatorId);
-            return false;
-        }
-        if (string.Equals(request.TriggerType, "MANUAL", StringComparison.OrdinalIgnoreCase)
-            && op.LastManualSyncAt.HasValue
-            && DateTimeOffset.UtcNow - op.LastManualSyncAt.Value < ManualSyncCooldown)
-        {
-            logger.LogInformation("Manual sync trigger throttled for operator {OperatorId}.", request.OperatorId);
-            return false;
+            logger.LogInformation("Manual sync trigger rejected: operator {OperatorId} is disabled.", request.OperatorId);
+            throw new OperatorDisabledException(request.OperatorId);
         }
 
         return await sender.Send(new SyncOperatorDevicesCommand(

@@ -15,11 +15,11 @@
 
 using GraphQL.Client.Abstractions;
 
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+namespace TrackHub.Router.Infrastructure.TelemetryApi;
 
 public class PositionWriter : GraphQLService, IPositionWriter
 {
-    public PositionWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Manager)) { }
+    public PositionWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Telemetry)) { }
 
     protected PositionWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
 

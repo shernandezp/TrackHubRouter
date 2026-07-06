@@ -92,7 +92,7 @@ public class GetDevicesQueryHandler(
         if (@operator.Credential is not null)
         {
             await reader.Init(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
+            var devices = await deviceReader.GetVisibleDeviceTransportersByOperatorAsync(@operator.OperatorId, cancellationToken);
             return await reader.GetDevicesAsync(devices, cancellationToken);
         }
         return [];

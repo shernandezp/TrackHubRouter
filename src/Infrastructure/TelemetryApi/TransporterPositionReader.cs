@@ -13,10 +13,10 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+namespace TrackHub.Router.Infrastructure.TelemetryApi;
 
 public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
-    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ITransporterPositionReader
+    : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry)), ITransporterPositionReader
 {
 
     public async Task<IEnumerable<PositionVm>> GetTransporterPositionAsync(Guid operatorId, CancellationToken cancellationToken)

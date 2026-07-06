@@ -92,7 +92,7 @@ public class GetDevicesQueriesTests : TestsContext
 
         _deviceRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([@operator]);
-        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync([deviceTransporter]);
+        _deviceReaderMock.Setup(x => x.GetVisibleDeviceTransportersByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync([deviceTransporter]);
 
         var handler = new GetDevicesQueryHandler(
             _configurationMock.Object,

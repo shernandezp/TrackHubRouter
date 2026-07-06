@@ -13,12 +13,14 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+namespace TrackHubRouter.Domain.Models;
 
-/// <summary>
-/// Latest-position writer authenticated with the Router's client-credentials identity
-/// (router_client). Used by on-demand map reads so the upsert never depends on the calling
-/// user's permissions; reads continue to use the user's propagated token.
-/// </summary>
-public sealed class PositionSystemWriter(IGraphQLClientFactory graphQLClient)
-    : PositionWriter(graphQLClient.CreateClient(Clients.Manager, asService: true)), IPositionSystemWriter;
+// Device-sync counts returned by Manager's synchronizeOperatorDevices mutation (spec 01.3 A6).
+// Manager no longer records the sync run; it returns these counts so the Router can be the single
+// writer of sync-run telemetry, recording exactly one run per attempt.
+public readonly record struct DeviceSyncCountsVm(
+    int DevicesSeen,
+    int DevicesAdded,
+    int DevicesUpdated,
+    int DevicesRemoved,
+    int DevicesIgnored);

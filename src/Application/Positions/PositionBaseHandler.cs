@@ -13,6 +13,10 @@
 //  limitations under the License.
 //
 
+using Common.Application.Exceptions;
+using Common.Application.Interfaces;
+using Common.Domain.Constants;
+using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 using TrackHubRouter.Domain.Extensions;
 
@@ -20,6 +24,42 @@ namespace TrackHubRouter.Application.Positions;
 
 public abstract class PositionBaseHandler
 {
+    /// <summary>
+    /// Enforces the transporter group-visibility rule for user principals before any
+    /// provider or history read: non-privileged users must share a group with the
+    /// target transporter. Administrators/managers and service clients pass through.
+    /// </summary>
+    protected static async Task EnsureTransporterVisibilityAsync(
+        IGroupVisibilityReader groupVisibilityReader,
+        ICurrentPrincipal principal,
+        Guid accountId,
+        Guid transporterId,
+        CancellationToken cancellationToken)
+    {
+        if (principal.PrincipalType != PrincipalType.User || !principal.UserId.HasValue)
+        {
+            return;
+        }
+
+        if (string.Equals(principal.Role, Roles.Administrator, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(principal.Role, Roles.Manager, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var visible = await groupVisibilityReader.ValidateGroupVisibilityAsync(
+            accountId,
+            principal.UserId.Value,
+            "Transporter",
+            transporterId.ToString(),
+            cancellationToken);
+
+        if (!visible)
+        {
+            throw new ForbiddenAccessException($"Transporter {transporterId} is not visible to the requesting user.");
+        }
+    }
+
     /// <summary>
     /// Retrieves the device positions asynchronously
     /// </summary>

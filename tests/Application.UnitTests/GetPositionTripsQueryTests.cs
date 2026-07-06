@@ -18,7 +18,9 @@ using Microsoft.Extensions.Configuration;
 using TrackHubRouter.Application.Positions.Queries.GetTrips;
 using TrackHubRouter.Domain.Interfaces.Registry;
 using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHubRouter.Application.Gating;
 using TrackHubRouter.Domain.Models;
+using Common.Application.Interfaces;
 using Common.Domain.Enums;
 using Application.UnitTests;
 using TrackHubRouter.Domain.Interfaces.Operator;
@@ -34,6 +36,10 @@ public class GetPositionTripsQueryTests : TestsContext
     private Mock<IPositionRegistry> _positionRegistryMock = null!;
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<ITransporterTypeReader> _transporterTypeReaderMock = null!;
+    private Mock<IAccountModeResolver> _modeResolverMock = null!;
+    private Mock<IPositionHistoryReader> _positionHistoryReaderMock = null!;
+    private Mock<IGroupVisibilityReader> _groupVisibilityReaderMock = null!;
+    private Mock<ICurrentPrincipal> _principalMock = null!;
 
     [SetUp]
     public void SetUp()
@@ -43,9 +49,25 @@ public class GetPositionTripsQueryTests : TestsContext
         _positionRegistryMock = new Mock<IPositionRegistry>();
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _transporterTypeReaderMock = new Mock<ITransporterTypeReader>();
+        _modeResolverMock = new Mock<IAccountModeResolver>();
+        _positionHistoryReaderMock = new Mock<IPositionHistoryReader>();
+        _groupVisibilityReaderMock = new Mock<IGroupVisibilityReader>();
+        _principalMock = new Mock<ICurrentPrincipal>();
 
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
+
+    private GetPositionTripsQueryHandler CreateHandler()
+        => new(
+            _configurationMock.Object,
+            _operatorReaderMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            _transporterTypeReaderMock.Object,
+            _modeResolverMock.Object,
+            _positionHistoryReaderMock.Object,
+            _groupVisibilityReaderMock.Object,
+            _principalMock.Object);
 
     [Test]
     public async Task Handle_WithPositions_ReturnsTrips()
@@ -74,12 +96,7 @@ public class GetPositionTripsQueryTests : TestsContext
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _transporterTypeReaderMock.Setup(x => x.GetTransporterTypeAsync(device.TransporterTypeId, It.IsAny<CancellationToken>())).ReturnsAsync(new TransporterTypeVm(false, 5, 10, 120));
 
-        var handler = new GetPositionTripsQueryHandler(
-            _configurationMock.Object,
-            _operatorReaderMock.Object,
-            _positionRegistryMock.Object,
-            _deviceReaderMock.Object,
-            _transporterTypeReaderMock.Object);
+        var handler = CreateHandler();
 
         // Act
         var result = await handler.Handle(new GetPositionTripsQuery(transporterId, from, to), CancellationToken.None);
@@ -103,12 +120,7 @@ public class GetPositionTripsQueryTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(device);
 
-        var handler = new GetPositionTripsQueryHandler(
-            _configurationMock.Object,
-            _operatorReaderMock.Object,
-            _positionRegistryMock.Object,
-            _deviceReaderMock.Object,
-            _transporterTypeReaderMock.Object);
+        var handler = CreateHandler();
 
         // Act
         var result = await handler.Handle(new GetPositionTripsQuery(transporterId, from, to), CancellationToken.None);

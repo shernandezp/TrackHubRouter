@@ -125,10 +125,10 @@ public class GetPositionsQueriesTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(device);
 
-        var accountReader = AccountReaderForDisabled(operatorVm.AccountId);
+        var modeResolver = ModeResolverForDisabled(operatorVm.AccountId);
         var handler = new GetPositionByTransporterQueryHandler(
             _configurationMock.Object,
-            accountReader.Object,
+            modeResolver.Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -141,7 +141,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         // Assert
         Assert.That(result.TransporterId, Is.EqualTo(device.TransporterId));
-        accountReader.Verify(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()), Times.Never);
+        modeResolver.Verify(x => x.IsIntegrationEnabledAsync(operatorVm.AccountId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var handler = new GetPositionByTransporterQueryHandler(
             _configurationMock.Object,
-            AccountReaderForEnabled(accountId).Object,
+            ModeResolverForEnabled(accountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -206,7 +206,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var handler = new GetPositionByTransporterQueryHandler(
             _configurationMock.Object,
-            AccountReaderForDisabled(accountId).Object,
+            ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -250,7 +250,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var handler = new GetPositionByTransporterQueryHandler(
             _configurationMock.Object,
-            AccountReaderForDisabled(accountId).Object,
+            ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -280,11 +280,11 @@ public class GetPositionsQueriesTests : TestsContext
 
         _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
-        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync([device]);
+        _deviceReaderMock.Setup(x => x.GetVisibleDeviceTransportersByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync([device]);
 
         var handler = new GetPositionsByUserQueryHandler(
             _configurationMock.Object,
-            AccountReaderForDisabled(operatorVm.AccountId).Object,
+            ModeResolverForDisabled(operatorVm.AccountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -316,12 +316,12 @@ public class GetPositionsQueriesTests : TestsContext
 
         _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
-        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
+        _deviceReaderMock.Setup(x => x.GetVisibleDeviceTransportersByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
 
-        var accountReader = AccountReaderForDisabled(accountId);
+        var modeResolver = ModeResolverForDisabled(accountId);
         var handler = new GetPositionsByUserQueryHandler(
             _configurationMock.Object,
-            accountReader.Object,
+            modeResolver.Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -335,9 +335,9 @@ public class GetPositionsQueriesTests : TestsContext
         // Assert
         Assert.That(result.Single().TransporterId, Is.EqualTo(livePosition.TransporterId));
         _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Once);
-        _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()), Times.Once);
+        _deviceReaderMock.Verify(x => x.GetVisibleDeviceTransportersByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()), Times.Once);
         _transporterPositionReaderMock.Verify(x => x.GetTransporterPositionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        accountReader.Verify(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()), Times.Never);
+        modeResolver.Verify(x => x.IsIntegrationEnabledAsync(accountId, It.IsAny<CancellationToken>()), Times.Once);
         // On-demand mode: the Router API persists the provider read with its service identity.
         _positionSystemWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
             It.Is<IEnumerable<PositionVm>>(p => p.Single().TransporterId == livePosition.TransporterId),
@@ -359,7 +359,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         var handler = new GetPositionsByUserQueryHandler(
             _configurationMock.Object,
-            AccountReaderForEnabled(accountId).Object,
+            ModeResolverForEnabled(accountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
@@ -373,7 +373,7 @@ public class GetPositionsQueriesTests : TestsContext
         // Assert
         Assert.That(result.Single().TransporterId, Is.EqualTo(cachedPosition.TransporterId));
         _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Never);
-        _deviceReaderMock.Verify(x => x.GetDevicesByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        _deviceReaderMock.Verify(x => x.GetVisibleDeviceTransportersByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         // Background-sync mode: the query only reads the cached projection; it never writes.
         _positionSystemWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
             It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -396,14 +396,14 @@ public class GetPositionsQueriesTests : TestsContext
 
         _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
-        _deviceReaderMock.Setup(x => x.GetDevicesByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
+        _deviceReaderMock.Setup(x => x.GetVisibleDeviceTransportersByOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync([device]);
         _transporterPositionReaderMock
             .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()))
             .ReturnsAsync([cachedPosition]);
 
         var handler = new GetPositionsByUserQueryHandler(
             _configurationMock.Object,
-            AccountReaderForDisabled(accountId).Object,
+            ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,

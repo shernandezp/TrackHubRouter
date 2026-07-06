@@ -29,8 +29,16 @@ public class PositionsRetrievedTests : TestsContext
         Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter> geofenceWriterMock,
         Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter> syncRunMock,
         Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter> alertMock)
-        => new(positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
+    {
+        // Enrichment disabled in tests: budget 0 keeps the geocoder out of the write path.
+        var geocodingMock = new Mock<TrackHubRouter.Domain.Interfaces.Geocoding.IReverseGeocodingService>();
+        geocodingMock.Setup(x => x.GetEnrichmentBudgetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(0);
+        var historyMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionHistorySystemWriter>();
+        return new(positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
+            geocodingMock.Object,
+            historyMock.Object,
             Mock.Of<ILogger<PositionsRetrieved.Notification.EventHandler>>());
+    }
 
     private static PositionsRetrieved.Notification BuildNotification(IEnumerable<PositionVm> positions, AccountSettingsVm account)
     {

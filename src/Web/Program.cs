@@ -30,6 +30,7 @@ Guard.Against.Null(allowedCORSOrigins, message: $"Allowed Origins configuration 
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext();
+builder.Services.AddAppTelemetryContext();
 builder.Services.AddGeofenceManagerContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -40,6 +41,8 @@ builder.Services
     .AddAuthorization()
     .AddMaxExecutionDepthRule(15)
     .AddErrorFilter<TrackHubGraphQLErrorFilter>()
+    .AddErrorFilter<GeocodingErrorFilter>()
+    .AddErrorFilter<OperatorSyncErrorFilter>()
     .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
     .AddQueryType<Query>()
     .AddMutationType<Mutation>();

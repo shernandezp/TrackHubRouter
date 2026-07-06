@@ -15,6 +15,7 @@
 
 using Common.Domain.Constants;
 using Moq;
+using TrackHubRouter.Application.Gating;
 using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 
@@ -80,6 +81,32 @@ public abstract class TestsContext
                 It.Is<Guid>(id => accountIds.Contains(id)),
                 FeatureKeys.GpsIntegration,
                 It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration ENABLED for the
+    /// given account ids (spec 01.3 A3): the map serves the stored projection, never the provider.
+    /// </summary>
+    protected static Mock<IAccountModeResolver> ModeResolverForEnabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountModeResolver>();
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.Is<Guid>(id => accountIds.Contains(id)), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.Is<Guid>(id => !accountIds.Contains(id)), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration DISABLED for the
+    /// given account ids (spec 01.3 A3): the map reads the provider on demand.
+    /// </summary>
+    protected static Mock<IAccountModeResolver> ModeResolverForDisabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountModeResolver>();
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         return mock;
     }

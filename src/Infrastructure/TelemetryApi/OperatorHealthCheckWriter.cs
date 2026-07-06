@@ -1,8 +1,13 @@
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+using GraphQL.Client.Abstractions;
 
-public class OperatorHealthCheckWriter(IGraphQLClientFactory graphQLClient)
-    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorHealthCheckWriter
+namespace TrackHub.Router.Infrastructure.TelemetryApi;
+
+public class OperatorHealthCheckWriter : GraphQLService, IOperatorHealthCheckWriter
 {
+    public OperatorHealthCheckWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Telemetry)) { }
+
+    protected OperatorHealthCheckWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
+
     public async Task RecordAsync(OperatorHealthCheckDto dto, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
@@ -35,3 +40,8 @@ public class OperatorHealthCheckWriter(IGraphQLClientFactory graphQLClient)
         await MutationAsync<object>(request, cancellationToken);
     }
 }
+
+// Records with the Router's own service identity (never the user token) so manual,
+// user-triggered health checks can persist their result.
+public sealed class OperatorHealthCheckSystemWriter(IGraphQLClientFactory graphQLClient)
+    : OperatorHealthCheckWriter(graphQLClient.CreateClient(Clients.Telemetry, asService: true)), IOperatorHealthCheckSystemWriter;

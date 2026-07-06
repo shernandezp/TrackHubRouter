@@ -13,10 +13,12 @@
 //  limitations under the License.
 //
 
+using System.Diagnostics;
 using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TrackHubRouter.Domain.Extensions;
 using TrackHubRouter.Domain.Models;
 
@@ -29,7 +31,9 @@ public readonly record struct PingOperatorQuery(Guid OperatorId) : IRequest<bool
 public class PingOperatorQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader,
-    IConnectivityRegistry connectivityRegistry)
+    IConnectivityRegistry connectivityRegistry,
+    IOperatorHealthCheckSystemWriter healthWriter,
+    ILogger<PingOperatorQueryHandler> logger)
     : IRequestHandler<PingOperatorQuery, bool>
 {
     // This property retrieves the EncryptionKey from the configuration
@@ -59,7 +63,10 @@ public class PingOperatorQueryHandler(
         return await TestConnectivityAsync(reader, @operator, cancellationToken);
     }
 
-    // This method tests the connectivity by pinging the operator
+    // Tests connectivity and persists the manually triggered result as an operator
+    // health check. Health is core: the record is written with the Router's own service
+    // identity regardless of the account's feature flags, and a persistence failure
+    // never masks the connectivity result.
     private async Task<bool> TestConnectivityAsync(
         IConnectivityTester reader,
         OperatorVm @operator,
@@ -67,12 +74,55 @@ public class PingOperatorQueryHandler(
     {
         // Ensure that the EncryptionKey is not null, otherwise throw an exception
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        // If the operator has a credential, ping using the decrypted credential value
-        if (@operator.Credential is not null)
+        if (@operator.Credential is null)
+        {
+            return false;
+        }
+
+        var startedAt = DateTimeOffset.UtcNow;
+        var stopwatch = Stopwatch.StartNew();
+        try
         {
             await reader.Ping(@operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
+            stopwatch.Stop();
+            await RecordAsync(@operator, startedAt, (int)stopwatch.ElapsedMilliseconds, "HEALTHY", null, null, cancellationToken);
             return true;
         }
-        return false;
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            stopwatch.Stop();
+            await RecordAsync(@operator, startedAt, (int)stopwatch.ElapsedMilliseconds, "OFFLINE", ex.GetType().Name, ex.Message, cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task RecordAsync(
+        OperatorVm @operator,
+        DateTimeOffset startedAt,
+        int latencyMs,
+        string status,
+        string? errorCode,
+        string? errorMessage,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await healthWriter.RecordAsync(new OperatorHealthCheckDto(
+                AccountId: @operator.AccountId,
+                OperatorId: @operator.OperatorId,
+                CheckType: "MANUAL",
+                Status: status,
+                LatencyMs: latencyMs,
+                StartedAt: startedAt,
+                CompletedAt: DateTimeOffset.UtcNow,
+                ErrorCode: errorCode,
+                ErrorMessage: errorMessage,
+                RetryCount: 0,
+                CorrelationId: Guid.NewGuid().ToString()), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to persist manual health check for operator {OperatorId}.", @operator.OperatorId);
+        }
     }
 }

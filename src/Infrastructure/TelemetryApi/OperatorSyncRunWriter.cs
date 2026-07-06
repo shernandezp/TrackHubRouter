@@ -1,7 +1,7 @@
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+namespace TrackHub.Router.Infrastructure.TelemetryApi;
 
 public class OperatorSyncRunWriter(IGraphQLClientFactory graphQLClient)
-    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorSyncRunWriter
+    : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry)), IOperatorSyncRunWriter
 {
     public async Task RecordAsync(OperatorSyncRunDto dto, CancellationToken cancellationToken)
     {

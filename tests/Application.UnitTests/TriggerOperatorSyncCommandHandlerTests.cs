@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackHubRouter.Application.DevicePositions.Commands.Sync;
 using TrackHubRouter.Application.DevicePositions.Queries.Get;
+using TrackHubRouter.Domain.Exceptions;
 using TrackHubRouter.Domain.Interfaces.Manager;
 using TrackHubRouter.Domain.Models;
 
@@ -62,17 +63,16 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(op.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync(op);
 
     [Test]
-    public async Task Handle_UnknownAccount_ReturnsFalseAndDoesNotDispatch()
+    public void Handle_UnknownAccount_ThrowsOperatorNotFoundAndDoesNotDispatch()
     {
         var accountId = Guid.NewGuid();
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         SetupAccounts(); // empty list
         SetupOperator(op);
 
-        var result = await CreateHandler().Handle(
-            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None);
-
-        Assert.That(result, Is.False);
+        // A2: never a silent false — the Router returns a typed error.
+        Assert.ThrowsAsync<OperatorNotFoundException>(() => CreateHandler().Handle(
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None));
         _senderMock.Verify(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -104,7 +104,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
     }
 
     [Test]
-    public async Task Handle_CrossAccountOperator_ReturnsFalse()
+    public void Handle_CrossAccountOperator_ThrowsOperatorNotFound()
     {
         var accountId = Guid.NewGuid();
         var otherAccount = Guid.NewGuid();
@@ -112,15 +112,14 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
         var op = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, otherAccount, TestCredentialTokenVm);
         SetupOperator(op);
 
-        var result = await CreateHandler().Handle(
-            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None);
-
-        Assert.That(result, Is.False);
+        // A2: operator that does not belong to the account -> typed error, never a silent false.
+        Assert.ThrowsAsync<OperatorNotFoundException>(() => CreateHandler().Handle(
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None));
         _senderMock.Verify(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
-    public async Task Handle_OperatorDisabled_ReturnsFalse()
+    public void Handle_OperatorDisabled_ThrowsOperatorDisabled()
     {
         var accountId = Guid.NewGuid();
         SetupAccounts(new AccountSettingsVm(accountId, 0, false, false, GpsIntegrationEnabled: true));
@@ -128,10 +127,9 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
             Enabled: false);
         SetupOperator(op);
 
-        var result = await CreateHandler().Handle(
-            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None);
-
-        Assert.That(result, Is.False);
+        // A2: disabled operator -> typed error, never a silent false.
+        Assert.ThrowsAsync<OperatorDisabledException>(() => CreateHandler().Handle(
+            new TriggerOperatorSyncCommand(accountId, op.OperatorId), CancellationToken.None));
         _senderMock.Verify(s => s.Send(It.IsAny<SyncOperatorDevicesCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

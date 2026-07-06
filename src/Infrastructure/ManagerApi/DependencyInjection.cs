@@ -41,16 +41,15 @@ public static class DependencyInjection
         services.AddHttpClient($"{Clients.Manager}AsService",
                 client => client.Timeout = TimeSpan.FromSeconds(30));
 
+        // Master-data / provider-support readers and writers stay on Manager. The positions/history/
+        // health/sync-run surface moved to TelemetryApi (spec 01.3 §5.5, AddAppTelemetryContext).
         services.AddScoped<IAccountReader, AccountReader>();
         services.AddScoped<ICredentialWriter, CredentialWriter>();
+        services.AddScoped<IGeocodingProviderReader, GeocodingProviderReader>();
+        services.AddScoped<IGroupVisibilityReader, GroupVisibilityReader>();
         services.AddScoped<IDeviceTransporterReader, DeviceTransporterReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();
-        services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<ITransporterTypeReader, TransporterTypeReader>();
-        services.AddScoped<IPositionWriter, PositionWriter>();
-        services.AddScoped<IPositionSystemWriter, PositionSystemWriter>();
-        services.AddScoped<IOperatorSyncRunWriter, OperatorSyncRunWriter>();
-        services.AddScoped<IOperatorHealthCheckWriter, OperatorHealthCheckWriter>();
         services.AddScoped<IDeviceSyncWriter, DeviceSyncWriter>();
         services.AddScoped<IAlertEventWriter, AlertEventWriter>();
 

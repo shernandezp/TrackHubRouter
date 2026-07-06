@@ -23,6 +23,7 @@ builder.AddTrackHubSerilog();
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext(false);
+builder.Services.AddAppTelemetryContext(false);
 builder.Services.AddGeofenceManagerContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);

@@ -28,7 +28,7 @@ public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) 
 
 public class GetPositionByTransporterQueryHandler(
         IConfiguration configuration,
-        IAccountReader accountReader,
+        Application.Gating.IAccountModeResolver modeResolver,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
@@ -48,11 +48,10 @@ public class GetPositionByTransporterQueryHandler(
     public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
-        var providerEnabledAccounts = await Application.Gating.GpsFeatureGate.GetProviderIntegrationEnabledAccountIdsAsync(
-            accountReader,
-            [@operator.AccountId],
-            cancellationToken);
-        if (!Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(@operator, providerEnabledAccounts))
+        // Mode split through the single resolver (spec 01.3 A3): integration enabled -> serve the
+        // stored projection; disabled -> read the provider on demand.
+        var integrationEnabled = await modeResolver.IsIntegrationEnabledAsync(@operator.AccountId, cancellationToken);
+        if (!@operator.Enabled || integrationEnabled)
         {
             return await GetFallbackPositionAsync(@operator.OperatorId, request.TransporterId, cancellationToken);
         }

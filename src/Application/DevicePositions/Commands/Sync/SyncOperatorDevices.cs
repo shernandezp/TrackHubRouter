@@ -53,6 +53,7 @@ public class SyncOperatorDevicesCommandHandler(
         string? errorCode = null;
         string? errorMessage = null;
         var devices = Array.Empty<DeviceVm>();
+        var counts = default(DeviceSyncCountsVm);
 
         try
         {
@@ -76,7 +77,8 @@ public class SyncOperatorDevicesCommandHandler(
                 ProviderMetadataHash: d.ProviderMetadataHash,
                 ProviderStatus: d.ProviderStatus));
 
-            await deviceSyncWriter.SynchronizeAsync(
+            // Manager returns the counts and no longer records the run (spec 01.3 A6).
+            counts = await deviceSyncWriter.SynchronizeAsync(
                 request.Account.AccountId,
                 request.Operator.OperatorId,
                 dtos,
@@ -84,8 +86,6 @@ public class SyncOperatorDevicesCommandHandler(
                 request.TriggerType,
                 request.AutoAssignNewDevices,
                 cancellationToken);
-
-            return true;
         }
         catch (Exception ex)
         {
@@ -96,6 +96,11 @@ public class SyncOperatorDevicesCommandHandler(
                 request.Operator.OperatorId, request.Account.AccountId);
         }
 
+        // Single sync-run writer (spec 01.3 A6): the Router records exactly one run per attempt, with
+        // identical field completeness for success (Manager's counts) and failure (counts default to
+        // zero, DevicesSeen reflects what the provider returned before the failure). Best-effort:
+        // telemetry failures never fail the sync itself.
+        var succeeded = result == "SUCCEEDED";
         try
         {
             await syncRunWriter.RecordAsync(new OperatorSyncRunDto(
@@ -105,11 +110,11 @@ public class SyncOperatorDevicesCommandHandler(
                 Result: result,
                 StartedAt: startedAt,
                 CompletedAt: DateTimeOffset.UtcNow,
-                DevicesSeen: devices.Length,
-                DevicesAdded: 0,
-                DevicesUpdated: 0,
-                DevicesRemoved: 0,
-                DevicesIgnored: 0,
+                DevicesSeen: succeeded ? counts.DevicesSeen : devices.Length,
+                DevicesAdded: counts.DevicesAdded,
+                DevicesUpdated: counts.DevicesUpdated,
+                DevicesRemoved: counts.DevicesRemoved,
+                DevicesIgnored: counts.DevicesIgnored,
                 PositionsRead: 0,
                 PositionsAccepted: 0,
                 PositionsRejected: 0,
@@ -117,7 +122,7 @@ public class SyncOperatorDevicesCommandHandler(
                 ErrorMessage: errorMessage,
                 CorrelationId: correlationId), cancellationToken);
 
-            if (result == "FAILED")
+            if (!succeeded)
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
                     AccountId: request.Account.AccountId,
@@ -137,6 +142,6 @@ public class SyncOperatorDevicesCommandHandler(
                 request.Operator.OperatorId);
         }
 
-        return false;
+        return succeeded;
     }
 }

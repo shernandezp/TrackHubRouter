@@ -93,6 +93,11 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             new DeviceVm(Guid.NewGuid(), 2, "S2", "Device 2", 0, 0, "Dev2", "hash2", "ACTIVE")
         };
         _readerMock.Setup(r => r.GetDevicesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(devices);
+        // Manager returns the counts (A6); the Router records the run.
+        _deviceSyncWriterMock.Setup(w => w.SynchronizeAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IEnumerable<SynchronizedDeviceDto>>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeviceSyncCountsVm(DevicesSeen: 2, DevicesAdded: 2, DevicesUpdated: 0, DevicesRemoved: 0, DevicesIgnored: 0));
 
         var result = await CreateHandler().Handle(
             new SyncOperatorDevicesCommand(op, account, "AUTOMATIC", "corr-1"), CancellationToken.None);
@@ -106,7 +111,14 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             "AUTOMATIC",
             true,
             It.IsAny<CancellationToken>()), Times.Once);
-        _syncRunWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorSyncRunDto>(), It.IsAny<CancellationToken>()), Times.Never);
+        // A6: the Router is the single sync-run writer; it records exactly one SUCCEEDED run with the
+        // counts Manager returned.
+        _syncRunWriterMock.Verify(w => w.RecordAsync(
+            It.Is<OperatorSyncRunDto>(r => r.Result == "SUCCEEDED"
+                                            && r.DevicesSeen == 2
+                                            && r.DevicesAdded == 2
+                                            && r.CorrelationId == "corr-1"),
+            It.IsAny<CancellationToken>()), Times.Once);
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -185,6 +197,9 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             "AUTOMATIC",
             true,
             It.IsAny<CancellationToken>()), Times.Once);
-        _syncRunWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorSyncRunDto>(), It.IsAny<CancellationToken>()), Times.Never);
+        // A6: even an empty catalog produces exactly one SUCCEEDED run, recorded by the Router.
+        _syncRunWriterMock.Verify(w => w.RecordAsync(
+            It.Is<OperatorSyncRunDto>(r => r.Result == "SUCCEEDED"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }
