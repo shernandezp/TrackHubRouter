@@ -13,9 +13,9 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL.Mutation;
 
 public partial class Mutation
 {

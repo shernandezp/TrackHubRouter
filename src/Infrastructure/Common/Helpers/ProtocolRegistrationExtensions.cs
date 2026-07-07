@@ -15,7 +15,7 @@
 
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Common.Helpers;
 

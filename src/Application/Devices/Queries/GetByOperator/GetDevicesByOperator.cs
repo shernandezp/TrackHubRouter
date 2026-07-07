@@ -16,11 +16,11 @@
 using Ardalis.GuardClauses;
 using Common.Application.Attributes;
 using Common.Domain.Constants;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Extensions;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.Devices.Queries.GetByOperator;
+namespace TrackHub.Router.Application.Devices.Queries.GetByOperator;
 
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]

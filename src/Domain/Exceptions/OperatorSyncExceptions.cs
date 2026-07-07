@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Exceptions;
+namespace TrackHub.Router.Domain.Exceptions;
 
 // A manual sync targeted an operator that does not exist or does not belong to the requesting
 // account. Mapped to the OPERATOR_NOT_FOUND GraphQL error code (spec 01.3 A2 / §7): the Router

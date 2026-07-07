@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Application.Gating;
+namespace TrackHub.Router.Application.Gating;
 
 /// <summary>
 /// The single request-side resolver for the per-account GPS mode flags (spec 01.3 A3, resolves

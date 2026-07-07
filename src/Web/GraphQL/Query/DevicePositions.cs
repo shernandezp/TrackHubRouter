@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Positions.Queries.GetRange;
-using TrackHubRouter.Application.Positions.Queries.GetTrips;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
-    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
+    public async Task<IEnumerable<PositionVm>> GetDevicePositionsByUser([Service] ISender sender)
+        => await sender.Send(new GetPositionsByUserQuery());
+
+    public async Task<PositionVm> GetDevicePositionByTransporter([Service] ISender sender, [AsParameters] GetPositionByTransporterQuery query)
         => await sender.Send(query);
 
-    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
-        => await sender.Send(query);
 }

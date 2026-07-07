@@ -17,11 +17,11 @@ using Common.Domain.Enums;
 using Common.Mediator;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
-using TrackHubRouter.Application.DevicePositions.Queries.Get;
-using TrackHubRouter.Domain.Exceptions;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Domain.Exceptions;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Models;
 
 namespace Application.UnitTests;
 

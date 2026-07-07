@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Infrastructure.Protrack.Models;
 using TrackHub.Router.Infrastructure.Tests;
 

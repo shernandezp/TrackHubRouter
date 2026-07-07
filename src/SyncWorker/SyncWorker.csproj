@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
-    <RootNamespace>TrackHubRouter.SyncWorker</RootNamespace>
-    <AssemblyName>TrackHubRouter.SyncWorker</AssemblyName>
+    <RootNamespace>TrackHub.Router.SyncWorker</RootNamespace>
+    <AssemblyName>TrackHub.Router.SyncWorker</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />

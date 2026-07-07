@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         // Single request-side mode resolver (spec 01.3 A3): all position handlers resolve the
         // gps.integration / gps.positionHistory flags through here, with a 60-second cache.
-        services.AddScoped<TrackHubRouter.Application.Gating.IAccountModeResolver, TrackHubRouter.Application.Gating.AccountModeResolver>();
+        services.AddScoped<TrackHub.Router.Application.Gating.IAccountModeResolver, TrackHub.Router.Application.Gating.AccountModeResolver>();
         return services;
     }
 }

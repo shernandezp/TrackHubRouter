@@ -17,10 +17,10 @@ using System.Diagnostics;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.DevicePositions.Commands.Health;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Health;
 
 public readonly record struct RecordOperatorHealthCommand(
     OperatorVm Operator,
@@ -90,7 +90,7 @@ public class RecordOperatorHealthCommandHandler(
                     AccountId: request.Account.AccountId,
                     EventType: "GpsOperatorOffline",
                     Severity: "Critical",
-                    SourceModule: "TrackHubRouter.SyncWorker",
+                    SourceModule: "TrackHub.Router.SyncWorker",
                     ResourceType: "Operator",
                     ResourceId: request.Operator.OperatorId.ToString(),
                     Status: "Open",
@@ -104,7 +104,7 @@ public class RecordOperatorHealthCommandHandler(
                     AccountId: request.Account.AccountId,
                     EventType: "GpsOperatorRecovered",
                     Severity: "Info",
-                    SourceModule: "TrackHubRouter.SyncWorker",
+                    SourceModule: "TrackHub.Router.SyncWorker",
                     ResourceType: "Operator",
                     ResourceId: request.Operator.OperatorId.ToString(),
                     Status: "Open",

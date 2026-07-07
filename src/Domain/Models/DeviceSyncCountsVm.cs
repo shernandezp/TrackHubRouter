@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Models;
 
 // Device-sync counts returned by Manager's synchronizeOperatorDevices mutation (spec 01.3 A6).
 // Manager no longer records the sync run; it returns these counts so the Router can be the single

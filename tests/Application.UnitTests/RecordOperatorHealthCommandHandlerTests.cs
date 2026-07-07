@@ -17,13 +17,13 @@ using Common.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Commands.Health;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Application.DevicePositions.Commands.Health;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
 namespace Application.UnitTests;
 

@@ -15,9 +15,9 @@
 
 using System.Globalization;
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces.Geocoding;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
 namespace TrackHub.Router.Infrastructure.Common.Geocoding;
 

@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Enumerators;
+namespace TrackHub.Router.Domain.Enumerators;
 
 // Replay history source: PROVIDER reads the GPS operator API on demand (core, ungated);
 // STORED reads TrackHub-stored history (requires gps.positionHistory).

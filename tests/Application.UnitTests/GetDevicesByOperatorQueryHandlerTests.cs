@@ -17,14 +17,14 @@ using Application.UnitTests;
 using Common.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using TrackHubRouter.Application.Devices.Queries.GetByOperator;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Application.Devices.Queries.GetByOperator;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
-namespace TrackHubRouter.Application.UnitTests.Devices.Queries.GetByOperator;
+namespace TrackHub.Router.Application.UnitTests.Devices.Queries.GetByOperator;
 
 [TestFixture]
 public class GetDevicesByOperatorQueryHandlerTests : TestsContext

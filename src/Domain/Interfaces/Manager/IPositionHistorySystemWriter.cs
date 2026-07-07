@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+namespace TrackHub.Router.Domain.Interfaces.Manager;
 
 // Appends stored history rows for the storing pipeline with the Router's own service
 // identity. Manager enforces the gps.positionHistory flag and per-row idempotency.

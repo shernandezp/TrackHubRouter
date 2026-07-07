@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Models;
 
 // Active geocoding provider configuration served by Manager to the Router service
 // client. ApiKey is encrypted; Salt is the per-row salt (operator-credential pattern).

@@ -16,10 +16,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Common.Domain.Enums;
-using TrackHubRouter.Application.DevicePositions.Registry;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Application.DevicePositions.Registry;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
-namespace TrackHubRouter.Application.UnitTests.DevicePositions.Registry;
+namespace TrackHub.Router.Application.UnitTests.DevicePositions.Registry;
 
 [TestFixture]
 public class PositionRegistryTests

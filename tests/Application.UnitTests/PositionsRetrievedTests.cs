@@ -16,24 +16,24 @@
 using Application.UnitTests;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Events;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Events;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.UnitTests.DevicePositions.Events;
+namespace TrackHub.Router.Application.UnitTests.DevicePositions.Events;
 
 [TestFixture]
 public class PositionsRetrievedTests : TestsContext
 {
     private static PositionsRetrieved.Notification.EventHandler CreateHandler(
-        Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter> positionWriterMock,
-        Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter> geofenceWriterMock,
-        Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter> syncRunMock,
-        Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter> alertMock)
+        Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter> positionWriterMock,
+        Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter> geofenceWriterMock,
+        Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter> syncRunMock,
+        Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter> alertMock)
     {
         // Enrichment disabled in tests: budget 0 keeps the geocoder out of the write path.
-        var geocodingMock = new Mock<TrackHubRouter.Domain.Interfaces.Geocoding.IReverseGeocodingService>();
+        var geocodingMock = new Mock<TrackHub.Router.Domain.Interfaces.Geocoding.IReverseGeocodingService>();
         geocodingMock.Setup(x => x.GetEnrichmentBudgetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(0);
-        var historyMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionHistorySystemWriter>();
+        var historyMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionHistorySystemWriter>();
         return new(positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
             geocodingMock.Object,
             historyMock.Object,
@@ -49,10 +49,10 @@ public class PositionsRetrievedTests : TestsContext
     [Test]
     public async Task EventHandler_CallsPositionWriterAndGeofenceWhenEnabled_AndRecordsSucceededRun()
     {
-        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
-        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
-        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
-        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
@@ -63,7 +63,7 @@ public class PositionsRetrievedTests : TestsContext
         positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         geofenceWriterMock.Setup(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new TrackHubRouter.Domain.Models.GeofenceProcessingResultVm(0, 1, 0));
+            .ReturnsAsync(new TrackHub.Router.Domain.Models.GeofenceProcessingResultVm(0, 1, 0));
 
         await handler.Handle(notification, CancellationToken.None);
 
@@ -78,10 +78,10 @@ public class PositionsRetrievedTests : TestsContext
     [Test]
     public async Task EventHandler_RecordsFailedRunAndAlert_WhenPositionWriterThrows()
     {
-        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
-        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
-        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
-        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
@@ -101,10 +101,10 @@ public class PositionsRetrievedTests : TestsContext
     [Test]
     public async Task EventHandler_RecordsRequestedTriggerType()
     {
-        var positionWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IPositionWriter>();
-        var geofenceWriterMock = new Mock<TrackHubRouter.Domain.Interfaces.Geofence.IGeofenceWriter>();
-        var syncRunMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
-        var alertMock = new Mock<TrackHubRouter.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
         var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);

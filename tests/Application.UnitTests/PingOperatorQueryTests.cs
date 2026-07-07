@@ -16,16 +16,16 @@
 using Moq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Application.PingOperator.Queries;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.PingOperator.Queries;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Models;
 using Common.Domain.Enums;
 using Application.UnitTests;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Records;
 
-namespace TrackHubRouter.Application.UnitTests.PingOperator.Queries;
+namespace TrackHub.Router.Application.UnitTests.PingOperator.Queries;
 
 [TestFixture]
 public class PingOperatorQueryTests : TestsContext

@@ -14,9 +14,9 @@
 //
 
 using TrackHub.Router.Infrastructure.Protrack.Mappers;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Protrack;
 

@@ -15,9 +15,9 @@
 
 using HotChocolate;
 using HotChocolate.Execution;
-using TrackHubRouter.Domain.Exceptions;
+using TrackHub.Router.Domain.Exceptions;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL;
 
 // Maps geocoder outages to a typed error so clients degrade to coordinates-only
 // display instead of treating the failure as a generic server error.

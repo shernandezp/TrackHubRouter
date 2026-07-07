@@ -13,13 +13,17 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Geocoding.Queries;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Positions.Queries.GetRange;
+using TrackHub.Router.Application.Positions.Queries.GetTrips;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
-    public async Task<AddressVm> GetReverseGeocode([Service] ISender sender, [AsParameters] ReverseGeocodeQuery query)
+    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
+        => await sender.Send(query);
+
+    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
         => await sender.Send(query);
 }

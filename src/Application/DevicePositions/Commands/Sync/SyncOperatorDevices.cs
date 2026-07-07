@@ -16,10 +16,10 @@
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.DevicePositions.Commands.Sync;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
 public readonly record struct SyncOperatorDevicesCommand(
     OperatorVm Operator,
@@ -128,7 +128,7 @@ public class SyncOperatorDevicesCommandHandler(
                     AccountId: request.Account.AccountId,
                     EventType: "GpsOperatorDeviceSyncFailed",
                     Severity: "Warning",
-                    SourceModule: "TrackHubRouter.SyncWorker",
+                    SourceModule: "TrackHub.Router.SyncWorker",
                     ResourceType: "Operator",
                     ResourceId: request.Operator.OperatorId.ToString(),
                     Status: "Open",

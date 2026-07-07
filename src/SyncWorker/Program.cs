@@ -14,7 +14,7 @@
 //
 
 using Common.Application;
-using TrackHubRouter.SyncWorker;
+using TrackHub.Router.SyncWorker;
 
 var builder = Host.CreateApplicationBuilder(args);
 

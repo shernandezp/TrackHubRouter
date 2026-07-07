@@ -15,9 +15,9 @@
 
 using Common.Domain.Constants;
 using Microsoft.Extensions.Caching.Memory;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
-namespace TrackHubRouter.Application.Gating;
+namespace TrackHub.Router.Application.Gating;
 
 /// <inheritdoc cref="IAccountModeResolver"/>
 public sealed class AccountModeResolver(IAccountReader accountReader, IMemoryCache cache) : IAccountModeResolver

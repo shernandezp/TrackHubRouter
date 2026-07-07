@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ using System.Text;
 using System.Text.Json;
 using Ardalis.GuardClauses;
 using Common.Domain.Extensions;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Helpers;
 // Helper class for managing tokens

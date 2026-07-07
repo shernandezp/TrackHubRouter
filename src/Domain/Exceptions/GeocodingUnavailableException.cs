@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Exceptions;
+namespace TrackHub.Router.Domain.Exceptions;
 
 // Thrown when reverse geocoding cannot be served: no active GeocodingProvider is
 // configured or the geocoding service is unreachable. Mapped to the GEOCODER_UNAVAILABLE

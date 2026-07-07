@@ -19,10 +19,10 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.PingOperator.Queries;
+namespace TrackHub.Router.Application.PingOperator.Queries;
 
 [Authorize(Resource = Resources.Credentials, Action = Actions.Custom)]
 public readonly record struct PingOperatorQuery(Guid OperatorId) : IRequest<bool>;

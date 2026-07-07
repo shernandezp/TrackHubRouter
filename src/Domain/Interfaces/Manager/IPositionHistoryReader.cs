@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+namespace TrackHub.Router.Domain.Interfaces.Manager;
 
 // Stored-history read for the STORED replay source. Runs under the requesting user's
 // token so Manager enforces the feature flag, authorization, and group visibility.

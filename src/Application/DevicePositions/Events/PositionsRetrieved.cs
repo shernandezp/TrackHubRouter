@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 //
 
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Interfaces.Geocoding;
-using TrackHubRouter.Domain.Interfaces.Geofence;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Domain.Interfaces.Geofence;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.DevicePositions.Events;
+namespace TrackHub.Router.Application.DevicePositions.Events;
 
 public sealed class PositionsRetrieved
 {
@@ -157,7 +157,7 @@ public sealed class PositionsRetrieved
                             AccountId: notification.Settings.AccountId,
                             EventType: "GpsOperatorPositionSyncFailed",
                             Severity: "Warning",
-                            SourceModule: "TrackHubRouter.SyncWorker",
+                            SourceModule: "TrackHub.Router.SyncWorker",
                             ResourceType: "Operator",
                             ResourceId: notification.Operator.OperatorId.ToString(),
                             Status: "Open",

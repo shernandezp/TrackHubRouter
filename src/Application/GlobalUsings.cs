@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 global using FluentValidation;
 global using Common.Mediator;
 global using Microsoft.Extensions.DependencyInjection;
-global using TrackHubRouter.Domain.Interfaces.Operator;
+global using TrackHub.Router.Domain.Interfaces.Operator;
 global using Common.Domain.Enums;
-global using TrackHubRouter.Domain.Interfaces;
-global using TrackHubRouter.Domain.Interfaces.Manager;
-global using TrackHubRouter.Domain.Interfaces.Registry;
+global using TrackHub.Router.Domain.Interfaces;
+global using TrackHub.Router.Domain.Interfaces.Manager;
+global using TrackHub.Router.Domain.Interfaces.Registry;

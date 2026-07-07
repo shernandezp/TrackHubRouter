@@ -18,7 +18,9 @@ using Ardalis.GuardClauses;
 using Common.Application;
 using Common.Web.Transformers;
 using Scalar.AspNetCore;
-using TrackHubRouter.Web.GraphQL;
+using TrackHub.Router.Web.GraphQL;
+using TrackHub.Router.Web.GraphQL.Mutation;
+using TrackHub.Router.Web.GraphQL.Query;
 
 var builder = WebApplication.CreateBuilder(args);
 

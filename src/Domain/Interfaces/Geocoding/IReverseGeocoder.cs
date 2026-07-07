@@ -14,10 +14,10 @@
 //
 
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
-namespace TrackHubRouter.Domain.Interfaces.Geocoding;
+namespace TrackHub.Router.Domain.Interfaces.Geocoding;
 
 // One adapter per GeocodingProviderType, mirroring the operator-adapter pattern:
 // a future ORS/Google integration is a new adapter plus a provider row, no call-site changes.

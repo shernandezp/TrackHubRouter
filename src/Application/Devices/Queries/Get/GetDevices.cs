@@ -16,12 +16,12 @@
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using System.Runtime.CompilerServices;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
 using Microsoft.Extensions.Configuration;
 using Ardalis.GuardClauses;
 
-namespace TrackHubRouter.Application.Devices.Queries.Get;
+namespace TrackHub.Router.Application.Devices.Queries.Get;
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
 [RateLimiting(PermitLimit = 3, WindowSeconds = 60)]

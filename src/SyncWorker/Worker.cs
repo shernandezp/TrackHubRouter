@@ -14,11 +14,11 @@
 //
 
 using Common.Mediator;
-using TrackHubRouter.Application.DevicePositions.Commands.Health;
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Application.DevicePositions.Commands.Health;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
-namespace TrackHubRouter.SyncWorker;
+namespace TrackHub.Router.SyncWorker;
 
 public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : BackgroundService
 {

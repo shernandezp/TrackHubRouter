@@ -15,8 +15,8 @@
 
 using System.Security.Cryptography;
 using System.Text;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.Protrack.Helpers;
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Application.PingOperator;
+namespace TrackHub.Router.Application.PingOperator;
 
 // This class represents a registry for connectivity testers.
 public class ConnectivityRegistry(IServiceScopeFactory scopeFactory) : IConnectivityRegistry

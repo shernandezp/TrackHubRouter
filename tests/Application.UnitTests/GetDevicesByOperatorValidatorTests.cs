@@ -14,9 +14,9 @@
 //
 
 using FluentValidation.TestHelper;
-using TrackHubRouter.Application.Devices.Queries.GetByOperator;
+using TrackHub.Router.Application.Devices.Queries.GetByOperator;
 
-namespace TrackHubRouter.Application.UnitTests.Devices.Queries.GetByOperator;
+namespace TrackHub.Router.Application.UnitTests.Devices.Queries.GetByOperator;
 
 [TestFixture]
 public class GetDevicesByOperatorValidatorTests

@@ -15,12 +15,12 @@
 
 using Application.UnitTests;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Events;
-using TrackHubRouter.Application.DevicePositions.Queries.Get;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Events;
+using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Domain.Models;
 using Common.Mediator;
 
-namespace TrackHubRouter.Application.UnitTests.DevicePositions.Events;
+namespace TrackHub.Router.Application.UnitTests.DevicePositions.Events;
 
 [TestFixture]
 public class OperatorRetrievedTests : TestsContext

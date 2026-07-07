@@ -16,11 +16,11 @@
 using Common.Domain.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Exceptions;
-using TrackHubRouter.Domain.Interfaces.Geocoding;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Exceptions;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
 namespace TrackHub.Router.Infrastructure.Common.Geocoding;
 

@@ -13,9 +13,9 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Domain.Interfaces.Geocoding;
+namespace TrackHub.Router.Domain.Interfaces.Geocoding;
 
 public interface IReverseGeocodingService
 {

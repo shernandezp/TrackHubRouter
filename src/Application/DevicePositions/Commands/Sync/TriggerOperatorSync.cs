@@ -14,9 +14,9 @@
 //
 
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Exceptions;
+using TrackHub.Router.Domain.Exceptions;
 
-namespace TrackHubRouter.Application.DevicePositions.Commands.Sync;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
 public readonly record struct TriggerOperatorSyncCommand(
     Guid AccountId,

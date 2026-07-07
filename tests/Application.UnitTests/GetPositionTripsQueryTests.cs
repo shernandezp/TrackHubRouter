@@ -15,18 +15,18 @@
 
 using Moq;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Application.Positions.Queries.GetTrips;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Application.Gating;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Positions.Queries.GetTrips;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Application.Gating;
+using TrackHub.Router.Domain.Models;
 using Common.Application.Interfaces;
 using Common.Domain.Enums;
 using Application.UnitTests;
-using TrackHubRouter.Domain.Interfaces.Operator;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Records;
 
-namespace TrackHubRouter.Application.UnitTests.Positions.Queries.GetTrips;
+namespace TrackHub.Router.Application.UnitTests.Positions.Queries.GetTrips;
 
 [TestFixture]
 public class GetPositionTripsQueryTests : TestsContext

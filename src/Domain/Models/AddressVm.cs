@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Models;
 
 public readonly record struct AddressVm(
     string? Address,

@@ -1,4 +1,4 @@
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Models;
 
 public readonly record struct OperatorSyncRunDto(
     Guid AccountId,

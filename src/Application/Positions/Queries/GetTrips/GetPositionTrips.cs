@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ using Common.Application.Exceptions;
 using Common.Application.Interfaces;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Application.Positions.Mappers;
-using TrackHubRouter.Domain.Enumerators;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Positions.Mappers;
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.Positions.Queries.GetTrips;
+namespace TrackHub.Router.Application.Positions.Queries.GetTrips;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 public readonly record struct GetPositionTripsQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To, PositionSourceType Source = PositionSourceType.Provider) : IRequest<IEnumerable<TripVm>>;

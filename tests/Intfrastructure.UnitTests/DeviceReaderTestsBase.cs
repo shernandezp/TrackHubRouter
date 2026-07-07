@@ -14,8 +14,8 @@
 //
 
 global using Moq;
-global using TrackHubRouter.Domain.Interfaces;
-global using TrackHubRouter.Domain.Models;
+global using TrackHub.Router.Domain.Interfaces;
+global using TrackHub.Router.Domain.Models;
 global using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.Tests;

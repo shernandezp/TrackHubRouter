@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+namespace TrackHub.Router.Domain.Interfaces.Manager;
 
 /// <summary>
 /// Latest-position writer that authenticates with the Router's own service identity instead of the

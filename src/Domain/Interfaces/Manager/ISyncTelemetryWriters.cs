@@ -1,6 +1,6 @@
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+namespace TrackHub.Router.Domain.Interfaces.Manager;
 
 public interface IOperatorSyncRunWriter
 {

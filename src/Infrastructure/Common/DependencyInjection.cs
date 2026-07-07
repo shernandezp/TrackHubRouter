@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Infrastructure.Common;
 using TrackHub.Router.Infrastructure.Common.Geocoding;
 using TrackHub.Router.Infrastructure.Common.Helpers;
-using TrackHubRouter.Domain.Interfaces.Geocoding;
-using TrackHubRouter.Application.Devices.Registry;
-using TrackHubRouter.Application.PingOperator;
-using TrackHubRouter.Application.DevicePositions.Registry;
-using TrackHubRouter.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Application.Devices.Registry;
+using TrackHub.Router.Application.PingOperator;
+using TrackHub.Router.Application.DevicePositions.Registry;
+using TrackHub.Router.Domain.Interfaces.Registry;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

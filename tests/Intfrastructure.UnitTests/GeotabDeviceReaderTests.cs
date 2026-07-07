@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 using Common.Domain.Enums;
 
 namespace TrackHub.Router.Infrastructure.Geotab.Tests;

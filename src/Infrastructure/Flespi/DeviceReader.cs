@@ -14,7 +14,7 @@
 //
 
 using TrackHub.Router.Infrastructure.Flespi.Mappers;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Flespi;
 

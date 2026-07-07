@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Records;
+namespace TrackHub.Router.Domain.Records;
 
 // Decrypted, ready-to-use geocoding provider connection handed to adapters.
 public readonly record struct GeocodingProviderConnectionDto(

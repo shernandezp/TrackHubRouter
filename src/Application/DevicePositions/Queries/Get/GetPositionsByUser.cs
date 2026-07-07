@@ -19,10 +19,10 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
 
-namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
 // The account-configurable map refresh has a 10-second floor (spec 07 §17.4), i.e. up
 // to 6 legitimate calls per minute per user, plus page loads and tab returns on top.

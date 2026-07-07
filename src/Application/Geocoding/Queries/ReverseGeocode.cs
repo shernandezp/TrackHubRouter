@@ -16,11 +16,11 @@
 using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Interfaces.Geocoding;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.Geocoding.Queries;
+namespace TrackHub.Router.Application.Geocoding.Queries;
 
 // Resolves a single coordinate through the geocoding abstraction. When the coordinate
 // corresponds to a TrackHub-stored row (ids supplied), the resolved address is written

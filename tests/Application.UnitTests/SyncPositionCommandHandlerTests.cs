@@ -16,13 +16,13 @@
 using Application.UnitTests;
 using Moq;
 using Common.Mediator;
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
-using TrackHubRouter.Application.DevicePositions.Events;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Application.DevicePositions.Events;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.UnitTests.DevicePositions.Commands.Sync;
+namespace TrackHub.Router.Application.UnitTests.DevicePositions.Commands.Sync;
 
 [TestFixture]
 public class SyncPositionCommandHandlerTests : TestsContext

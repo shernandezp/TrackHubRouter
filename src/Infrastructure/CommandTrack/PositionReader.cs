@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
 
 namespace TrackHub.Router.Infrastructure.CommandTrack;
 
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Infrastructure.CommandTrack.Mappers;
 using Common.Domain.Extensions;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory, 
     IHttpClientService httpClientService,

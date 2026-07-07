@@ -18,10 +18,10 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
 
-namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) : IRequest<PositionVm>;

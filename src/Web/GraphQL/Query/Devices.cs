@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Devices.Queries.Get;
-using TrackHubRouter.Application.Devices.Queries.GetByOperator;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Devices.Queries.Get;
+using TrackHub.Router.Application.Devices.Queries.GetByOperator;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
