@@ -33,6 +33,6 @@ internal readonly record struct DevicePosition(
     bool Ignition,
     double? Satellites,
     double? Mileage,
-    double? Hourmeter,
+    [property: System.Text.Json.Serialization.JsonPropertyName("hobbsMeter")] double? Hourmeter,
     double? Temperature
     );

@@ -17,21 +17,10 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 
 // This class represents a device reader that implements the IDeviceReader interface.
 // It is responsible for retrieving devices by operator from the GraphQL service.
-public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient) 
+public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceTransporterReader
 {
-
-    /// <summary>
-    /// Retrieves devices by operator asynchronously.
-    /// </summary>
-    /// <param name="operatorId">The ID of the operator.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of DeviceVm objects representing the devices.</returns>
-    public async Task<IEnumerable<DeviceTransporterVm>> GetVisibleDeviceTransportersByOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string VisibleDeviceTransportersByOperatorQuery = @"
                 query($operatorId: UUID!) {
                     deviceTransporterByUserByOperator(query: { operatorId: $operatorId })
                     {
@@ -42,17 +31,9 @@ public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
                         transporterType,
                         transporterTypeId
                     }
-                }",
-            Variables = new { operatorId }
-        };
-        return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
-    }
+                }";
 
-    public async Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string AssignedDeviceTransportersByOperatorQuery = @"
             query($accountId: UUID!, $operatorId: UUID!) {
                 assignedDeviceTransportersByOperator(
                     query: { accountId: $accountId, operatorId: $operatorId }
@@ -64,7 +45,42 @@ public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
                         transporterType,
                         transporterTypeId
                     }
-            }",
+            }";
+
+    internal const string DeviceTransporterByIdQuery = @"
+                query($transporterId: UUID!) {
+                    deviceTransporterById(query: { transporterId: $transporterId })
+                    {
+                        transporterId,
+                        identifier,
+                        serial,
+                        name,
+                        transporterType,
+                        transporterTypeId
+                    }
+                }";
+
+    /// <summary>
+    /// Retrieves devices by operator asynchronously.
+    /// </summary>
+    /// <param name="operatorId">The ID of the operator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of DeviceVm objects representing the devices.</returns>
+    public async Task<IEnumerable<DeviceTransporterVm>> GetVisibleDeviceTransportersByOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = VisibleDeviceTransportersByOperatorQuery,
+            Variables = new { operatorId }
+        };
+        return await QueryAsync<IEnumerable<DeviceTransporterVm>>(request, cancellationToken);
+    }
+
+    public async Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = AssignedDeviceTransportersByOperatorQuery,
             Variables = new
             {
                 accountId,
@@ -84,18 +100,7 @@ public class DeviceTransporterReader(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($transporterId: UUID!) {
-                    deviceTransporterById(query: { transporterId: $transporterId })
-                    {
-                        transporterId,
-                        identifier,
-                        serial,
-                        name,
-                        transporterType,
-                        transporterTypeId
-                    }
-                }",
+            Query = DeviceTransporterByIdQuery,
             Variables = new { transporterId }
         };
         return await QueryAsync<DeviceTransporterVm>(request, cancellationToken);

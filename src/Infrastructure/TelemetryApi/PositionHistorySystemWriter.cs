@@ -20,6 +20,11 @@ namespace TrackHub.Router.Infrastructure.TelemetryApi;
 public class PositionHistorySystemWriter(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry, asService: true)), IPositionHistorySystemWriter
 {
+    internal const string AppendPositionHistoryBatchMutation = @"
+                mutation($command: AppendPositionHistoryBatchCommandInput!) {
+                    appendPositionHistoryBatch(command: $command)
+                }";
+
     public async Task<int> AppendRangeAsync(Guid accountId, Guid operatorId, IEnumerable<PositionVm> positions, CancellationToken cancellationToken)
     {
         var rows = positions.Select(p => new
@@ -52,10 +57,7 @@ public class PositionHistorySystemWriter(IGraphQLClientFactory graphQLClient)
 
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: AppendPositionHistoryBatchCommandInput!) {
-                    appendPositionHistoryBatch(command: $command)
-                }",
+            Query = AppendPositionHistoryBatchMutation,
             Variables = new
             {
                 command = new

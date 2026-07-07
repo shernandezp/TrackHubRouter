@@ -18,12 +18,7 @@ namespace TrackHub.Router.Infrastructure.TelemetryApi;
 public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry)), ITransporterPositionReader
 {
-
-    public async Task<IEnumerable<PositionVm>> GetTransporterPositionAsync(Guid operatorId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string TransporterPositionByOperatorQuery = @"
                 query($operatorId: UUID!) {
                     transporterPositionByOperator(query: { operatorId: $operatorId })
                     {
@@ -50,7 +45,13 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
                         altitude
                         address
                     }
-                }",
+                }";
+
+    public async Task<IEnumerable<PositionVm>> GetTransporterPositionAsync(Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = TransporterPositionByOperatorQuery,
             Variables = new { operatorId }
         };
         return await QueryAsync<IEnumerable<PositionVm>>(request, cancellationToken);

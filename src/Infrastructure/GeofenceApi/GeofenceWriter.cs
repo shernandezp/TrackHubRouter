@@ -17,18 +17,22 @@ namespace TrackHub.Router.Infrastructure.GeofenceApi;
 
 public class GeofenceWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Geofence)), IGeofenceWriter
 {
-    public async Task<GeofenceProcessingResultVm> ProcessPositionsAsync(IEnumerable<PositionVm> positions, Guid accountId, CancellationToken token)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    // Single source of truth for the mutation this writer sends; the
+    // ServiceContracts tests validate this exact string against the Geofence schema.
+    internal const string ProcessPositionsMutation = @"
                 mutation($command: ProcessPositionsCommandInput!) {
                     processPositions(command: $command) {
                         processedCount
                         eventsUpdated
                         eventsCreated
                     }
-                }",
+                }";
+
+    public async Task<GeofenceProcessingResultVm> ProcessPositionsAsync(IEnumerable<PositionVm> positions, Guid accountId, CancellationToken token)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = ProcessPositionsMutation,
             Variables = new
             {
                 command = new

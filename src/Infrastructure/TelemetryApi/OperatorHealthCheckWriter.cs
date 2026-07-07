@@ -8,14 +8,16 @@ public class OperatorHealthCheckWriter : GraphQLService, IOperatorHealthCheckWri
 
     protected OperatorHealthCheckWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
 
+    internal const string RecordOperatorHealthMutation = @"
+                mutation($command: RecordOperatorHealthCommandInput!) {
+                    recordOperatorHealth(command: $command) { operatorHealthCheckId }
+                }";
+
     public async Task RecordAsync(OperatorHealthCheckDto dto, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: RecordOperatorHealthCommandInput!) {
-                    recordOperatorHealth(command: $command) { operatorHealthCheckId }
-                }",
+            Query = RecordOperatorHealthMutation,
             Variables = new
             {
                 command = new

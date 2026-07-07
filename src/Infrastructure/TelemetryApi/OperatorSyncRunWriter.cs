@@ -3,14 +3,16 @@ namespace TrackHub.Router.Infrastructure.TelemetryApi;
 public class OperatorSyncRunWriter(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry)), IOperatorSyncRunWriter
 {
+    internal const string RecordOperatorSyncRunMutation = @"
+                mutation($command: RecordOperatorSyncRunCommandInput!) {
+                    recordOperatorSyncRun(command: $command) { operatorSyncRunId }
+                }";
+
     public async Task RecordAsync(OperatorSyncRunDto dto, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: RecordOperatorSyncRunCommandInput!) {
-                    recordOperatorSyncRun(command: $command) { operatorSyncRunId }
-                }",
+            Query = RecordOperatorSyncRunMutation,
             Variables = new
             {
                 command = new

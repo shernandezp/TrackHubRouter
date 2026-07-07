@@ -36,16 +36,10 @@ builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();
 
-builder.Services
-    .AddGraphQLServer()
-    .AddAuthorization()
-    .AddMaxExecutionDepthRule(15)
-    .AddErrorFilter<TrackHubGraphQLErrorFilter>()
+// Shared TrackHub GraphQL hardening + the Router-specific error filters.
+builder.Services.AddTrackHubGraphQLServer<Query, Mutation>(builder.Environment.IsDevelopment())
     .AddErrorFilter<GeocodingErrorFilter>()
-    .AddErrorFilter<OperatorSyncErrorFilter>()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>();
+    .AddErrorFilter<OperatorSyncErrorFilter>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 

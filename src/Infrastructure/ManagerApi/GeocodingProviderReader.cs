@@ -20,11 +20,7 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class GeocodingProviderReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager, asService: true)), IGeocodingProviderReader
 {
-    public async Task<GeocodingProviderTokenVm?> GetActiveGeocodingProviderAsync(CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string ActiveGeocodingProviderQuery = @"
                 query {
                     activeGeocodingProvider {
                         geocodingProviderId
@@ -37,7 +33,13 @@ public class GeocodingProviderReader(IGraphQLClientFactory graphQLClient)
                         timeoutSeconds
                         configurationJson
                     }
-                }"
+                }";
+
+    public async Task<GeocodingProviderTokenVm?> GetActiveGeocodingProviderAsync(CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = ActiveGeocodingProviderQuery
         };
         return await QueryAsync<GeocodingProviderTokenVm?>(request, cancellationToken);
     }

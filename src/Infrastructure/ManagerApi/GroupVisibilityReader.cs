@@ -20,14 +20,16 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class GroupVisibilityReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IGroupVisibilityReader
 {
+    internal const string ValidateGroupVisibilityQuery = @"
+                query($accountId: UUID!, $userId: UUID!, $resourceType: String!, $resourceId: String!) {
+                    validateGroupVisibility(query: { accountId: $accountId, userId: $userId, resourceType: $resourceType, resourceId: $resourceId })
+                }";
+
     public async Task<bool> ValidateGroupVisibilityAsync(Guid accountId, Guid userId, string resourceType, string resourceId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($accountId: UUID!, $userId: UUID!, $resourceType: String!, $resourceId: String!) {
-                    validateGroupVisibility(query: { accountId: $accountId, userId: $userId, resourceType: $resourceType, resourceId: $resourceId })
-                }",
+            Query = ValidateGroupVisibilityQuery,
             Variables = new { accountId, userId, resourceType, resourceId }
         };
         return await QueryAsync<bool>(request, cancellationToken);

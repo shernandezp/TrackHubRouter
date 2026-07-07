@@ -3,14 +3,27 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class DeviceSyncWriter(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IDeviceSyncWriter
 {
+    internal const string WipeDevicesMutation = @"
+                mutation($operatorId: UUID!) {
+                    wipeDevices(operatorId: $operatorId)
+                }";
+
+    internal const string SynchronizeOperatorDevicesMutation = @"
+                mutation($command: SynchronizeOperatorDevicesCommandInput!) {
+                    synchronizeOperatorDevices(command: $command) {
+                        devicesSeen
+                        devicesAdded
+                        devicesUpdated
+                        devicesRemoved
+                        devicesIgnored
+                    }
+                }";
+
     public async Task ResetAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($operatorId: UUID!) {
-                    wipeDevices(operatorId: $operatorId)
-                }",
+            Query = WipeDevicesMutation,
             Variables = new { operatorId }
         };
         await MutationAsync<object>(request, cancellationToken);
@@ -27,16 +40,7 @@ public class DeviceSyncWriter(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: SynchronizeOperatorDevicesCommandInput!) {
-                    synchronizeOperatorDevices(command: $command) {
-                        devicesSeen
-                        devicesAdded
-                        devicesUpdated
-                        devicesRemoved
-                        devicesIgnored
-                    }
-                }",
+            Query = SynchronizeOperatorDevicesMutation,
             Variables = new
             {
                 command = new

@@ -23,18 +23,45 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
     // Fallback cadence (seconds) when the gps.integration feature omits a storing interval.
     private const int DefaultStoringIntervalSeconds = 360;
 
-    public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    // Single source of truth for the queries this reader sends; the
+    // ServiceContracts tests validate these exact strings against the Manager schema.
+    internal const string AccountsToSyncQuery = @"
                 query($filter: FiltersInput!) {
                     accountSettingsMaster(
                         query: { filter: $filter }
                       ) {
                             accountId
                        }
-                }",
+                }";
+
+    internal const string AccountToSyncQuery = @"
+                query($id: UUID!) {
+                    accountSettings(query: { id: $id }) {
+                        accountId
+                   }
+                }";
+
+    internal const string ValidateFeatureEnabledQuery = @"
+                query($accountId: UUID!, $featureKey: String!) {
+                    validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
+                }";
+
+    internal const string AccountFeaturesQuery = @"
+                query($accountId: UUID!) {
+                    accountFeatures(query: { accountId: $accountId }) {
+                        featureKey
+                        enabled
+                        effectiveFrom
+                        effectiveTo
+                        configurationJson
+                    }
+                }";
+
+    public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = AccountsToSyncQuery,
             Variables = new
             {
                 filter = new
@@ -52,12 +79,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($id: UUID!) {
-                    accountSettings(query: { id: $id }) {
-                        accountId
-                   }
-                }",
+            Query = AccountToSyncQuery,
             Variables = new
             {
                 id = accountId
@@ -74,10 +96,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($accountId: UUID!, $featureKey: String!) {
-                    validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
-                }",
+            Query = ValidateFeatureEnabledQuery,
             Variables = new
             {
                 accountId,
@@ -104,16 +123,7 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($accountId: UUID!) {
-                    accountFeatures(query: { accountId: $accountId }) {
-                        featureKey
-                        enabled
-                        effectiveFrom
-                        effectiveTo
-                        configurationJson
-                    }
-                }",
+            Query = AccountFeaturesQuery,
             Variables = new
             {
                 accountId

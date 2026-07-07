@@ -23,14 +23,16 @@ public class ResolvedAddressWriter : GraphQLService, IResolvedAddressWriter
 
     protected ResolvedAddressWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
 
+    internal const string PersistResolvedAddressMutation = @"
+                mutation($command: PersistResolvedAddressCommandInput!) {
+                    persistResolvedAddress(command: $command)
+                }";
+
     public async Task<bool> PersistResolvedAddressAsync(Guid? transporterPositionHistoryId, Guid? transporterId, AddressVm address, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: PersistResolvedAddressCommandInput!) {
-                    persistResolvedAddress(command: $command)
-                }",
+            Query = PersistResolvedAddressMutation,
             Variables = new
             {
                 command = new

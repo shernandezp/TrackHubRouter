@@ -23,14 +23,16 @@ public class PositionWriter : GraphQLService, IPositionWriter
 
     protected PositionWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
 
+    internal const string BulkTransporterPositionMutation = @"
+                mutation($command: BulkTransporterPositionCommandInput!) {
+                    bulkTransporterPosition(command: $command)
+                }";
+
     public async Task<bool> AddOrUpdatePositionAsync(IEnumerable<PositionVm> positions, CancellationToken token)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: BulkTransporterPositionCommandInput!) {
-                    bulkTransporterPosition(command: $command)
-                }",
+            Query = BulkTransporterPositionMutation,
             Variables = new
             {
                 command = new

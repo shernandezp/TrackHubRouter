@@ -22,11 +22,7 @@ public class PositionHistoryReader(IGraphQLClientFactory graphQLClient)
 {
     private const int MaxPoints = 10000;
 
-    public async Task<IEnumerable<PositionVm>> GetPositionHistoryRangeAsync(Guid accountId, Guid transporterId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string PositionHistoryRangeQuery = @"
                 query($accountId: UUID!, $transporterId: UUID!, $from: DateTime!, $to: DateTime!, $maxPoints: Int!) {
                     positionHistoryRange(query: { accountId: $accountId, transporterId: $transporterId, from: $from, to: $to, maxPoints: $maxPoints })
                     {
@@ -43,7 +39,13 @@ public class PositionHistoryReader(IGraphQLClientFactory graphQLClient)
                         country
                         transporterId
                     }
-                }",
+                }";
+
+    public async Task<IEnumerable<PositionVm>> GetPositionHistoryRangeAsync(Guid accountId, Guid transporterId, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = PositionHistoryRangeQuery,
             Variables = new { accountId, transporterId, from, to, maxPoints = MaxPoints }
         };
 

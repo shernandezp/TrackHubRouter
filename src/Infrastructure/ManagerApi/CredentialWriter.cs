@@ -21,6 +21,12 @@ namespace ManagerApi;
 // It is responsible for updating a token asynchronously.
 public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialWriter
 {
+    internal const string UpdateTokenMutation = @"
+                    mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {
+                      updateToken(id: $id,
+                            command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
+                    }";
+
     /// <summary>
     /// It constructs a GraphQL request with the necessary variables and sends a mutation to update the token.
     /// </summary>
@@ -32,11 +38,7 @@ public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLServ
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                    mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {
-                      updateToken(id: $id,
-                            command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
-                    }",
+            Query = UpdateTokenMutation,
             Variables = new
             {
                 id,
