@@ -44,6 +44,11 @@ public static class DependencyInjection
         // Master-data / provider-support readers and writers stay on Manager. The positions/history/
         // health/sync-run surface moved to TelemetryApi (spec 01.3 §5.5, AddAppTelemetryContext).
         services.AddScoped<IAccountReader, AccountReader>();
+
+        services.AddMemoryCache();
+        services.AddScoped<Common.Application.Interfaces.IAccountOperationalStatusReader, AccountOperationalStatusReader>();
+        services.AddScoped<Common.Application.Interfaces.IAccountOperationalStatusService, Common.Application.Services.CachedAccountOperationalStatusService>();
+
         services.AddScoped<ICredentialWriter, CredentialWriter>();
         services.AddScoped<IGeocodingProviderReader, GeocodingProviderReader>();
         services.AddScoped<IGroupVisibilityReader, GroupVisibilityReader>();
