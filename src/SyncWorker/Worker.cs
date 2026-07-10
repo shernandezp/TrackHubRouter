@@ -109,15 +109,16 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // The master projection already carries the credential under the worker's
+                // service identity — no per-operator re-fetch.
+                if (op.Credential is null)
+                {
+                    continue;
+                }
+
                 try
                 {
-                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
-                    if (!hydrated.Enabled || hydrated.Credential is null)
-                    {
-                        continue;
-                    }
-
-                    await sender.Send(new SyncOperatorDevicesCommand(hydrated, account, "AUTOMATIC"), stoppingToken);
+                    await sender.Send(new SyncOperatorDevicesCommand(op, "AUTOMATIC"), stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -162,14 +163,15 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // Credential comes with the master projection (service identity) — no re-fetch.
+                if (op.Credential is null)
+                {
+                    continue;
+                }
+
                 try
                 {
-                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
-                    if (!hydrated.Enabled || hydrated.Credential is null)
-                    {
-                        continue;
-                    }
-                    await sender.Send(new RecordOperatorHealthCommand(hydrated, account), stoppingToken);
+                    await sender.Send(new RecordOperatorHealthCommand(op), stoppingToken);
                 }
                 catch (Exception ex)
                 {

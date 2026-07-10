@@ -13,6 +13,7 @@
 //  limitations under the License.
 //
 
+using Common.Domain.Constants;
 using TrackHub.Router.Infrastructure.GeofenceApi;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddGeofenceManagerContext(this IServiceCollection services)
     {
+        // A named client MUST be registered: an unregistered name silently yields a default
+        // HttpClient (100 s timeout, no propagation). processPositions is a mutation — no retry.
+        services.AddGraphQLClient(Clients.Geofence);
         services.AddScoped<IGeofenceWriter, GeofenceWriter>();
         return services;
     }

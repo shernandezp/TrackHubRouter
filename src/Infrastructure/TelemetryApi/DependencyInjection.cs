@@ -23,24 +23,13 @@ public static class TelemetryApiDependencyInjection
 {
     public static IServiceCollection AddAppTelemetryContext(this IServiceCollection services, bool headerPropagation = true)
     {
-        if (headerPropagation)
-        {
-            services.AddHeaderPropagation(o => o.Headers.Add("Authorization"));
-
-            services.AddHttpClient(Clients.Telemetry,
-                client => client.Timeout = TimeSpan.FromSeconds(30))
-                .AddHeaderPropagation();
-        }
-        else
-        {
-            services.AddHttpClient(Clients.Telemetry,
-                    client => client.Timeout = TimeSpan.FromSeconds(30));
-        }
+        // Mixed reader/writer surface — retries stay off (GraphQL mutations are POSTs and
+        // cannot be distinguished by HTTP method).
+        services.AddGraphQLClient(Clients.Telemetry, propagateHeaders: headerPropagation);
 
         // Dedicated client for system (client-credentials) calls: never propagates the user's
         // Authorization header, so the factory applies the Router's own service identity.
-        services.AddHttpClient($"{Clients.Telemetry}AsService",
-                client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddGraphQLServiceClient(Clients.Telemetry);
 
         services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<IPositionWriter, PositionWriter>();

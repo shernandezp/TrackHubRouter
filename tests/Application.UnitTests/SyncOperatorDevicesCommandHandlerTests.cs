@@ -34,6 +34,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
     private Mock<IDeviceRegistry> _deviceRegistryMock = null!;
     private Mock<IDeviceSyncWriter> _deviceSyncWriterMock = null!;
     private Mock<IOperatorSyncRunWriter> _syncRunWriterMock = null!;
+    private Mock<IOperatorHealthCheckSystemWriter> _healthWriterMock = null!;
     private Mock<IAlertEventWriter> _alertWriterMock = null!;
     private Mock<IExternalDeviceReader> _readerMock = null!;
 
@@ -46,6 +47,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         _deviceRegistryMock = new Mock<IDeviceRegistry>();
         _deviceSyncWriterMock = new Mock<IDeviceSyncWriter>();
         _syncRunWriterMock = new Mock<IOperatorSyncRunWriter>();
+        _healthWriterMock = new Mock<IOperatorHealthCheckSystemWriter>();
         _alertWriterMock = new Mock<IAlertEventWriter>();
         _readerMock = new Mock<IExternalDeviceReader>();
         _readerMock.SetupGet(r => r.Protocol).Returns(ProtocolType.CommandTrack);
@@ -59,6 +61,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         _deviceRegistryMock.Object,
         _deviceSyncWriterMock.Object,
         _syncRunWriterMock.Object,
+        _healthWriterMock.Object,
         _alertWriterMock.Object,
         Mock.Of<ILogger<SyncOperatorDevicesCommandHandler>>());
 
@@ -75,10 +78,11 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         var account = EnabledAccount(op.AccountId);
 
         var result = await CreateHandler().Handle(
-            new SyncOperatorDevicesCommand(op, account, "MANUAL"), CancellationToken.None);
+            new SyncOperatorDevicesCommand(op, "MANUAL"), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _syncRunWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorSyncRunDto>(), It.IsAny<CancellationToken>()), Times.Never);
+        _healthWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorHealthCheckDto>(), It.IsAny<CancellationToken>()), Times.Never);
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -100,7 +104,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             .ReturnsAsync(new DeviceSyncCountsVm(DevicesSeen: 2, DevicesAdded: 2, DevicesUpdated: 0, DevicesRemoved: 0, DevicesIgnored: 0));
 
         var result = await CreateHandler().Handle(
-            new SyncOperatorDevicesCommand(op, account, "AUTOMATIC", "corr-1"), CancellationToken.None);
+            new SyncOperatorDevicesCommand(op, "AUTOMATIC", "corr-1"), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _deviceSyncWriterMock.Verify(w => w.SynchronizeAsync(
@@ -119,6 +123,15 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
                                             && r.DevicesAdded == 2
                                             && r.CorrelationId == "corr-1"),
             It.IsAny<CancellationToken>()), Times.Once);
+        // A successful sync is a connectivity observation: the derived Health status goes
+        // HEALTHY without needing the background health loop (manual-sync-only accounts).
+        _healthWriterMock.Verify(w => w.RecordAsync(
+            It.Is<OperatorHealthCheckDto>(h => h.Status == "HEALTHY"
+                                                && h.CheckType == "DEVICE_SYNC"
+                                                && h.OperatorId == op.OperatorId
+                                                && h.ErrorCode == null
+                                                && h.CorrelationId == "corr-1"),
+            It.IsAny<CancellationToken>()), Times.Once);
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -134,7 +147,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         _readerMock.Setup(r => r.GetDevicesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(devices);
 
         var result = await CreateHandler().Handle(
-            new SyncOperatorDevicesCommand(op, account, "MANUAL", "corr-reset", ResetDeviceCatalog: true),
+            new SyncOperatorDevicesCommand(op, "MANUAL", "corr-reset", ResetDeviceCatalog: true),
             CancellationToken.None);
 
         Assert.That(result, Is.True);
@@ -158,7 +171,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             .ThrowsAsync(new InvalidOperationException("boom"));
 
         var result = await CreateHandler().Handle(
-            new SyncOperatorDevicesCommand(op, account, "MANUAL"), CancellationToken.None);
+            new SyncOperatorDevicesCommand(op, "MANUAL"), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _deviceSyncWriterMock.Verify(w => w.ResetAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -175,6 +188,13 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
                                        && a.Severity == "Warning"
                                        && a.DeduplicationKey.StartsWith($"device-sync-failed:{op.OperatorId}")),
             It.IsAny<CancellationToken>()), Times.Once);
+        // An unreachable provider is an OFFLINE observation with the failure detail.
+        _healthWriterMock.Verify(w => w.RecordAsync(
+            It.Is<OperatorHealthCheckDto>(h => h.Status == "OFFLINE"
+                                                && h.CheckType == "DEVICE_SYNC"
+                                                && h.ErrorCode == "InvalidOperationException"
+                                                && h.ErrorMessage == "boom"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -186,7 +206,7 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
             .ReturnsAsync([]);
 
         var result = await CreateHandler().Handle(
-            new SyncOperatorDevicesCommand(op, account, "AUTOMATIC"), CancellationToken.None);
+            new SyncOperatorDevicesCommand(op, "AUTOMATIC"), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _deviceSyncWriterMock.Verify(w => w.SynchronizeAsync(

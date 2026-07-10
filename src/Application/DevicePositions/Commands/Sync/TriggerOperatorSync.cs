@@ -27,7 +27,6 @@ public readonly record struct TriggerOperatorSyncCommand(
     bool? AutoAssignNewDevices = null) : IRequest<bool>;
 
 public class TriggerOperatorSyncCommandHandler(
-    IAccountReader accountReader,
     IOperatorReader operatorReader,
     ISender sender,
     ILogger<TriggerOperatorSyncCommandHandler> logger) : IRequestHandler<TriggerOperatorSyncCommand, bool>
@@ -35,21 +34,16 @@ public class TriggerOperatorSyncCommandHandler(
     public async Task<bool> Handle(TriggerOperatorSyncCommand request, CancellationToken cancellationToken)
     {
         // The manual-sync throttle lives at the single point of entry — Manager's
-        // ManualSyncMinIntervalSeconds, which throws TooManyRequestsException (spec 01.3 A2, K3).
+        // ManualSyncMinIntervalSeconds, which throws TooManyRequestsException
         // The Router's former hardcoded 5-minute cooldown is removed so a trigger accepted by
         // Manager can never be silently dropped here. The Router still validates operator/account/
-        // enabled and returns typed errors instead of a silent false.
+        // enabled and returns typed errors instead of a silent false. One Manager read suffices:
+        // Manager already validated the account (authorization + account-status gate) before
+        // dispatching, and the operator row binds the account id.
         var op = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
         if (op.AccountId != request.AccountId)
         {
             logger.LogWarning("Manual sync trigger rejected: operator {OperatorId} does not belong to account {AccountId}.", request.OperatorId, request.AccountId);
-            throw new OperatorNotFoundException(request.OperatorId);
-        }
-
-        var account = await accountReader.GetAccountToSyncAsync(request.AccountId, cancellationToken);
-        if (!account.HasValue)
-        {
-            logger.LogWarning("Manual sync trigger received for unknown or unauthorized account {AccountId}.", request.AccountId);
             throw new OperatorNotFoundException(request.OperatorId);
         }
 
@@ -61,7 +55,6 @@ public class TriggerOperatorSyncCommandHandler(
 
         return await sender.Send(new SyncOperatorDevicesCommand(
             op,
-            account.Value,
             request.TriggerType,
             request.CorrelationId,
             request.ResetDeviceCatalog,

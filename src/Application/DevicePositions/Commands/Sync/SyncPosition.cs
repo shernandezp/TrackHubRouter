@@ -38,19 +38,16 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
             {
                 var operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, cancellationToken);
                 using var semaphore = new SemaphoreSlim(10);
+                // The master projection already carries each operator's credential under the
+                // worker's service identity — no per-operator re-fetch.
                 var tasks = operators
-                    .Where(o => o.Enabled)
+                    .Where(o => o.Enabled && o.Credential is not null)
                     .Select(async @operator =>
                 {
                     await semaphore.WaitAsync(cancellationToken);
                     try
                     {
-                        var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
-                        if (!operatorCredential.Enabled)
-                        {
-                            return;
-                        }
-                        await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
+                        await publisher.Publish(new OperatorRetrieved.Notification(@operator, account), cancellationToken);
                     }
                     finally
                     {

@@ -353,8 +353,11 @@ public class GetPositionsQueriesTests : TestsContext
         var cachedPosition = new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow };
 
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
+        // Stored-projection operators are read through ONE batched Telemetry call.
         _transporterPositionReaderMock
-            .Setup(x => x.GetTransporterPositionAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetTransporterPositionsAsync(
+                It.Is<IReadOnlyCollection<Guid>>(ids => ids.Single() == operatorVm.OperatorId),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync([cachedPosition]);
 
         var handler = new GetPositionsByUserQueryHandler(
@@ -374,6 +377,7 @@ public class GetPositionsQueriesTests : TestsContext
         Assert.That(result.Single().TransporterId, Is.EqualTo(cachedPosition.TransporterId));
         _positionRegistryMock.Verify(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>()), Times.Never);
         _deviceReaderMock.Verify(x => x.GetVisibleDeviceTransportersByOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        _transporterPositionReaderMock.Verify(x => x.GetTransporterPositionAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         // Background-sync mode: the query only reads the cached projection; it never writes.
         _positionSystemWriterMock.Verify(x => x.AddOrUpdatePositionAsync(
             It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()), Times.Never);

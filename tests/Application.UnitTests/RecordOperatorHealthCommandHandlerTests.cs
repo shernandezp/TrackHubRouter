@@ -72,7 +72,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
         var account = EnabledAccount(op.AccountId);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _healthWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorHealthCheckDto>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -88,7 +88,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -106,7 +106,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .ThrowsAsync(new HttpRequestException("dead"));
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -130,7 +130,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -150,7 +150,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }

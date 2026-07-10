@@ -24,7 +24,6 @@ namespace TrackHub.Router.Application.DevicePositions.Commands.Health;
 
 public readonly record struct RecordOperatorHealthCommand(
     OperatorVm Operator,
-    AccountSettingsVm Account,
     string CheckType = "PING") : IRequest<bool>;
 
 public class RecordOperatorHealthCommandHandler(
@@ -72,7 +71,7 @@ public class RecordOperatorHealthCommandHandler(
         try
         {
             await healthWriter.RecordAsync(new OperatorHealthCheckDto(
-                AccountId: request.Account.AccountId,
+                AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
                 CheckType: request.CheckType,
                 Status: status,
@@ -87,7 +86,7 @@ public class RecordOperatorHealthCommandHandler(
             if (status == "OFFLINE")
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
-                    AccountId: request.Account.AccountId,
+                    AccountId: request.Operator.AccountId,
                     EventType: "GpsOperatorOffline",
                     Severity: "Critical",
                     SourceModule: "TrackHub.Router.SyncWorker",
@@ -101,7 +100,7 @@ public class RecordOperatorHealthCommandHandler(
                      && !string.IsNullOrEmpty(previousStatus))
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
-                    AccountId: request.Account.AccountId,
+                    AccountId: request.Operator.AccountId,
                     EventType: "GpsOperatorRecovered",
                     Severity: "Info",
                     SourceModule: "TrackHub.Router.SyncWorker",

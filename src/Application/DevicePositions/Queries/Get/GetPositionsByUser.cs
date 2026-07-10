@@ -89,9 +89,19 @@ public class GetPositionsByUserQueryHandler(
             }
         }
 
-        foreach (var @operator in storedProjectionOperators)
+        if (storedProjectionOperators.Count > 0)
         {
-            allPositions.AddRange(await GetStoredPositionsAsync(@operator.OperatorId, cancellationToken));
+            // One batched Telemetry read for every stored-projection operator (this path runs
+            // on every map refresh — previously one call per operator).
+            try
+            {
+                allPositions.AddRange(await transporterPositionReader.GetTransporterPositionsAsync(
+                    storedProjectionOperators.Select(o => o.OperatorId).ToArray(), cancellationToken));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Error retrieving stored positions for {OperatorCount} operators", storedProjectionOperators.Count);
+            }
         }
 
         //Most recent position for each transporter if multiple positions are available

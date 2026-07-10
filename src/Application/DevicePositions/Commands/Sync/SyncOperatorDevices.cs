@@ -23,7 +23,6 @@ namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
 public readonly record struct SyncOperatorDevicesCommand(
     OperatorVm Operator,
-    AccountSettingsVm Account,
     string TriggerType,
     string? CorrelationId = null,
     bool ResetDeviceCatalog = false,
@@ -34,6 +33,7 @@ public class SyncOperatorDevicesCommandHandler(
     IDeviceRegistry deviceRegistry,
     IDeviceSyncWriter deviceSyncWriter,
     IOperatorSyncRunWriter syncRunWriter,
+    IOperatorHealthCheckSystemWriter healthWriter,
     IAlertEventWriter alertWriter,
     ILogger<SyncOperatorDevicesCommandHandler> logger) : IRequestHandler<SyncOperatorDevicesCommand, bool>
 {
@@ -54,19 +54,23 @@ public class SyncOperatorDevicesCommandHandler(
         string? errorMessage = null;
         var devices = Array.Empty<DeviceVm>();
         var counts = default(DeviceSyncCountsVm);
+        var providerReached = false;
+        DateTimeOffset? providerCompletedAt = null;
 
         try
         {
             var reader = deviceRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
             await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
             devices = (await reader.GetDevicesAsync(cancellationToken))?.ToArray() ?? [];
+            providerReached = true;
+            providerCompletedAt = DateTimeOffset.UtcNow;
             if (request.ResetDeviceCatalog)
             {
-                await deviceSyncWriter.ResetAsync(request.Account.AccountId, request.Operator.OperatorId, cancellationToken);
+                await deviceSyncWriter.ResetAsync(request.Operator.AccountId, request.Operator.OperatorId, cancellationToken);
             }
 
             var dtos = devices.Select(d => new SynchronizedDeviceDto(
-                AccountId: request.Account.AccountId,
+                AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
                 Serial: d.Serial,
                 Name: d.Name,
@@ -79,7 +83,7 @@ public class SyncOperatorDevicesCommandHandler(
 
             // Manager returns the counts and no longer records the run (spec 01.3 A6).
             counts = await deviceSyncWriter.SynchronizeAsync(
-                request.Account.AccountId,
+                request.Operator.AccountId,
                 request.Operator.OperatorId,
                 dtos,
                 correlationId,
@@ -93,7 +97,7 @@ public class SyncOperatorDevicesCommandHandler(
             errorCode = ex.GetType().Name;
             errorMessage = ex.Message;
             logger.LogError(ex, "Device sync failed for operator {OperatorId} (account {AccountId}).",
-                request.Operator.OperatorId, request.Account.AccountId);
+                request.Operator.OperatorId, request.Operator.AccountId);
         }
 
         // Single sync-run writer (spec 01.3 A6): the Router records exactly one run per attempt, with
@@ -104,7 +108,7 @@ public class SyncOperatorDevicesCommandHandler(
         try
         {
             await syncRunWriter.RecordAsync(new OperatorSyncRunDto(
-                AccountId: request.Account.AccountId,
+                AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
                 TriggerType: request.TriggerType,
                 Result: result,
@@ -122,10 +126,30 @@ public class SyncOperatorDevicesCommandHandler(
                 ErrorMessage: errorMessage,
                 CorrelationId: correlationId), cancellationToken);
 
+            // Every sync attempt IS a connectivity observation: reaching the provider proves the
+            // operator is up, failing to reach it proves it is not. Recording it here keeps the
+            // derived Health status meaningful for accounts that only sync manually (no
+            // background worker / gps.integration required). Uses the Router's service identity —
+            // recordOperatorHealth is ServiceClient-only.
+            var checkCompletedAt = providerCompletedAt ?? DateTimeOffset.UtcNow;
+            await healthWriter.RecordAsync(new OperatorHealthCheckDto(
+                AccountId: request.Operator.AccountId,
+                OperatorId: request.Operator.OperatorId,
+                // Telemetry's OperatorHealthCheckType enum, GraphQL form (like the worker's "PING").
+                CheckType: "DEVICE_SYNC",
+                Status: providerReached ? "HEALTHY" : "OFFLINE",
+                LatencyMs: (int)(checkCompletedAt - startedAt).TotalMilliseconds,
+                StartedAt: startedAt,
+                CompletedAt: checkCompletedAt,
+                ErrorCode: providerReached ? null : errorCode,
+                ErrorMessage: providerReached ? null : errorMessage,
+                RetryCount: 0,
+                CorrelationId: correlationId), cancellationToken);
+
             if (!succeeded)
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
-                    AccountId: request.Account.AccountId,
+                    AccountId: request.Operator.AccountId,
                     EventType: "GpsOperatorDeviceSyncFailed",
                     Severity: "Warning",
                     SourceModule: "TrackHub.Router.SyncWorker",

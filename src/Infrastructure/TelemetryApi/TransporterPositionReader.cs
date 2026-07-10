@@ -47,12 +47,58 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
                     }
                 }";
 
+    // Batched live-map read: one Telemetry round trip for all the caller's stored-projection
+    // operators instead of one call per operator per map refresh.
+    internal const string TransporterPositionsByOperatorsQuery = @"
+                query($operatorIds: [UUID!]!) {
+                    transporterPositionsByOperators(operatorIds: $operatorIds)
+                    {
+                        transporterId
+                        transporterType
+                        state
+                        speed
+                        longitude
+                        latitude
+                        geometryId
+                        eventId
+                        deviceName
+                        deviceDateTime
+                        course
+                        country
+                        city
+                        attributes {
+                            temperature
+                            satellites
+                            mileage
+                            ignition
+                            hourmeter
+                        }
+                        altitude
+                        address
+                    }
+                }";
+
     public async Task<IEnumerable<PositionVm>> GetTransporterPositionAsync(Guid operatorId, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
             Query = TransporterPositionByOperatorQuery,
             Variables = new { operatorId }
+        };
+        return await QueryAsync<IEnumerable<PositionVm>>(request, cancellationToken);
+    }
+
+    public async Task<IEnumerable<PositionVm>> GetTransporterPositionsAsync(IReadOnlyCollection<Guid> operatorIds, CancellationToken cancellationToken)
+    {
+        if (operatorIds.Count == 0)
+        {
+            return [];
+        }
+
+        var request = new GraphQLRequest
+        {
+            Query = TransporterPositionsByOperatorsQuery,
+            Variables = new { operatorIds }
         };
         return await QueryAsync<IEnumerable<PositionVm>>(request, cancellationToken);
     }

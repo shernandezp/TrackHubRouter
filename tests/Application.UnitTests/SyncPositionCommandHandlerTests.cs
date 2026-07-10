@@ -75,14 +75,12 @@ public class SyncPositionCommandHandlerTests : TestsContext
         var operatorId1 = Guid.NewGuid();
         var operatorId2 = Guid.NewGuid();
 
+        // The master projection carries the credential — the handler must not re-fetch operators.
         var operators = new[]
         {
-            new OperatorVm(operatorId1, 1, accountId, null),
-            new OperatorVm(operatorId2, 1, accountId, null)
+            new OperatorVm(operatorId1, 1, accountId, TestCredentialTokenVm),
+            new OperatorVm(operatorId2, 1, accountId, TestCredentialTokenVm)
         };
-
-        var operatorCredential1 = new OperatorVm(operatorId1, 1, accountId, null);
-        var operatorCredential2 = new OperatorVm(operatorId2, 1, accountId, null);
 
         _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([account]);
@@ -92,11 +90,6 @@ public class SyncPositionCommandHandlerTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(accountId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(operators);
 
-        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(operatorCredential1);
-        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId2, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(operatorCredential2);
-
         // Act
         var result = await _handler.Handle(new SyncPositionCommand(), CancellationToken.None);
 
@@ -104,6 +97,7 @@ public class SyncPositionCommandHandlerTests : TestsContext
         Assert.That(result, Is.True);
         _publisherMock.Verify(x => x.Publish(It.IsAny<OperatorRetrieved.Notification>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         _intervalManagerMock.Verify(x => x.UpdateLastExecutionTime(accountId), Times.Once);
+        _operatorReaderMock.Verify(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -153,8 +147,8 @@ public class SyncPositionCommandHandlerTests : TestsContext
 
         var operators = new[]
         {
-            new OperatorVm(enabledId, 1, accountId, null, Enabled: true),
-            new OperatorVm(disabledId, 1, accountId, null, Enabled: false)
+            new OperatorVm(enabledId, 1, accountId, TestCredentialTokenVm, Enabled: true),
+            new OperatorVm(disabledId, 1, accountId, TestCredentialTokenVm, Enabled: false)
         };
 
         _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
@@ -162,13 +156,11 @@ public class SyncPositionCommandHandlerTests : TestsContext
         _intervalManagerMock.Setup(x => x.ShouldExecuteTask(account)).Returns(true);
         _operatorReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(accountId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(operators);
-        _operatorReaderMock.Setup(x => x.GetOperatorAsync(enabledId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new OperatorVm(enabledId, 1, accountId, null, Enabled: true));
 
         var result = await _handler.Handle(new SyncPositionCommand(), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _publisherMock.Verify(x => x.Publish(It.IsAny<OperatorRetrieved.Notification>(), It.IsAny<CancellationToken>()), Times.Once);
-        _operatorReaderMock.Verify(x => x.GetOperatorAsync(disabledId, It.IsAny<CancellationToken>()), Times.Never);
+        _operatorReaderMock.Verify(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

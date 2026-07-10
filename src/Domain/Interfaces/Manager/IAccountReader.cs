@@ -18,6 +18,5 @@ namespace TrackHub.Router.Domain.Interfaces.Manager;
 public interface IAccountReader
 {
     Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken);
-    Task<AccountSettingsVm?> GetAccountToSyncAsync(Guid accountId, CancellationToken cancellationToken);
     Task<bool> IsFeatureEnabledAsync(Guid accountId, string featureKey, CancellationToken cancellationToken);
 }

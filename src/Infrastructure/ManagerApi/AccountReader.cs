@@ -34,21 +34,15 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
                        }
                 }";
 
-    internal const string AccountToSyncQuery = @"
-                query($id: UUID!) {
-                    accountSettings(query: { id: $id }) {
-                        accountId
-                   }
-                }";
-
     internal const string ValidateFeatureEnabledQuery = @"
                 query($accountId: UUID!, $featureKey: String!) {
                     validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
                 }";
 
-    internal const string AccountFeaturesQuery = @"
-                query($accountId: UUID!) {
-                    accountFeatures(query: { accountId: $accountId }) {
+    internal const string AllAccountFeaturesQuery = @"
+                query {
+                    allAccountFeaturesMaster {
+                        accountId
                         featureKey
                         enabled
                         effectiveFrom
@@ -71,25 +65,20 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             }
         };
         var accounts = await QueryAsync<IEnumerable<AccountSettingsVm>>(request, cancellationToken);
-        var accountTasks = accounts.Select(account => AddAccountFeaturesAsync(account, cancellationToken));
-        return await Task.WhenAll(accountTasks);
-    }
 
-    public async Task<AccountSettingsVm?> GetAccountToSyncAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = AccountToSyncQuery,
-            Variables = new
-            {
-                id = accountId
-            }
-        };
+        // Two round trips regardless of account count: the account list plus every account's
+        // features in one batched master read (previously one accountFeatures call per account).
+        var featureRequest = new GraphQLRequest { Query = AllAccountFeaturesQuery };
+        var allFeatures = await QueryAsync<IReadOnlyCollection<AccountFeatureMasterStateVm>>(featureRequest, cancellationToken);
+        var featuresByAccount = allFeatures
+            .GroupBy(f => f.AccountId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyCollection<AccountFeatureStateVm>)g
+                .Select(f => new AccountFeatureStateVm(f.FeatureKey, f.Enabled, f.EffectiveFrom, f.EffectiveTo, f.ConfigurationJson))
+                .ToList());
 
-        var account = await QueryAsync<AccountSettingsVm>(request, cancellationToken);
-        return account.AccountId == Guid.Empty
-            ? null
-            : await AddAccountFeaturesAsync(account, cancellationToken);
+        return accounts
+            .Select(account => BuildAccountSettings(account, featuresByAccount.GetValueOrDefault(account.AccountId, [])))
+            .ToList();
     }
 
     public async Task<bool> IsFeatureEnabledAsync(Guid accountId, string featureKey, CancellationToken cancellationToken)
@@ -107,31 +96,14 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
         return await QueryAsync<bool>(request, cancellationToken);
     }
 
-    private async Task<AccountSettingsVm> AddAccountFeaturesAsync(AccountSettingsVm account, CancellationToken cancellationToken)
-    {
-        var features = await GetAccountFeaturesAsync(account.AccountId, cancellationToken);
-        return new AccountSettingsVm(
+    private static AccountSettingsVm BuildAccountSettings(AccountSettingsVm account, IReadOnlyCollection<AccountFeatureStateVm> features)
+        => new(
             account.AccountId,
             ResolveStoringInterval(features),
             IsFeatureEnabled(features, FeatureKeys.Geofencing),
             IsFeatureEnabled(features, FeatureKeys.TripManagement),
             IsFeatureEnabled(features, FeatureKeys.GpsIntegration),
             IsFeatureEnabled(features, FeatureKeys.GpsPositionHistory));
-    }
-
-    private async Task<IReadOnlyCollection<AccountFeatureStateVm>> GetAccountFeaturesAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = AccountFeaturesQuery,
-            Variables = new
-            {
-                accountId
-            }
-        };
-
-        return await QueryAsync<IReadOnlyCollection<AccountFeatureStateVm>>(request, cancellationToken);
-    }
 
     private static bool IsFeatureEnabled(IEnumerable<AccountFeatureStateVm> features, string featureKey)
     {
@@ -169,6 +141,14 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
     }
 
     private readonly record struct AccountFeatureStateVm(
+        string FeatureKey,
+        bool Enabled,
+        DateTimeOffset? EffectiveFrom,
+        DateTimeOffset? EffectiveTo,
+        string? ConfigurationJson);
+
+    private readonly record struct AccountFeatureMasterStateVm(
+        Guid AccountId,
         string FeatureKey,
         bool Enabled,
         DateTimeOffset? EffectiveFrom,

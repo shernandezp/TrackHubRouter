@@ -22,24 +22,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAppManagerContext(this IServiceCollection services, bool headerPropagation = true)
     {
-        if (headerPropagation)
-        {
-            services.AddHeaderPropagation(o => o.Headers.Add("Authorization"));
-
-            services.AddHttpClient(Clients.Manager,
-                client => client.Timeout = TimeSpan.FromSeconds(30))
-                .AddHeaderPropagation();
-        }
-        else
-        {
-            services.AddHttpClient(Clients.Manager,
-                    client => client.Timeout = TimeSpan.FromSeconds(30));
-        }
+        // Mixed reader/writer surface — retries stay off (GraphQL mutations are POSTs and
+        // cannot be distinguished by HTTP method).
+        services.AddGraphQLClient(Clients.Manager, propagateHeaders: headerPropagation);
 
         // Dedicated client for system (client-credentials) calls: never propagates the user's
         // Authorization header, so the factory applies the Router's own service identity.
-        services.AddHttpClient($"{Clients.Manager}AsService",
-                client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddGraphQLServiceClient(Clients.Manager);
 
         // Master-data / provider-support readers and writers stay on Manager. The positions/history/
         // health/sync-run surface moved to TelemetryApi (spec 01.3 §5.5, AddAppTelemetryContext).

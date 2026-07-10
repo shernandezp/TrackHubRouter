@@ -110,6 +110,9 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                         }
                     }";
 
+    // The master projection includes the credential: Manager only populates it for
+    // service-client principals (the SyncWorker identity), and having it here means the worker
+    // loops never re-fetch each operator individually just to obtain it.
     internal const string OperatorsMasterQuery = @"
             query($filter: FiltersInput!) {
                 operatorsMaster(
@@ -125,6 +128,19 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                         lastPositionSyncAt
                         healthStatus
                         lastHealthCheckAt
+                        credential {
+                            credentialId
+                            uri
+                            username
+                            password
+                            salt
+                            key
+                            key2
+                            token
+                            tokenExpiration
+                            refreshToken
+                            refreshTokenExpiration
+                        }
                     }
             }";
 
