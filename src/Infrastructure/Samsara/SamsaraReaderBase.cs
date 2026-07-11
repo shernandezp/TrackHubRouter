@@ -15,7 +15,7 @@
 
 using System.Net.Http.Headers;
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Samsara;
 

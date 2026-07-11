@@ -15,7 +15,7 @@
 
 using Common.Domain.Extensions;
 using TrackHub.Router.Infrastructure.Samsara.Mappers;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Samsara;
 

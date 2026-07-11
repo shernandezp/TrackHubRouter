@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Positions.Queries.GetRange;
-using TrackHubRouter.Application.Positions.Queries.GetTrips;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.PingOperator.Queries;
 
-namespace TrackHubRouter.Web.GraphQL;
+namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
-    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
-        => await sender.Send(query);
-
-    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
+    public async Task<bool> PingOperator([Service] ISender sender, [AsParameters] PingOperatorQuery query)
         => await sender.Send(query);
 }

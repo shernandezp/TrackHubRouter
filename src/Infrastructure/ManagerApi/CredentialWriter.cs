@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Records;
 
 namespace ManagerApi;
 
@@ -21,6 +21,12 @@ namespace ManagerApi;
 // It is responsible for updating a token asynchronously.
 public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialWriter
 {
+    internal const string UpdateTokenMutation = @"
+                    mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {
+                      updateToken(id: $id,
+                            command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
+                    }";
+
     /// <summary>
     /// It constructs a GraphQL request with the necessary variables and sends a mutation to update the token.
     /// </summary>
@@ -32,11 +38,7 @@ public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLServ
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                    mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {
-                      updateToken(id: $id,
-                            command: { credential: { credentialId: $credentialId, refreshToken: $refreshToken, refreshTokenExpiration: $refreshTokenExpiration, token: $token, tokenExpiration: $tokenExpiration } })
-                    }",
+            Query = UpdateTokenMutation,
             Variables = new
             {
                 id,

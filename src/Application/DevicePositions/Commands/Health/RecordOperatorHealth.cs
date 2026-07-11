@@ -17,14 +17,13 @@ using System.Diagnostics;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.DevicePositions.Commands.Health;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Health;
 
 public readonly record struct RecordOperatorHealthCommand(
     OperatorVm Operator,
-    AccountSettingsVm Account,
     string CheckType = "PING") : IRequest<bool>;
 
 public class RecordOperatorHealthCommandHandler(
@@ -39,12 +38,6 @@ public class RecordOperatorHealthCommandHandler(
     public async Task<bool> Handle(RecordOperatorHealthCommand request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        if (!request.Account.GpsOperatorHealthEnabled)
-        {
-            logger.LogInformation("Operator health check skipped: feature disabled for account {AccountId}.", request.Account.AccountId);
-            return false;
-        }
-
         if (request.Operator.Credential is null)
         {
             return false;
@@ -78,7 +71,7 @@ public class RecordOperatorHealthCommandHandler(
         try
         {
             await healthWriter.RecordAsync(new OperatorHealthCheckDto(
-                AccountId: request.Account.AccountId,
+                AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
                 CheckType: request.CheckType,
                 Status: status,
@@ -93,10 +86,10 @@ public class RecordOperatorHealthCommandHandler(
             if (status == "OFFLINE")
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
-                    AccountId: request.Account.AccountId,
+                    AccountId: request.Operator.AccountId,
                     EventType: "GpsOperatorOffline",
                     Severity: "Critical",
-                    SourceModule: "TrackHubRouter.SyncWorker",
+                    SourceModule: "TrackHub.Router.SyncWorker",
                     ResourceType: "Operator",
                     ResourceId: request.Operator.OperatorId.ToString(),
                     Status: "Open",
@@ -107,10 +100,10 @@ public class RecordOperatorHealthCommandHandler(
                      && !string.IsNullOrEmpty(previousStatus))
             {
                 await alertWriter.RecordAsync(new AlertEventDto(
-                    AccountId: request.Account.AccountId,
+                    AccountId: request.Operator.AccountId,
                     EventType: "GpsOperatorRecovered",
                     Severity: "Info",
-                    SourceModule: "TrackHubRouter.SyncWorker",
+                    SourceModule: "TrackHub.Router.SyncWorker",
                     ResourceType: "Operator",
                     ResourceId: request.Operator.OperatorId.ToString(),
                     Status: "Open",

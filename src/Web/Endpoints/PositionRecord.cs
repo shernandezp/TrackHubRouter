@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.Positions.Queries.GetRange;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Positions.Queries.GetRange;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Web.Endpoints;
+namespace TrackHub.Router.Web.Endpoints;
 
 public class PositionRecord : EndpointGroupBase
 {

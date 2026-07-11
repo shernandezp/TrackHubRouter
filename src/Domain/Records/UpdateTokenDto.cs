@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Records;
+namespace TrackHub.Router.Domain.Records;
 
 public readonly record struct UpdateTokenDto(
     Guid CredentialId,
     string? Token,
-    DateTime? TokenExpiration,
+    DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration
+    DateTimeOffset? RefreshTokenExpiration
     );

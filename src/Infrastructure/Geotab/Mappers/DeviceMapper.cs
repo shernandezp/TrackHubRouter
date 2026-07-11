@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 using Common.Domain.Enums;
 using Geotab.Checkmate.ObjectModel;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Geotab.Mappers;
 

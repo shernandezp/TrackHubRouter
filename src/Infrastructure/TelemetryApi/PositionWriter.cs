@@ -13,18 +13,26 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Infrastructure.ManagerApi;
+using GraphQL.Client.Abstractions;
 
-public class PositionWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IPositionWriter
+namespace TrackHub.Router.Infrastructure.TelemetryApi;
+
+public class PositionWriter : GraphQLService, IPositionWriter
 {
+    public PositionWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Telemetry)) { }
+
+    protected PositionWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
+
+    internal const string BulkTransporterPositionMutation = @"
+                mutation($command: BulkTransporterPositionCommandInput!) {
+                    bulkTransporterPosition(command: $command)
+                }";
+
     public async Task<bool> AddOrUpdatePositionAsync(IEnumerable<PositionVm> positions, CancellationToken token)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: BulkTransporterPositionCommandInput!) {
-                    bulkTransporterPosition(command: $command)
-                }",
+            Query = BulkTransporterPositionMutation,
             Variables = new
             {
                 command = new

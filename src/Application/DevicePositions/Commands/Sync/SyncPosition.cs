@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.DevicePositions.Events;
+using TrackHub.Router.Application.DevicePositions.Events;
 
-namespace TrackHubRouter.Application.DevicePositions.Commands.Sync;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
 public readonly record struct SyncPositionCommand() : IRequest<bool>;
 
@@ -38,19 +38,16 @@ public class UpdateTransporterCommandHandler(IAccountReader reader,
             {
                 var operators = await operatorReader.GetOperatorsByAccountsAsync(account.AccountId, cancellationToken);
                 using var semaphore = new SemaphoreSlim(10);
+                // The master projection already carries each operator's credential under the
+                // worker's service identity — no per-operator re-fetch.
                 var tasks = operators
-                    .Where(o => o.Enabled)
+                    .Where(o => o.Enabled && o.Credential is not null)
                     .Select(async @operator =>
                 {
                     await semaphore.WaitAsync(cancellationToken);
                     try
                     {
-                        var operatorCredential = await operatorReader.GetOperatorAsync(@operator.OperatorId, cancellationToken);
-                        if (!operatorCredential.Enabled)
-                        {
-                            return;
-                        }
-                        await publisher.Publish(new OperatorRetrieved.Notification(operatorCredential, account), cancellationToken);
+                        await publisher.Publish(new OperatorRetrieved.Notification(@operator, account), cancellationToken);
                     }
                     finally
                     {

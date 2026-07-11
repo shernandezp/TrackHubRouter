@@ -15,8 +15,8 @@
 
 using System.Security.Cryptography;
 using System.Text;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.Protrack.Helpers;
 
@@ -61,7 +61,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
             throw new InvalidOperationException("Failed to obtain access token from Protrack API");
         }
 
-        var tokenExpiration = DateTime.UtcNow.AddSeconds(response.Record.Expires_in);
+        var tokenExpiration = DateTimeOffset.UtcNow.AddSeconds(response.Record.Expires_in);
 
         await credentialWriter.UpdateTokenAsync(credential.CredentialId, new UpdateTokenDto(
             credential.CredentialId,
@@ -95,5 +95,5 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
     }
 
     private static bool IsTokenExpired(CredentialTokenDto token)
-        => DateTime.UtcNow >= token.TokenExpiration;
+        => DateTimeOffset.UtcNow >= token.TokenExpiration;
 }

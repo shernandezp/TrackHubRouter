@@ -22,29 +22,28 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddAppManagerContext(this IServiceCollection services, bool headerPropagation = true)
     {
-        if (headerPropagation)
-        {
-            services.AddHeaderPropagation(o => o.Headers.Add("Authorization"));
+        // Mixed reader/writer surface — retries stay off (GraphQL mutations are POSTs and
+        // cannot be distinguished by HTTP method).
+        services.AddGraphQLClient(Clients.Manager, propagateHeaders: headerPropagation);
 
-            services.AddHttpClient(Clients.Manager,
-                client => client.Timeout = TimeSpan.FromSeconds(30))
-                .AddHeaderPropagation();
-        }
-        else
-        {
-            services.AddHttpClient(Clients.Manager,
-                    client => client.Timeout = TimeSpan.FromSeconds(30));
-        }
+        // Dedicated client for system (client-credentials) calls: never propagates the user's
+        // Authorization header, so the factory applies the Router's own service identity.
+        services.AddGraphQLServiceClient(Clients.Manager);
 
+        // Master-data / provider-support readers and writers stay on Manager. The positions/history/
+        // health/sync-run surface moved to TelemetryApi (spec 01.3 §5.5, AddAppTelemetryContext).
         services.AddScoped<IAccountReader, AccountReader>();
+
+        services.AddMemoryCache();
+        services.AddScoped<Common.Application.Interfaces.IAccountOperationalStatusReader, AccountOperationalStatusReader>();
+        services.AddScoped<Common.Application.Interfaces.IAccountOperationalStatusService, Common.Application.Services.CachedAccountOperationalStatusService>();
+
         services.AddScoped<ICredentialWriter, CredentialWriter>();
+        services.AddScoped<IGeocodingProviderReader, GeocodingProviderReader>();
+        services.AddScoped<IGroupVisibilityReader, GroupVisibilityReader>();
         services.AddScoped<IDeviceTransporterReader, DeviceTransporterReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();
-        services.AddScoped<ITransporterPositionReader, TransporterPositionReader>();
         services.AddScoped<ITransporterTypeReader, TransporterTypeReader>();
-        services.AddScoped<IPositionWriter, PositionWriter>();
-        services.AddScoped<IOperatorSyncRunWriter, OperatorSyncRunWriter>();
-        services.AddScoped<IOperatorHealthCheckWriter, OperatorHealthCheckWriter>();
         services.AddScoped<IDeviceSyncWriter, DeviceSyncWriter>();
         services.AddScoped<IAlertEventWriter, AlertEventWriter>();
 

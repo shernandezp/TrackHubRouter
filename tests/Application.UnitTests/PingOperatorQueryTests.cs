@@ -15,16 +15,17 @@
 
 using Moq;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Application.PingOperator.Queries;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Models;
+using Microsoft.Extensions.Logging;
+using TrackHub.Router.Application.PingOperator.Queries;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Models;
 using Common.Domain.Enums;
 using Application.UnitTests;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Domain.Records;
 
-namespace TrackHubRouter.Application.UnitTests.PingOperator.Queries;
+namespace TrackHub.Router.Application.UnitTests.PingOperator.Queries;
 
 [TestFixture]
 public class PingOperatorQueryTests : TestsContext
@@ -32,6 +33,7 @@ public class PingOperatorQueryTests : TestsContext
     private Mock<IConfiguration> _configurationMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
     private Mock<IConnectivityRegistry> _connectivityRegistryMock = null!;
+    private Mock<IOperatorHealthCheckSystemWriter> _healthWriterMock = null!;
 
     [SetUp]
     public void SetUp()
@@ -39,9 +41,18 @@ public class PingOperatorQueryTests : TestsContext
         _configurationMock = new Mock<IConfiguration>();
         _operatorReaderMock = new Mock<IOperatorReader>();
         _connectivityRegistryMock = new Mock<IConnectivityRegistry>();
+        _healthWriterMock = new Mock<IOperatorHealthCheckSystemWriter>();
 
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
+
+    private PingOperatorQueryHandler CreateHandler()
+        => new(
+            _configurationMock.Object,
+            _operatorReaderMock.Object,
+            _connectivityRegistryMock.Object,
+            _healthWriterMock.Object,
+            Mock.Of<ILogger<PingOperatorQueryHandler>>());
 
     [Test]
     public async Task Handle_WithCredential_PingsAndReturnsTrue()
@@ -57,10 +68,7 @@ public class PingOperatorQueryTests : TestsContext
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _connectivityRegistryMock.Setup(x => x.GetTester(It.IsAny<ProtocolType>())).Returns(testerMock.Object);
 
-        var handler = new PingOperatorQueryHandler(
-            _configurationMock.Object,
-            _operatorReaderMock.Object,
-            _connectivityRegistryMock.Object);
+        var handler = CreateHandler();
 
         // Act
         var result = await handler.Handle(new PingOperatorQuery(operatorId), CancellationToken.None);
@@ -68,6 +76,9 @@ public class PingOperatorQueryTests : TestsContext
         // Assert
         Assert.That(result, Is.True);
         testerMock.Verify(t => t.Ping(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>()), Times.Once);
+        _healthWriterMock.Verify(x => x.RecordAsync(
+            It.Is<OperatorHealthCheckDto>(d => d.CheckType == "MANUAL" && d.Status == "HEALTHY" && d.OperatorId == operatorId),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -79,10 +90,7 @@ public class PingOperatorQueryTests : TestsContext
 
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
 
-        var handler = new PingOperatorQueryHandler(
-            _configurationMock.Object,
-            _operatorReaderMock.Object,
-            _connectivityRegistryMock.Object);
+        var handler = CreateHandler();
 
         // Act
         var result = await handler.Handle(new PingOperatorQuery(operatorId), CancellationToken.None);
@@ -106,10 +114,7 @@ public class PingOperatorQueryTests : TestsContext
 
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
 
-        var handler = new PingOperatorQueryHandler(
-            _configurationMock.Object,
-            _operatorReaderMock.Object,
-            _connectivityRegistryMock.Object);
+        var handler = CreateHandler();
 
         // Act
         var result = await handler.Handle(new PingOperatorQuery(operatorId), CancellationToken.None);

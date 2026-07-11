@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 //
 
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Traccar.Adapters;
 

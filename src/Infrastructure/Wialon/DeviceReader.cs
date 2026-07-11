@@ -14,8 +14,8 @@
 //
 
 using TrackHub.Router.Infrastructure.Wialon.Mappers;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Wialon;
 

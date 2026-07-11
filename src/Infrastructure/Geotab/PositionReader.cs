@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 
 using Geotab.Checkmate.ObjectModel;
 using TrackHub.Router.Infrastructure.Geotab.Mappers;
-using TrackHubRouter.Domain.Interfaces.Operator;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Geotab;
 
@@ -58,8 +58,9 @@ public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
         var logRecordSearch = new LogRecordSearch
         {
             DeviceSearch = new DeviceSearch(Id.Create(deviceDto.Identifier)),
-            FromDate = from.DateTime,
-            ToDate = to.DateTime
+            // Geotab SDK search bounds are UTC DateTime; convert at the SDK boundary.
+            FromDate = from.UtcDateTime,
+            ToDate = to.UtcDateTime
         };
         var positions = await GeotabApi!.CallAsync<IEnumerable<LogRecord>>("Get", typeof(LogRecord), new { search = logRecordSearch }, cancellationToken);
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);

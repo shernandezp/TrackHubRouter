@@ -18,7 +18,9 @@ using Ardalis.GuardClauses;
 using Common.Application;
 using Common.Web.Transformers;
 using Scalar.AspNetCore;
-using TrackHubRouter.Web.GraphQL;
+using TrackHub.Router.Web.GraphQL;
+using TrackHub.Router.Web.GraphQL.Mutation;
+using TrackHub.Router.Web.GraphQL.Query;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,19 +32,16 @@ Guard.Against.Null(allowedCORSOrigins, message: $"Allowed Origins configuration 
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext();
+builder.Services.AddAppTelemetryContext();
 builder.Services.AddGeofenceManagerContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();
 
-builder.Services
-    .AddGraphQLServer()
-    .AddAuthorization()
-    .AddMaxExecutionDepthRule(15)
-    .AddErrorFilter<TrackHubGraphQLErrorFilter>()
-    .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
-    .AddQueryType<Query>()
-    .AddMutationType<Mutation>();
+// Shared TrackHub GraphQL hardening + the Router-specific error filters.
+builder.Services.AddTrackHubGraphQLServer<Query, Mutation>(builder.Environment.IsDevelopment())
+    .AddErrorFilter<GeocodingErrorFilter>()
+    .AddErrorFilter<OperatorSyncErrorFilter>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
@@ -81,6 +80,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// Explicit: WebApplication would auto-insert these, but authentication must not depend on
+// pipeline inference.
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseExceptionHandler(options => { });
 app.MapEndpoints(Assembly.GetExecutingAssembly());

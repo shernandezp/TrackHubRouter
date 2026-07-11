@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
 //
 
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Interfaces.Geofence;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Interfaces.Geocoding;
+using TrackHub.Router.Domain.Interfaces.Geofence;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.DevicePositions.Events;
+namespace TrackHub.Router.Application.DevicePositions.Events;
 
 public sealed class PositionsRetrieved
 {
@@ -34,6 +35,8 @@ public sealed class PositionsRetrieved
             IGeofenceWriter geofenceWriter,
             IOperatorSyncRunWriter syncRunWriter,
             IAlertEventWriter alertWriter,
+            IReverseGeocodingService geocodingService,
+            IPositionHistorySystemWriter historyWriter,
             ILogger<EventHandler> logger) : INotificationHandler<Notification>
         {
             public async Task Handle(Notification notification, CancellationToken cancellationToken)
@@ -49,6 +52,18 @@ public sealed class PositionsRetrieved
                     .Where(IsValidPosition)
                     .ToArray();
                 var invalidPositionCount = positionsRead - validPositionCandidates.Length;
+
+                // Bounded address enrichment: resolve addresses for rows the GPS provider
+                // left blank, up to the per-cycle budget, honoring the active provider's
+                // throttle. Failures are logged and never block or delay position storage.
+                // Enrich the full set of valid fixes so both the latest projection and the stored
+                // history carry addresses.
+                validPositionCandidates = await EnrichAddressesAsync(validPositionCandidates, cancellationToken);
+
+                // The per-transporter dedupe (freshest fix per transporter wins) applies ONLY to the
+                // latest-position projection (spec 01.3 A4 / K6). The history append below receives
+                // every valid fix — a transporter with two active devices records both — while the
+                // idempotency key prevents duplicates.
                 var validPositions = validPositionCandidates
                     .GroupBy(p => p.TransporterId)
                     .Select(g => g
@@ -80,6 +95,28 @@ public sealed class PositionsRetrieved
                         if (writeSucceeded && notification.Settings.GeofencingEnabled)
                         {
                             await geofenceWriter.ProcessPositionsAsync(validPositions, notification.Settings.AccountId, cancellationToken);
+                        }
+
+                        // Stored history: the account-level sync cadence already runs at the
+                        // configured storing interval, so every accepted batch is appended for
+                        // accounts with gps.positionHistory. History receives ALL valid fixes (not the
+                        // deduped latest set) so multi-device transporters keep every fix (spec 01.3
+                        // A4 / K6). Failures never fail the sync run.
+                        if (writeSucceeded && notification.Settings.GpsPositionHistoryEnabled)
+                        {
+                            try
+                            {
+                                await historyWriter.AppendRangeAsync(
+                                    notification.Settings.AccountId,
+                                    notification.Operator.OperatorId,
+                                    validPositionCandidates,
+                                    cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(ex, "Position history append failed for operator {OperatorId} (account {AccountId}).",
+                                    notification.Operator.OperatorId, notification.Settings.AccountId);
+                            }
                         }
                     }
                 }
@@ -120,7 +157,7 @@ public sealed class PositionsRetrieved
                             AccountId: notification.Settings.AccountId,
                             EventType: "GpsOperatorPositionSyncFailed",
                             Severity: "Warning",
-                            SourceModule: "TrackHubRouter.SyncWorker",
+                            SourceModule: "TrackHub.Router.SyncWorker",
                             ResourceType: "Operator",
                             ResourceId: notification.Operator.OperatorId.ToString(),
                             Status: "Open",
@@ -133,6 +170,45 @@ public sealed class PositionsRetrieved
                     logger.LogError(ex, "Failed to record sync telemetry for operator {OperatorId}.",
                         notification.Operator.OperatorId);
                 }
+            }
+
+            private async Task<PositionVm[]> EnrichAddressesAsync(PositionVm[] positions, CancellationToken cancellationToken)
+            {
+                try
+                {
+                    var budget = await geocodingService.GetEnrichmentBudgetAsync(cancellationToken);
+                    if (budget <= 0)
+                    {
+                        return positions;
+                    }
+
+                    for (var i = 0; i < positions.Length && budget > 0; i++)
+                    {
+                        if (!string.IsNullOrWhiteSpace(positions[i].Address))
+                        {
+                            continue;
+                        }
+
+                        budget--;
+                        var address = await geocodingService.TryResolveAsync(positions[i].Latitude, positions[i].Longitude, cancellationToken);
+                        if (address.HasValue && !string.IsNullOrWhiteSpace(address.Value.Address))
+                        {
+                            positions[i] = positions[i] with
+                            {
+                                Address = address.Value.Address,
+                                City = address.Value.City,
+                                State = address.Value.State,
+                                Country = address.Value.Country
+                            };
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Address enrichment failed; storing positions without addresses.");
+                }
+
+                return positions;
             }
 
             private static bool IsValidPosition(PositionVm position)

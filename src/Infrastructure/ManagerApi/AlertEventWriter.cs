@@ -3,14 +3,16 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class AlertEventWriter(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IAlertEventWriter
 {
+    internal const string RecordAlertEventMutation = @"
+                mutation($command: RecordAlertEventCommandInput!) {
+                    recordAlertEvent(command: $command) { alertEventId }
+                }";
+
     public async Task RecordAsync(AlertEventDto dto, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                mutation($command: RecordAlertEventCommandInput!) {
-                    recordAlertEvent(command: $command) { alertEventId }
-                }",
+            Query = RecordAlertEventMutation,
             Variables = new
             {
                 command = new

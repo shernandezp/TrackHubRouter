@@ -16,10 +16,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Common.Domain.Enums;
-using TrackHubRouter.Application.PingOperator;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Application.PingOperator;
+using TrackHub.Router.Domain.Interfaces;
 
-namespace TrackHubRouter.Application.UnitTests.PingOperator.Registry;
+namespace TrackHub.Router.Application.UnitTests.PingOperator.Registry;
 
 [TestFixture]
 public class ConnectivityRegistryTests

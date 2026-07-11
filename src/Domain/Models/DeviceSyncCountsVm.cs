@@ -13,12 +13,14 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
+namespace TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Web.GraphQL;
-
-public partial class Mutation
-{
-    public async Task<bool> TriggerOperatorSync([Service] ISender sender, TriggerOperatorSyncCommand command)
-        => await sender.Send(command);
-}
+// Device-sync counts returned by Manager's synchronizeOperatorDevices mutation (spec 01.3 A6).
+// Manager no longer records the sync run; it returns these counts so the Router can be the single
+// writer of sync-run telemetry, recording exactly one run per attempt.
+public readonly record struct DeviceSyncCountsVm(
+    int DevicesSeen,
+    int DevicesAdded,
+    int DevicesUpdated,
+    int DevicesRemoved,
+    int DevicesIgnored);

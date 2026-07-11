@@ -16,8 +16,8 @@
 using System.Net.Http.Headers;
 using Common.Domain.Enums;
 using TrackHub.Router.Infrastructure.Protrack.Helpers;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.Protrack;
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -14,12 +14,22 @@
 //
 
 using Geotab.Checkmate.ObjectModel;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Geotab.Mappers;
 
 internal static class PositionMapper
 {
+    /// <summary>
+    /// Converts a Geotab SDK <see cref="DateTime"/> (UTC, but frequently carries Kind=Unspecified)
+    /// into a UTC <see cref="DateTimeOffset"/> at the SDK boundary. Falls back to now when the SDK
+    /// omits the timestamp.
+    /// </summary>
+    private static DateTimeOffset ToUtc(DateTime? value)
+        => value.HasValue
+            ? new DateTimeOffset(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc))
+            : DateTimeOffset.UtcNow;
+
 
     /// <summary>
     /// Maps a LogRecord object to a PositionVm object
@@ -35,7 +45,7 @@ internal static class PositionMapper
             position.Latitude ?? 0,
             position.Longitude ?? 0,
             null,
-            position.DateTime ?? DateTime.Now,
+            ToUtc(position.DateTime),
             null,
             position.Speed ?? 0,
             0,
@@ -61,7 +71,7 @@ internal static class PositionMapper
             position.Latitude ?? 0,
             position.Longitude ?? 0,
             null,
-            position.DateTime ?? DateTime.Now,
+            ToUtc(position.DateTime),
             null,
             position.Speed ?? 0,
             position.Bearing,

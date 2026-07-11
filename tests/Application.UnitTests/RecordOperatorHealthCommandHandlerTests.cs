@@ -17,13 +17,13 @@ using Common.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Commands.Health;
-using TrackHubRouter.Domain.Interfaces;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Interfaces.Operator;
-using TrackHubRouter.Domain.Interfaces.Registry;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Records;
+using TrackHub.Router.Application.DevicePositions.Commands.Health;
+using TrackHub.Router.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Registry;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Records;
 
 namespace Application.UnitTests;
 
@@ -63,7 +63,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             HealthStatus: previousStatus);
 
     private static AccountSettingsVm EnabledAccount(Guid accountId) =>
-        new(accountId, false, 0, false, false, GpsIntegrationEnabled: true, GpsOperatorHealthEnabled: true);
+        new(accountId, 0, false, false, GpsIntegrationEnabled: true);
 
     [Test]
     public async Task Handle_NoCredential_ReturnsFalseAndRecordsNothing()
@@ -72,7 +72,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
         var account = EnabledAccount(op.AccountId);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _healthWriterMock.Verify(w => w.RecordAsync(It.IsAny<OperatorHealthCheckDto>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -88,7 +88,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -106,7 +106,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .ThrowsAsync(new HttpRequestException("dead"));
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.False);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -130,7 +130,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         var result = await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         Assert.That(result, Is.True);
         _healthWriterMock.Verify(w => w.RecordAsync(
@@ -150,7 +150,7 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
             .Returns(Task.CompletedTask);
 
         await CreateHandler().Handle(
-            new RecordOperatorHealthCommand(op, account), CancellationToken.None);
+            new RecordOperatorHealthCommand(op), CancellationToken.None);
 
         _alertWriterMock.Verify(w => w.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }

@@ -13,5 +13,12 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Infrastructure.CommandTrack.Models;
-internal readonly record struct TokenResult(string Token, DateTime Expires);
+
+internal readonly record struct TokenResult(
+    string Token,
+    // CommandTrack auth response: assume UTC for naive timestamps at the JSON boundary.
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset Expires);

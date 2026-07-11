@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,12 +13,9 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.PingOperator.Queries;
+namespace TrackHub.Router.Domain.Exceptions;
 
-namespace TrackHubRouter.Web.GraphQL;
-
-public partial class Query
-{
-    public async Task<bool> PingOperator([Service] ISender sender, [AsParameters] PingOperatorQuery query)
-        => await sender.Send(query);
-}
+// Thrown when reverse geocoding cannot be served: no active GeocodingProvider is
+// configured or the geocoding service is unreachable. Mapped to the GEOCODER_UNAVAILABLE
+// GraphQL error code; position rendering never fails because geocoding failed.
+public sealed class GeocodingUnavailableException(string message) : Exception(message);

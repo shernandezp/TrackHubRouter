@@ -17,20 +17,10 @@ namespace ManagerApi;
 
 // This class represents the implementation of the IOperatorReader interface
 // It is responsible for reading operator data from the GraphQL service
-public class OperatorReader(IGraphQLClientFactory graphQLClient) 
+public class OperatorReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
 {
-
-    /// <summary>
-    /// Retrieves a list of operators associated with the current user 
-    /// </summary>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation if needed</param>
-    /// <returns>A collection of OperatorVm objects representing the operators</returns>
-    public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string OperatorsByUserQuery = @"
                     query {
                         operatorsByUser
                         {
@@ -58,16 +48,9 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                                 refreshTokenExpiration
                             }
                         }
-                    }"
-        };
-        return await QueryAsync<IEnumerable<OperatorVm>>(request, cancellationToken);
-    }
+                    }";
 
-    public async Task<OperatorVm> GetOperatorByTransporterAsync(Guid transporterId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string OperatorByTransporterQuery = @"
                     query($transporterId: UUID!) {
                         operatorByTransporter(query: { transporterId: $transporterId })
                         {
@@ -95,17 +78,9 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                                 refreshTokenExpiration
                             }
                         }
-                    }",
-            Variables = new { transporterId }
-        };
-        return await QueryAsync<OperatorVm>(request, cancellationToken);
-    }
+                    }";
 
-    public async Task<OperatorVm> GetOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    internal const string OperatorQuery = @"
                     query($id: UUID!) {
                         operator(query: { id: $id })
                         {
@@ -133,17 +108,12 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                                 refreshTokenExpiration
                             }
                         }
-                    }",
-            Variables = new { id = operatorId }
-        };
-        return await QueryAsync<OperatorVm>(request, cancellationToken);
-    }
+                    }";
 
-    public async Task<IEnumerable<OperatorVm>> GetOperatorsByAccountsAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    // The master projection includes the credential: Manager only populates it for
+    // service-client principals (the SyncWorker identity), and having it here means the worker
+    // loops never re-fetch each operator individually just to obtain it.
+    internal const string OperatorsMasterQuery = @"
             query($filter: FiltersInput!) {
                 operatorsMaster(
                     query: { filter: $filter }
@@ -158,8 +128,61 @@ public class OperatorReader(IGraphQLClientFactory graphQLClient)
                         lastPositionSyncAt
                         healthStatus
                         lastHealthCheckAt
+                        credential {
+                            credentialId
+                            uri
+                            username
+                            password
+                            salt
+                            key
+                            key2
+                            token
+                            tokenExpiration
+                            refreshToken
+                            refreshTokenExpiration
+                        }
                     }
-            }",
+            }";
+
+    /// <summary>
+    /// Retrieves a list of operators associated with the current user 
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation if needed</param>
+    /// <returns>A collection of OperatorVm objects representing the operators</returns>
+    public async Task<IEnumerable<OperatorVm>> GetOperatorsAsync(CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = OperatorsByUserQuery
+        };
+        return await QueryAsync<IEnumerable<OperatorVm>>(request, cancellationToken);
+    }
+
+    public async Task<OperatorVm> GetOperatorByTransporterAsync(Guid transporterId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = OperatorByTransporterQuery,
+            Variables = new { transporterId }
+        };
+        return await QueryAsync<OperatorVm>(request, cancellationToken);
+    }
+
+    public async Task<OperatorVm> GetOperatorAsync(Guid operatorId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = OperatorQuery,
+            Variables = new { id = operatorId }
+        };
+        return await QueryAsync<OperatorVm>(request, cancellationToken);
+    }
+
+    public async Task<IEnumerable<OperatorVm>> GetOperatorsByAccountsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = OperatorsMasterQuery,
             Variables = new
             {
                 filter = new

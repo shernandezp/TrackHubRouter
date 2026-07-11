@@ -20,6 +20,15 @@ namespace TrackHub.Router.Infrastructure.ManagerApi;
 public class TransporterTypeReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ITransporterTypeReader
 {
+    internal const string TransporterTypeQuery = @"
+                query($transporterTypeId: Short!) {
+                    transporterType(query: { transporterTypeId: $transporterTypeId }) {
+                        accBased
+                        stoppedGap
+                        maxTimeGap
+                        maxDistance
+                    }
+                }";
 
     /// <summary>
     /// Retrieves a transporter type asynchronously.
@@ -31,15 +40,7 @@ public class TransporterTypeReader(IGraphQLClientFactory graphQLClient)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($transporterTypeId: Short!) {
-                    transporterType(query: { transporterTypeId: $transporterTypeId }) {
-                        accBased
-                        stoppedGap
-                        maxTimeGap
-                        maxDistance
-                    }
-                }",
+            Query = TransporterTypeQuery,
             Variables = new { transporterTypeId }
         };
         return await QueryAsync<TransporterTypeVm>(request, cancellationToken);

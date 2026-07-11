@@ -1,6 +1,6 @@
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Domain.Interfaces.Manager;
+namespace TrackHub.Router.Domain.Interfaces.Manager;
 
 public interface IOperatorSyncRunWriter
 {
@@ -12,10 +12,17 @@ public interface IOperatorHealthCheckWriter
     Task RecordAsync(OperatorHealthCheckDto dto, CancellationToken cancellationToken);
 }
 
+// Same telemetry write with the Router's own service identity, for user-triggered
+// manual health checks (the Manager command is ServiceClient-only).
+public interface IOperatorHealthCheckSystemWriter : IOperatorHealthCheckWriter;
+
 public interface IDeviceSyncWriter
 {
     Task ResetAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken);
-    Task SynchronizeAsync(Guid accountId, Guid operatorId, IEnumerable<SynchronizedDeviceDto> devices, string correlationId, string triggerType, bool autoAssignNewDevices, CancellationToken cancellationToken);
+
+    // Returns the device-sync counts (spec 01.3 A6) so the Router can record exactly one sync run
+    // per attempt; Manager no longer records the run itself.
+    Task<DeviceSyncCountsVm> SynchronizeAsync(Guid accountId, Guid operatorId, IEnumerable<SynchronizedDeviceDto> devices, string correlationId, string triggerType, bool autoAssignNewDevices, CancellationToken cancellationToken);
 }
 
 public interface IAlertEventWriter

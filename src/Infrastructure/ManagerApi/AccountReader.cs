@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,26 +13,49 @@
 //  limitations under the License.
 //
 
+using System.Text.Json;
+
 namespace TrackHub.Router.Infrastructure.ManagerApi;
 
-public class AccountReader(IGraphQLClientFactory graphQLClient) 
+public class AccountReader(IGraphQLClientFactory graphQLClient)
     : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IAccountReader
 {
+    // Fallback cadence (seconds) when the gps.integration feature omits a storing interval.
+    private const int DefaultStoringIntervalSeconds = 360;
 
-    public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
+    // Single source of truth for the queries this reader sends; the
+    // ServiceContracts tests validate these exact strings against the Manager schema.
+    internal const string AccountsToSyncQuery = @"
                 query($filter: FiltersInput!) {
                     accountSettingsMaster(
                         query: { filter: $filter }
                       ) {
                             accountId
-                            storeLastPosition
-                            storingInterval
                        }
-                }",
+                }";
+
+    internal const string ValidateFeatureEnabledQuery = @"
+                query($accountId: UUID!, $featureKey: String!) {
+                    validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
+                }";
+
+    internal const string AllAccountFeaturesQuery = @"
+                query {
+                    allAccountFeaturesMaster {
+                        accountId
+                        featureKey
+                        enabled
+                        effectiveFrom
+                        effectiveTo
+                        configurationJson
+                    }
+                }";
+
+    public async Task<IEnumerable<AccountSettingsVm>> GetAccountsToSyncAsync(CancellationToken cancellationToken)
+    {
+        var request = new GraphQLRequest
+        {
+            Query = AccountsToSyncQuery,
             Variables = new
             {
                 filter = new
@@ -42,42 +65,27 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             }
         };
         var accounts = await QueryAsync<IEnumerable<AccountSettingsVm>>(request, cancellationToken);
-        var accountTasks = accounts.Select(account => AddAccountFeaturesAsync(account, cancellationToken));
-        return await Task.WhenAll(accountTasks);
-    }
 
-    public async Task<AccountSettingsVm?> GetAccountToSyncAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
-                query($id: UUID!) {
-                    accountSettings(query: { id: $id }) {
-                        accountId
-                        storeLastPosition
-                        storingInterval
-                   }
-                }",
-            Variables = new
-            {
-                id = accountId
-            }
-        };
+        // Two round trips regardless of account count: the account list plus every account's
+        // features in one batched master read (previously one accountFeatures call per account).
+        var featureRequest = new GraphQLRequest { Query = AllAccountFeaturesQuery };
+        var allFeatures = await QueryAsync<IReadOnlyCollection<AccountFeatureMasterStateVm>>(featureRequest, cancellationToken);
+        var featuresByAccount = allFeatures
+            .GroupBy(f => f.AccountId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyCollection<AccountFeatureStateVm>)g
+                .Select(f => new AccountFeatureStateVm(f.FeatureKey, f.Enabled, f.EffectiveFrom, f.EffectiveTo, f.ConfigurationJson))
+                .ToList());
 
-        var account = await QueryAsync<AccountSettingsVm>(request, cancellationToken);
-        return account.AccountId == Guid.Empty
-            ? null
-            : await AddAccountFeaturesAsync(account, cancellationToken);
+        return accounts
+            .Select(account => BuildAccountSettings(account, featuresByAccount.GetValueOrDefault(account.AccountId, [])))
+            .ToList();
     }
 
     public async Task<bool> IsFeatureEnabledAsync(Guid accountId, string featureKey, CancellationToken cancellationToken)
     {
         var request = new GraphQLRequest
         {
-            Query = @"
-                query($accountId: UUID!, $featureKey: String!) {
-                    validateFeatureEnabled(query: { accountId: $accountId, featureKey: $featureKey })
-                }",
+            Query = ValidateFeatureEnabledQuery,
             Variables = new
             {
                 accountId,
@@ -88,40 +96,14 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
         return await QueryAsync<bool>(request, cancellationToken);
     }
 
-    private async Task<AccountSettingsVm> AddAccountFeaturesAsync(AccountSettingsVm account, CancellationToken cancellationToken)
-    {
-        var features = await GetAccountFeaturesAsync(account.AccountId, cancellationToken);
-        return new AccountSettingsVm(
+    private static AccountSettingsVm BuildAccountSettings(AccountSettingsVm account, IReadOnlyCollection<AccountFeatureStateVm> features)
+        => new(
             account.AccountId,
-            account.StoreLastPosition,
-            account.StoringInterval,
+            ResolveStoringInterval(features),
             IsFeatureEnabled(features, FeatureKeys.Geofencing),
             IsFeatureEnabled(features, FeatureKeys.TripManagement),
             IsFeatureEnabled(features, FeatureKeys.GpsIntegration),
             IsFeatureEnabled(features, FeatureKeys.GpsPositionHistory));
-    }
-
-    private async Task<IReadOnlyCollection<AccountFeatureStateVm>> GetAccountFeaturesAsync(Guid accountId, CancellationToken cancellationToken)
-    {
-        var request = new GraphQLRequest
-        {
-            Query = @"
-                query($accountId: UUID!) {
-                    accountFeatures(query: { accountId: $accountId }) {
-                        featureKey
-                        enabled
-                        effectiveFrom
-                        effectiveTo
-                    }
-                }",
-            Variables = new
-            {
-                accountId
-            }
-        };
-
-        return await QueryAsync<IReadOnlyCollection<AccountFeatureStateVm>>(request, cancellationToken);
-    }
 
     private static bool IsFeatureEnabled(IEnumerable<AccountFeatureStateVm> features, string featureKey)
     {
@@ -133,9 +115,43 @@ public class AccountReader(IGraphQLClientFactory graphQLClient)
             && (!feature.EffectiveTo.HasValue || feature.EffectiveTo >= now));
     }
 
+    // Storing cadence is a storage/cost setting owned by the SuperAdministrator and stored in the
+    // gps.integration feature configuration ("storingIntervalSeconds").
+    private static int ResolveStoringInterval(IEnumerable<AccountFeatureStateVm> features)
+    {
+        var integration = features.FirstOrDefault(f => f.FeatureKey == FeatureKeys.GpsIntegration);
+        if (!string.IsNullOrWhiteSpace(integration.ConfigurationJson))
+        {
+            try
+            {
+                var doc = JsonDocument.Parse(integration.ConfigurationJson!);
+                if (doc.RootElement.TryGetProperty("storingIntervalSeconds", out var value)
+                    && value.TryGetInt32(out var seconds)
+                    && seconds > 0)
+                {
+                    return seconds;
+                }
+            }
+            catch (JsonException)
+            {
+                // fall through to default
+            }
+        }
+        return DefaultStoringIntervalSeconds;
+    }
+
     private readonly record struct AccountFeatureStateVm(
         string FeatureKey,
         bool Enabled,
         DateTimeOffset? EffectiveFrom,
-        DateTimeOffset? EffectiveTo);
+        DateTimeOffset? EffectiveTo,
+        string? ConfigurationJson);
+
+    private readonly record struct AccountFeatureMasterStateVm(
+        Guid AccountId,
+        string FeatureKey,
+        bool Enabled,
+        DateTimeOffset? EffectiveFrom,
+        DateTimeOffset? EffectiveTo,
+        string? ConfigurationJson);
 }

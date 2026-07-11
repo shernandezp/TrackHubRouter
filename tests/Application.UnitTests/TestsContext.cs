@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 
 using Common.Domain.Constants;
 using Moq;
-using TrackHubRouter.Domain.Interfaces.Manager;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.Gating;
+using TrackHub.Router.Domain.Interfaces.Manager;
+using TrackHub.Router.Domain.Models;
 
 namespace Application.UnitTests;
 
@@ -40,12 +41,10 @@ public abstract class TestsContext
         var mock = new Mock<IAccountReader>();
         var accounts = accountIds.Select(id => new AccountSettingsVm(
             id,
-            StoreLastPosition: false,
             StoringInterval: 0,
             GeofencingEnabled: false,
             TripManagementEnabled: false,
             GpsIntegrationEnabled: true,
-            GpsOperatorHealthEnabled: true,
             GpsPositionHistoryEnabled: false)).ToList();
         mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(accounts);
@@ -71,12 +70,10 @@ public abstract class TestsContext
         var mock = new Mock<IAccountReader>();
         var accounts = accountIds.Select(id => new AccountSettingsVm(
             id,
-            StoreLastPosition: false,
             StoringInterval: 0,
             GeofencingEnabled: false,
             TripManagementEnabled: false,
             GpsIntegrationEnabled: false,
-            GpsOperatorHealthEnabled: false,
             GpsPositionHistoryEnabled: false)).ToList();
         mock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(accounts);
@@ -84,6 +81,32 @@ public abstract class TestsContext
                 It.Is<Guid>(id => accountIds.Contains(id)),
                 FeatureKeys.GpsIntegration,
                 It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration ENABLED for the
+    /// given account ids (spec 01.3 A3): the map serves the stored projection, never the provider.
+    /// </summary>
+    protected static Mock<IAccountModeResolver> ModeResolverForEnabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountModeResolver>();
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.Is<Guid>(id => accountIds.Contains(id)), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.Is<Guid>(id => !accountIds.Contains(id)), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        return mock;
+    }
+
+    /// <summary>
+    /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration DISABLED for the
+    /// given account ids (spec 01.3 A3): the map reads the provider on demand.
+    /// </summary>
+    protected static Mock<IAccountModeResolver> ModeResolverForDisabled(params Guid[] accountIds)
+    {
+        var mock = new Mock<IAccountModeResolver>();
+        mock.Setup(x => x.IsIntegrationEnabledAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         return mock;
     }

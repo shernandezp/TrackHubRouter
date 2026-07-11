@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Domain.Enumerators;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Models;
 
-namespace TrackHubRouter.Application.Positions.Mappers;
+namespace TrackHub.Router.Application.Positions.Mappers;
 
 public static class TripMapper
 {

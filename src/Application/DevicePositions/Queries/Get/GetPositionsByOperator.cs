@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
 
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
-using TrackHubRouter.Application.DevicePositions.Events;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
+using TrackHub.Router.Application.DevicePositions.Events;
 
-namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
 public readonly record struct GetPositionsByOperatorQuery(
     OperatorVm Operator,

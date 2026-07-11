@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,5 +13,5 @@
 //  limitations under the License.
 //
 
-global using TrackHubRouter.Domain.Models;
+global using TrackHub.Router.Domain.Models;
 global using TrackHub.Router.Infrastructure.GpsGate.Models;

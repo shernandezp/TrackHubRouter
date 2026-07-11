@@ -18,21 +18,22 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
 
-namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) : IRequest<PositionVm>;
 
 public class GetPositionByTransporterQueryHandler(
         IConfiguration configuration,
-        IAccountReader accountReader,
+        Application.Gating.IAccountModeResolver modeResolver,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
+        IPositionSystemWriter positionSystemWriter,
         ILogger<GetPositionByTransporterQueryHandler> logger)
         : IRequestHandler<GetPositionByTransporterQuery, PositionVm>
 {
@@ -47,11 +48,10 @@ public class GetPositionByTransporterQueryHandler(
     public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
-        var providerEnabledAccounts = await Application.Gating.GpsFeatureGate.GetProviderIntegrationEnabledAccountIdsAsync(
-            accountReader,
-            [@operator.AccountId],
-            cancellationToken);
-        if (!Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(@operator, providerEnabledAccounts))
+        // Mode split through the single resolver (spec 01.3 A3): integration enabled -> serve the
+        // stored projection; disabled -> read the provider on demand.
+        var integrationEnabled = await modeResolver.IsIntegrationEnabledAsync(@operator.AccountId, cancellationToken);
+        if (!@operator.Enabled || integrationEnabled)
         {
             return await GetFallbackPositionAsync(@operator.OperatorId, request.TransporterId, cancellationToken);
         }
@@ -83,6 +83,9 @@ public class GetPositionByTransporterQueryHandler(
                 var position = await reader.GetDevicePositionAsync(device, cancellationToken);
                 if (position.TransporterId != Guid.Empty)
                 {
+                    // On-demand mode: keep the latest-position projection current with the
+                    // provider read, using the Router's service identity (best effort).
+                    await PersistLatestPositionAsync(position, cancellationToken);
                     return position;
                 }
             }
@@ -93,6 +96,25 @@ public class GetPositionByTransporterQueryHandler(
         }
 
         return await GetFallbackPositionAsync(@operator.OperatorId, transporterId, cancellationToken);
+    }
+
+    private async Task PersistLatestPositionAsync(PositionVm position, CancellationToken cancellationToken)
+    {
+        if (position.DeviceDateTime == default
+            || position.Latitude is < -90d or > 90d
+            || position.Longitude is < -180d or > 180d)
+        {
+            return;
+        }
+
+        try
+        {
+            await positionSystemWriter.AddOrUpdatePositionAsync([position], cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Failed to persist on-demand position for transporter {TransporterId}; the read is unaffected.", position.TransporterId);
+        }
     }
 
     private async Task<PositionVm> GetFallbackPositionAsync(

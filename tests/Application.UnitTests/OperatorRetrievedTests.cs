@@ -15,12 +15,12 @@
 
 using Application.UnitTests;
 using Moq;
-using TrackHubRouter.Application.DevicePositions.Events;
-using TrackHubRouter.Application.DevicePositions.Queries.Get;
-using TrackHubRouter.Domain.Models;
+using TrackHub.Router.Application.DevicePositions.Events;
+using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Domain.Models;
 using Common.Mediator;
 
-namespace TrackHubRouter.Application.UnitTests.DevicePositions.Events;
+namespace TrackHub.Router.Application.UnitTests.DevicePositions.Events;
 
 [TestFixture]
 public class OperatorRetrievedTests : TestsContext
@@ -33,7 +33,7 @@ public class OperatorRetrievedTests : TestsContext
         var handler = new OperatorRetrieved.Notification.EventHandler(senderMock.Object);
 
         var operatorVm = new OperatorVm(Guid.NewGuid(), 1, Guid.NewGuid(), null);
-        var account = new AccountSettingsVm(Guid.NewGuid(), true, 10, false, false);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
         var notification = new OperatorRetrieved.Notification(operatorVm, account);
 
         // Act

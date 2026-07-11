@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
+namespace TrackHub.Router.Domain.Models;
 
 public readonly record struct TokenVm(
     string? Token,
-    DateTime? TokenExpiration,
+    // Provider-sourced token responses: assume UTC for naive timestamps at the JSON boundary.
+    [property: JsonConverter(typeof(UtcNullableDateTimeOffsetJsonConverter))] DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration);
+    [property: JsonConverter(typeof(UtcNullableDateTimeOffsetJsonConverter))] DateTimeOffset? RefreshTokenExpiration);

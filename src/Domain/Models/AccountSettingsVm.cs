@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
 //  limitations under the License.
 //
 
-namespace TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Models;
 
 public readonly record struct AccountSettingsVm(
     Guid AccountId,
-    bool StoreLastPosition,
     int StoringInterval,
     bool GeofencingEnabled,
     bool TripManagementEnabled,
     bool GpsIntegrationEnabled = false,
-    bool GpsOperatorHealthEnabled = false,
     bool GpsPositionHistoryEnabled = false
     );

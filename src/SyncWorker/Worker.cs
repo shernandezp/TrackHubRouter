@@ -14,11 +14,11 @@
 //
 
 using Common.Mediator;
-using TrackHubRouter.Application.DevicePositions.Commands.Health;
-using TrackHubRouter.Application.DevicePositions.Commands.Sync;
-using TrackHubRouter.Domain.Interfaces.Manager;
+using TrackHub.Router.Application.DevicePositions.Commands.Health;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Domain.Interfaces.Manager;
 
-namespace TrackHubRouter.SyncWorker;
+namespace TrackHub.Router.SyncWorker;
 
 public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : BackgroundService
 {
@@ -109,15 +109,16 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // The master projection already carries the credential under the worker's
+                // service identity — no per-operator re-fetch.
+                if (op.Credential is null)
+                {
+                    continue;
+                }
+
                 try
                 {
-                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
-                    if (!hydrated.Enabled || hydrated.Credential is null)
-                    {
-                        continue;
-                    }
-
-                    await sender.Send(new SyncOperatorDevicesCommand(hydrated, account, "AUTOMATIC"), stoppingToken);
+                    await sender.Send(new SyncOperatorDevicesCommand(op, "AUTOMATIC"), stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -137,7 +138,9 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
         var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled && a.GpsOperatorHealthEnabled))
+        // Operator health monitoring is core behavior for every account with provider
+        // integration running in the background; it is not a separately billed feature.
+        foreach (var account in accounts.Where(a => a.GpsIntegrationEnabled))
         {
             IEnumerable<Domain.Models.OperatorVm> operators;
             try
@@ -160,14 +163,15 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // Credential comes with the master projection (service identity) — no re-fetch.
+                if (op.Credential is null)
+                {
+                    continue;
+                }
+
                 try
                 {
-                    var hydrated = await operatorReader.GetOperatorAsync(op.OperatorId, stoppingToken);
-                    if (!hydrated.Enabled || hydrated.Credential is null)
-                    {
-                        continue;
-                    }
-                    await sender.Send(new RecordOperatorHealthCommand(hydrated, account), stoppingToken);
+                    await sender.Send(new RecordOperatorHealthCommand(op), stoppingToken);
                 }
                 catch (Exception ex)
                 {

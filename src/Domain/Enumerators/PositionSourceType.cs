@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2026 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
 //  limitations under the License.
 //
 
-using TrackHubRouter.Application.DevicePositions.Queries.Get;
-using TrackHubRouter.Domain.Models;
+namespace TrackHub.Router.Domain.Enumerators;
 
-namespace TrackHubRouter.Web.GraphQL;
-
-public partial class Query
+// Replay history source: PROVIDER reads the GPS operator API on demand (core, ungated);
+// STORED reads TrackHub-stored history (requires gps.positionHistory).
+public enum PositionSourceType
 {
-    public async Task<IEnumerable<PositionVm>> GetDevicePositionsByUser([Service] ISender sender)
-        => await sender.Send(new GetPositionsByUserQuery());
-
-    public async Task<PositionVm> GetDevicePositionByTransporter([Service] ISender sender, [AsParameters] GetPositionByTransporterQuery query)
-        => await sender.Send(query);
-
+    Provider = 0,
+    Stored = 1
 }

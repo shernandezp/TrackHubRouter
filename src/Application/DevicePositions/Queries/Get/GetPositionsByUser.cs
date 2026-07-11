@@ -19,22 +19,27 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using TrackHubRouter.Domain.Models;
-using TrackHubRouter.Domain.Extensions;
+using TrackHub.Router.Domain.Models;
+using TrackHub.Router.Domain.Extensions;
 
-namespace TrackHubRouter.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
+// The account-configurable map refresh has a 10-second floor (spec 07 §17.4), i.e. up
+// to 6 legitimate calls per minute per user, plus page loads and tab returns on top.
+// 12/min accommodates that legal cadence; provider protection remains the cached
+// projection and the per-operator fallback, not this limiter.
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
-[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
+[RateLimiting(PermitLimit = 12, WindowSeconds = 60)]
 public readonly record struct GetPositionsByUserQuery() : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsByUserQueryHandler(
         IConfiguration configuration,
-        IAccountReader accountReader,
+        Application.Gating.IAccountModeResolver modeResolver,
         IOperatorReader operatorReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
+        IPositionSystemWriter positionSystemWriter,
         ILogger<GetPositionsByUserQueryHandler> logger)
         : IRequestHandler<GetPositionsByUserQuery, IEnumerable<PositionVm>>
 {
@@ -55,34 +60,103 @@ public class GetPositionsByUserQueryHandler(
             return [];
         }
 
-        var providerEnabledAccounts = await Application.Gating.GpsFeatureGate.GetProviderIntegrationEnabledAccountIdsAsync(
-            accountReader,
-            operators.Select(o => o.AccountId),
-            cancellationToken);
-        var liveOperators = operators
-            .Where(o => Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(o, providerEnabledAccounts))
+        // Mode split per account (spec 01 §3), resolved through the single IAccountModeResolver
+        // (spec 01.3 A3):
+        // - gps.integration DISABLED  -> on-demand: read the GPS provider directly, persist
+        //   what was read, and fall back to the stored projection if the provider fails.
+        // - gps.integration ENABLED   -> always serve the stored latest-position projection;
+        //   the background SyncWorker keeps it current, so the provider is never contacted here.
+        var integrationEnabledAccounts = new HashSet<Guid>();
+        foreach (var accountId in operators.Select(o => o.AccountId).Where(id => id != Guid.Empty).Distinct())
+        {
+            if (await modeResolver.IsIntegrationEnabledAsync(accountId, cancellationToken))
+            {
+                integrationEnabledAccounts.Add(accountId);
+            }
+        }
+        var onDemandOperators = operators
+            .Where(o => Application.Gating.GpsFeatureGate.CanReadProviderOnDemand(o, integrationEnabledAccounts))
             .ToList();
-        var cachedOperators = operators.Except(liveOperators);
+        var storedProjectionOperators = operators.Except(onDemandOperators).ToList();
 
         var allPositions = new List<PositionVm>();
-        if (liveOperators.Count > 0)
+        if (onDemandOperators.Count > 0)
         {
-            var protocols = liveOperators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
-            await foreach (var positionsCollection in GetDevicePositionAsync(liveOperators, protocols, cancellationToken))
+            var protocols = onDemandOperators.Select(o => (ProtocolType)o.ProtocolTypeId).Distinct();
+            await foreach (var positionsCollection in GetDevicePositionAsync(onDemandOperators, protocols, cancellationToken))
             {
                 allPositions.AddRange(positionsCollection);
             }
         }
 
-        foreach (var @operator in cachedOperators)
+        if (storedProjectionOperators.Count > 0)
         {
-            allPositions.AddRange(await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken));
+            // One batched Telemetry read for every stored-projection operator (this path runs
+            // on every map refresh — previously one call per operator).
+            try
+            {
+                allPositions.AddRange(await transporterPositionReader.GetTransporterPositionsAsync(
+                    storedProjectionOperators.Select(o => o.OperatorId).ToArray(), cancellationToken));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Error retrieving stored positions for {OperatorCount} operators", storedProjectionOperators.Count);
+            }
         }
 
         //Most recent position for each transporter if multiple positions are available
-        return [.. allPositions
+        var result = allPositions
             .GroupBy(p => p.TransporterId)
-            .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())];
+            .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())
+            .ToList();
+
+        // Diagnosability (spec 01.3 A8 / K10): an empty map for an account that actually has active
+        // assignments is the §2.1 defect signature. Name the branch that produced nothing so it is
+        // never silent. No contract change — empty remains a valid response.
+        if (result.Count == 0 && operators.Any(o => o.Enabled))
+        {
+            await LogEmptyMapDiagnosticsAsync(operators, onDemandOperators, cancellationToken);
+        }
+
+        return result;
+    }
+
+    // Emits a structured warning per enabled operator that has active assignments in the account yet
+    // contributed no positions, naming the branch (provider read + stored fallback, or stored
+    // projection / visibility narrowing).
+    private async Task LogEmptyMapDiagnosticsAsync(
+        IReadOnlyCollection<OperatorVm> operators,
+        IReadOnlyCollection<OperatorVm> onDemandOperators,
+        CancellationToken cancellationToken)
+    {
+        foreach (var @operator in operators.Where(o => o.Enabled))
+        {
+            IEnumerable<DeviceTransporterVm> assigned;
+            try
+            {
+                // Account-wide, group-independent catalog: proves the account HAS active assignments.
+                assigned = await deviceReader.GetDeviceTransporterAsync(@operator.AccountId, @operator.OperatorId, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Live map empty and the diagnostic catalog read failed for operator {OperatorId} (account {AccountId}).",
+                    @operator.OperatorId, @operator.AccountId);
+                continue;
+            }
+
+            var assignedCount = assigned.Count();
+            if (assignedCount == 0)
+            {
+                continue;
+            }
+
+            var branch = onDemandOperators.Contains(@operator)
+                ? "provider read + stored fallback returned nothing"
+                : "stored projection empty or visibility narrowing (user not in the transporter's group)";
+            logger.LogWarning(
+                "Live map returned no positions for operator {OperatorId} (account {AccountId}) despite {AssignedCount} active assignment(s); empty branch: {Branch}.",
+                @operator.OperatorId, @operator.AccountId, assignedCount, branch);
+        }
     }
 
     /// <summary>
@@ -124,8 +198,14 @@ public class GetPositionsByUserQueryHandler(
         IEnumerable<OperatorVm> operators,
         CancellationToken cancellationToken)
     {
-        var @operator = operators.FirstOrDefault(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol);
-        return await TryGetPositionsAsync(reader, @operator, cancellationToken);
+        // Several operators may share the same protocol (e.g. two providers of the same brand);
+        // query each sequentially with its own credential and device catalog.
+        var positions = new List<PositionVm>();
+        foreach (var @operator in operators.Where(o => (ProtocolType)o.ProtocolTypeId == reader.Protocol))
+        {
+            positions.AddRange(await TryGetPositionsAsync(reader, @operator, cancellationToken));
+        }
+        return positions;
     }
 
     private async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
@@ -139,23 +219,31 @@ public class GetPositionsByUserQueryHandler(
                 throw new ArgumentNullException(nameof(@operator), "Credential is null");
             Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
 
-            var devices = await deviceReader.GetDevicesByOperatorAsync(@operator.OperatorId, cancellationToken);
+            var devices = await deviceReader.GetVisibleDeviceTransportersByOperatorAsync(@operator.OperatorId, cancellationToken);
             var credential = @operator.Credential.Value.Decrypt(EncryptionKey);
             await reader.Init(credential, cancellationToken);
             var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
             var positionsList = positions.ToList();
-            return positionsList.Count > 0
-                ? positionsList
-                : await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
+            if (positionsList.Count > 0)
+            {
+                // On-demand mode: the account has no background sync, so the Router API keeps
+                // the latest-position projection current with what it just read from the provider.
+                await PersistLatestPositionsAsync(positionsList, cancellationToken);
+                return positionsList;
+            }
+            return await GetStoredPositionsAsync(@operator.OperatorId, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error retrieving positions for user");
-            return await GetFallbackPositionsAsync(@operator.OperatorId, cancellationToken);
+            return await GetStoredPositionsAsync(@operator.OperatorId, cancellationToken);
         }
     }
 
-    private async Task<IEnumerable<PositionVm>> GetFallbackPositionsAsync(
+    // Reads the stored latest-position projection (user-group-scoped in Manager). This is
+    // the PRIMARY read for integration-enabled accounts and the FALLBACK when an on-demand
+    // provider read fails or returns nothing.
+    private async Task<IEnumerable<PositionVm>> GetStoredPositionsAsync(
         Guid operatorId,
         CancellationToken cancellationToken)
     {
@@ -165,9 +253,39 @@ public class GetPositionsByUserQueryHandler(
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogError(ex, "Error retrieving fallback positions for operator {OperatorId}", operatorId);
+            logger.LogError(ex, "Error retrieving stored positions for operator {OperatorId}", operatorId);
             return [];
         }
     }
+
+    /// <summary>
+    /// Best-effort upsert of provider-read positions using the Router's service identity.
+    /// Failures are logged and never block the map read.
+    /// </summary>
+    private async Task PersistLatestPositionsAsync(
+        IReadOnlyCollection<PositionVm> positions,
+        CancellationToken cancellationToken)
+    {
+        var validPositions = positions.Where(IsValidPosition).ToArray();
+        if (validPositions.Length == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await positionSystemWriter.AddOrUpdatePositionAsync(validPositions, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Failed to persist on-demand positions; the map read is unaffected.");
+        }
+    }
+
+    private static bool IsValidPosition(PositionVm position)
+        => position.TransporterId != Guid.Empty
+           && position.DeviceDateTime != default
+           && position.Latitude is >= -90d and <= 90d
+           && position.Longitude is >= -180d and <= 180d;
 
 }

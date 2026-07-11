@@ -15,7 +15,7 @@
 
 using System.Net.Http.Headers;
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces;
+using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.Navixy;
 
@@ -82,8 +82,9 @@ public class NavixyReaderBase
     /// Parses a Navixy date string to DateTimeOffset.
     /// </summary>
     protected static DateTimeOffset ParseNavixyDate(string dateStr)
-        => DateTimeOffset.TryParseExact(dateStr, NavixyDateFormat, null, 
-            System.Globalization.DateTimeStyles.AssumeUniversal, out var result)
+        // Navixy timestamps are naive (no zone); assume UTC and normalize to UTC.
+        => DateTimeOffset.TryParseExact(dateStr, NavixyDateFormat, null,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var result)
             ? result
             : DateTimeOffset.MinValue;
 }

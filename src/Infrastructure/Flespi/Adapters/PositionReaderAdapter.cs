@@ -14,7 +14,7 @@
 //
 
 using Common.Domain.Enums;
-using TrackHubRouter.Domain.Interfaces.Operator;
+using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Flespi.Adapters;
 
