@@ -47,7 +47,7 @@ public class PositionHistorySystemWriter(IGraphQLClientFactory graphQLClient)
             state = p.State,
             country = p.Country,
             attributes = p.Attributes is null ? null : JsonSerializer.Serialize(p.Attributes),
-            idempotencyKey = $"{operatorId}:{p.TransporterId}:{p.DeviceDateTime.UtcDateTime:O}"
+            idempotencyKey = $"{operatorId}:{p.TransporterId}:{p.DeviceDateTime.ToUniversalTime():O}"
         }).ToArray();
 
         if (rows.Length == 0)

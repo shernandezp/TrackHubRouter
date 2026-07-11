@@ -13,6 +13,9 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Infrastructure.GpsGate.Models;
 
 internal readonly record struct Device(
@@ -22,5 +25,6 @@ internal readonly record struct Device(
     double Latitude,
     double Longitude,
     double? Altitude,
-    DateTimeOffset? TimeStamp
+    // GpsGate timestamp: assume UTC for naive values, honour any offset, always normalize to UTC.
+    [property: JsonConverter(typeof(UtcNullableDateTimeOffsetJsonConverter))] DateTimeOffset? TimeStamp
     );

@@ -13,15 +13,19 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Infrastructure.Traccar.Models;
 
 internal readonly record struct Position(
     int Id,
     int DeviceId,
     string Protocol,
-    DateTimeOffset DeviceTime,
-    DateTimeOffset FixTime,
-    DateTimeOffset ServerTime,
+    // Traccar sends ISO 8601 with an explicit offset; honour it and normalize to UTC.
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset DeviceTime,
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset FixTime,
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset ServerTime,
     bool Outdated,
     bool Valid,
     double Latitude,

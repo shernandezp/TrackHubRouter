@@ -45,7 +45,7 @@ public class TripMapperTests
         // Arrange
         var positions = new List<PositionVm>
             {
-                new() { DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0, Speed = 0 }
+                new() { DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0, Speed = 0 }
             };
 
         // Act
@@ -65,8 +65,8 @@ public class TripMapperTests
         // Arrange
         var positions = new List<PositionVm>
             {
-                new() { DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 1 }
+                new() { DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 1 }
             };
 
         // Act
@@ -86,15 +86,15 @@ public class TripMapperTests
         // Arrange
         var positions = new List<PositionVm>
             {
-                new() { DeviceDateTime = DateTime.UtcNow, Latitude = 0.001, Longitude = 0.001, Speed = 10 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.002, Longitude = 0.002, Speed = 9 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.011, Longitude = 0.011, Speed = 10 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.012, Longitude = 0.012, Speed = 9 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(4), Latitude = 0.023, Longitude = 0.023, Speed = 20 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(10), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(11), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(12), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(13), Latitude = 0.024, Longitude = 0.024, Speed = 20 }
+                new() { DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0.001, Longitude = 0.001, Speed = 10 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(1), Latitude = 0.002, Longitude = 0.002, Speed = 9 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(2), Latitude = 0.011, Longitude = 0.011, Speed = 10 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(3), Latitude = 0.012, Longitude = 0.012, Speed = 9 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(4), Latitude = 0.023, Longitude = 0.023, Speed = 20 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(10), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(11), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(12), Latitude = 0.023, Longitude = 0.023, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(13), Latitude = 0.024, Longitude = 0.024, Speed = 20 }
             };
 
         // Act
@@ -111,16 +111,16 @@ public class TripMapperTests
         var positions = new List<PositionVm>
             {
                 // first trip - moving
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 10 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(2), Latitude = 0.002, Longitude = 0.002, Speed = 11 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 12 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(1), Latitude = 0.001, Longitude = 0.001, Speed = 10 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(2), Latitude = 0.002, Longitude = 0.002, Speed = 11 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(3), Latitude = 0.003, Longitude = 0.003, Speed = 12 },
                 // second trip - stop
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(60), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(61), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(62), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(60), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(61), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(62), Latitude = 0.003, Longitude = 0.003, Speed = 0 },
                 // third trip - moving
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(120), Latitude = 0.004, Longitude = 0.004, Speed = 10 },
-                new() { DeviceDateTime = DateTime.UtcNow.AddMinutes(121), Latitude = 0.005, Longitude = 0.005, Speed = 11 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(120), Latitude = 0.004, Longitude = 0.004, Speed = 10 },
+                new() { DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(121), Latitude = 0.005, Longitude = 0.005, Speed = 11 },
             };
 
         // Act
@@ -139,7 +139,7 @@ public class TripMapperTests
     {
         // Arrange
         var positions = new List<PositionVm>();
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTimeOffset.UtcNow;
 
         // First trip
         for (int i = 1; i < 100; i++)

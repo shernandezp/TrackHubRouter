@@ -82,8 +82,8 @@ public class GetPositionTripsQueryTests : TestsContext
 
         var positions = new[]
         {
-            new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-10), Latitude = 0, Longitude = 0, Speed = 10 },
-            new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-5), Latitude = 0.001, Longitude = 0.001, Speed = 12 }
+            new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(-10), Latitude = 0, Longitude = 0, Speed = 10 },
+            new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(-5), Latitude = 0.001, Longitude = 0.001, Speed = 12 }
         };
 
         var readerMock = new Mock<IPositionReader>();

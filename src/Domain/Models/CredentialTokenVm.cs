@@ -24,6 +24,6 @@ public readonly record struct CredentialTokenVm(
     string? Key,
     string? Key2,
     string? Token,
-    DateTime? TokenExpiration,
+    DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration);
+    DateTimeOffset? RefreshTokenExpiration);

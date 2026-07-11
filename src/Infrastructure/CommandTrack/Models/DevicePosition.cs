@@ -13,6 +13,9 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Infrastructure.CommandTrack.Models;
 
 internal readonly record struct DevicePosition(
@@ -22,7 +25,8 @@ internal readonly record struct DevicePosition(
     double Latitude,
     double Longitude,
     double? Altitude,
-    DateTimeOffset DeviceDateTime,
+    // CommandTrack timestamp: assume UTC for naive values, honour any offset, always normalize to UTC.
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset DeviceDateTime,
     double Speed,
     double Course,
     string Address,

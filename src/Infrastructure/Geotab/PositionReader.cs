@@ -58,8 +58,9 @@ public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
         var logRecordSearch = new LogRecordSearch
         {
             DeviceSearch = new DeviceSearch(Id.Create(deviceDto.Identifier)),
-            FromDate = from.DateTime,
-            ToDate = to.DateTime
+            // Geotab SDK search bounds are UTC DateTime; convert at the SDK boundary.
+            FromDate = from.UtcDateTime,
+            ToDate = to.UtcDateTime
         };
         var positions = await GeotabApi!.CallAsync<IEnumerable<LogRecord>>("Get", typeof(LogRecord), new { search = logRecordSearch }, cancellationToken);
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);

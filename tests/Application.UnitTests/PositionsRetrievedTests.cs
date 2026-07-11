@@ -56,7 +56,7 @@ public class PositionsRetrievedTests : TestsContext
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
-        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0 } };
         var account = new AccountSettingsVm(Guid.NewGuid(), 10, true, true);
         var notification = BuildNotification(positions, account);
 
@@ -85,7 +85,7 @@ public class PositionsRetrievedTests : TestsContext
 
         var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock);
 
-        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow, Latitude = 0, Longitude = 0 } };
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0 } };
         var account = new AccountSettingsVm(Guid.NewGuid(), 10, true, true);
         var notification = BuildNotification(positions, account);
 

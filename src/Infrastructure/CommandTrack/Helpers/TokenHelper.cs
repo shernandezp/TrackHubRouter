@@ -69,5 +69,5 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
 
     // Checks if the token has expired
     private static bool IsTokenExpired(CredentialTokenDto token)
-        => DateTime.UtcNow >= token.TokenExpiration;
+        => DateTimeOffset.UtcNow >= token.TokenExpiration;
 }

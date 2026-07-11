@@ -66,7 +66,7 @@ public class GetPositionsQueriesTests : TestsContext
         readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
         readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow }]);
+            .ReturnsAsync([new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow }]);
 
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
@@ -119,7 +119,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
-        readerMock.Setup(x => x.GetDevicePositionAsync(device, It.IsAny<CancellationToken>())).ReturnsAsync(new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow });
+        readerMock.Setup(x => x.GetDevicePositionAsync(device, It.IsAny<CancellationToken>())).ReturnsAsync(new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTimeOffset.UtcNow });
 
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
@@ -151,7 +151,7 @@ public class GetPositionsQueriesTests : TestsContext
         var accountId = Guid.NewGuid();
         var transporterId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
-        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow };
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTimeOffset.UtcNow };
 
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(operatorVm);
@@ -186,7 +186,7 @@ public class GetPositionsQueriesTests : TestsContext
         var transporterId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         var device = new DeviceTransporterVm { TransporterId = transporterId };
-        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-5) };
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(-5) };
 
         var readerMock = new Mock<IPositionReader>();
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
@@ -230,7 +230,7 @@ public class GetPositionsQueriesTests : TestsContext
         var transporterId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         var device = new DeviceTransporterVm { TransporterId = transporterId };
-        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-5) };
+        var cachedPosition = new PositionVm { TransporterId = transporterId, DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(-5) };
 
         var readerMock = new Mock<IPositionReader>();
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
@@ -276,7 +276,7 @@ public class GetPositionsQueriesTests : TestsContext
 
         readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
-        readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>())).ReturnsAsync([new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow }]);
+        readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>())).ReturnsAsync([new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTimeOffset.UtcNow }]);
 
         _positionRegistryMock.Setup(x => x.GetReaders(It.IsAny<IEnumerable<ProtocolType>>())).Returns([readerMock.Object]);
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
@@ -306,7 +306,7 @@ public class GetPositionsQueriesTests : TestsContext
         var accountId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         var device = new DeviceTransporterVm { TransporterId = Guid.NewGuid() };
-        var livePosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow };
+        var livePosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTimeOffset.UtcNow };
 
         var readerMock = new Mock<IPositionReader>();
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
@@ -350,7 +350,7 @@ public class GetPositionsQueriesTests : TestsContext
         // Arrange
         var accountId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
-        var cachedPosition = new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTime.UtcNow };
+        var cachedPosition = new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow };
 
         _operatorReaderMock.Setup(x => x.GetOperatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync([operatorVm]);
         // Stored-projection operators are read through ONE batched Telemetry call.
@@ -390,7 +390,7 @@ public class GetPositionsQueriesTests : TestsContext
         var accountId = Guid.NewGuid();
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId, TestCredentialTokenVm);
         var device = new DeviceTransporterVm { TransporterId = Guid.NewGuid() };
-        var cachedPosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTime.UtcNow.AddMinutes(-10) };
+        var cachedPosition = new PositionVm { TransporterId = device.TransporterId, DeviceDateTime = DateTimeOffset.UtcNow.AddMinutes(-10) };
 
         var readerMock = new Mock<IPositionReader>();
         readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);

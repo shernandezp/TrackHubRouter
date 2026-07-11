@@ -18,7 +18,7 @@ namespace TrackHub.Router.Domain.Records;
 public readonly record struct UpdateTokenDto(
     Guid CredentialId,
     string? Token,
-    DateTime? TokenExpiration,
+    DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration
+    DateTimeOffset? RefreshTokenExpiration
     );

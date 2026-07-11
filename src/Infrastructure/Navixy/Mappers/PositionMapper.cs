@@ -24,8 +24,9 @@ internal static class PositionMapper
     /// Parses a Navixy date string to DateTimeOffset.
     /// </summary>
     private static DateTimeOffset ParseNavixyDate(string? dateStr)
+        // Navixy timestamps are naive (no zone); assume UTC and normalize to UTC.
         => !string.IsNullOrEmpty(dateStr) && DateTimeOffset.TryParseExact(dateStr, NavixyDateFormat, null,
-            System.Globalization.DateTimeStyles.AssumeUniversal, out var result)
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var result)
             ? result
             : DateTimeOffset.MinValue;
 

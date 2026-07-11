@@ -23,6 +23,6 @@ public readonly record struct CredentialTokenDto(
     string? Key,
     string? Key2,
     string? Token,
-    DateTime? TokenExpiration,
+    DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration);
+    DateTimeOffset? RefreshTokenExpiration);

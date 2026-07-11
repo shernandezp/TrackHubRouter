@@ -67,8 +67,8 @@ public class RefreshTokenHelper(ICredentialWriter credentialWriter) : IRefreshTo
     }
 
     private static bool IsTokenExpired(CredentialTokenDto token)
-        => DateTime.UtcNow >= token.TokenExpiration;
+        => DateTimeOffset.UtcNow >= token.TokenExpiration;
 
     private static bool IsRefreshTokenExpired(CredentialTokenDto token)
-        => DateTime.UtcNow >= token.RefreshTokenExpiration;
+        => DateTimeOffset.UtcNow >= token.RefreshTokenExpiration;
 }

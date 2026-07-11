@@ -13,10 +13,14 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Domain.Models;
 
 public readonly record struct TokenVm(
     string? Token,
-    DateTime? TokenExpiration,
+    // Provider-sourced token responses: assume UTC for naive timestamps at the JSON boundary.
+    [property: JsonConverter(typeof(UtcNullableDateTimeOffsetJsonConverter))] DateTimeOffset? TokenExpiration,
     string? RefreshToken,
-    DateTime? RefreshTokenExpiration);
+    [property: JsonConverter(typeof(UtcNullableDateTimeOffsetJsonConverter))] DateTimeOffset? RefreshTokenExpiration);

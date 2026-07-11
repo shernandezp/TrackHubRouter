@@ -13,13 +13,17 @@
 //  limitations under the License.
 //
 
+using System.Text.Json.Serialization;
+using Common.Domain.Json;
+
 namespace TrackHub.Router.Infrastructure.Samsara.Models;
 
 /// <summary>
 /// Samsara GPS data model
 /// </summary>
 internal readonly record struct GpsData(
-    DateTime Time,
+    // Samsara sends RFC 3339 timestamps with an explicit offset ("Z"); honour it and normalize to UTC.
+    [property: JsonConverter(typeof(UtcDateTimeOffsetJsonConverter))] DateTimeOffset Time,
     double Latitude,
     double Longitude,
     double HeadingDegrees,
