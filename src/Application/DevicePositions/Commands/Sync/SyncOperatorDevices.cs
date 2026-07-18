@@ -88,7 +88,7 @@ public class SyncOperatorDevicesCommandHandler(
                 ProviderMetadataHash: d.ProviderMetadataHash,
                 ProviderStatus: d.ProviderStatus));
 
-            // Manager returns the counts and no longer records the run (spec 01.3 A6).
+            // Manager returns the counts and no longer records the run.
             counts = await deviceSyncWriter.SynchronizeAsync(
                 request.Operator.AccountId,
                 request.Operator.OperatorId,

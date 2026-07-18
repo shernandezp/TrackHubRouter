@@ -20,7 +20,7 @@ public interface IDeviceSyncWriter
 {
     Task ResetAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken);
 
-    // Returns the device-sync counts (spec 01.3 A6) so the Router can record exactly one sync run
+    // Returns the device-sync counts so the Router can record exactly one sync run
     // per attempt; Manager no longer records the run itself.
     Task<DeviceSyncCountsVm> SynchronizeAsync(Guid accountId, Guid operatorId, IEnumerable<SynchronizedDeviceDto> devices, string correlationId, string triggerType, bool autoAssignNewDevices, CancellationToken cancellationToken);
 }

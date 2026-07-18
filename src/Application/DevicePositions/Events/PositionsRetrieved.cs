@@ -197,7 +197,7 @@ public sealed class PositionsRetrieved
                 }
             }
 
-            // Freshest fix per transporter wins — the latest-position projection (spec 01.3 A4/K6).
+            // Freshest fix per transporter wins — the latest-position projection.
             private static PositionVm[] LatestPerTransporter(IEnumerable<PositionVm> candidates)
                 => candidates
                     .GroupBy(p => p.TransporterId)

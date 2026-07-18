@@ -19,7 +19,7 @@ using TrackHub.Router.Domain.Exceptions;
 
 namespace TrackHub.Router.Web.GraphQL;
 
-// Maps manual-sync validation failures to typed GraphQL error codes (spec 01.3 A2 / §7) so the
+// Maps manual-sync validation failures to typed GraphQL error codes so the
 // caller learns why a trigger was rejected instead of receiving a silent false.
 public sealed class OperatorSyncErrorFilter : IErrorFilter
 {

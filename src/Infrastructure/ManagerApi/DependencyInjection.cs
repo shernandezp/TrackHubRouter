@@ -31,7 +31,7 @@ public static class DependencyInjection
         services.AddGraphQLServiceClient(Clients.Manager);
 
         // Master-data / provider-support readers and writers stay on Manager. The positions/history/
-        // health/sync-run surface moved to TelemetryApi (spec 01.3 §5.5, AddAppTelemetryContext).
+        // health/sync-run surface moved to TelemetryApi.
         services.AddScoped<IAccountReader, AccountReader>();
 
         services.AddMemoryCache();

@@ -24,7 +24,7 @@ public partial class Query
     public async Task<IEnumerable<DeviceVm>> GetDevices([Service] ISender sender, CancellationToken cancellationToken)
         => await sender.Send(new GetDevicesQuery(), cancellationToken);
 
-    // Exposed as `providerDevicesByOperator` (spec 01.3 A5 / K7): this reads the GPS provider
+    // Exposed as `providerDevicesByOperator`: this reads the GPS provider
     // passthrough directly (used by the integration screens), distinct from the Manager
     // group-scoped catalog reached via IDeviceTransporterReader.GetVisibleDeviceTransportersByOperatorAsync.
     public async Task<IEnumerable<DeviceVm>> ProviderDevicesByOperator([Service] ISender sender, [AsParameters] GetDevicesByOperatorQuery query, CancellationToken cancellationToken)

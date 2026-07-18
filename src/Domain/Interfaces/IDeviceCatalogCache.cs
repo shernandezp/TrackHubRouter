@@ -21,7 +21,7 @@ namespace TrackHub.Router.Domain.Interfaces;
 // 10-second position loop was re-fetching this rarely-changing catalog from Manager on every cycle
 // per operator (router-audit A-12); the cache collapses that to one load per TTL, and the
 // device-sync loop invalidates the entry whenever it changes the catalog. Keyed by the explicit
-// account+operator scope (never a caller identity), so it is safe under the SVD-09 caching rule.
+// account+operator scope (never a caller identity), so it is safe to cache.
 public interface IDeviceCatalogCache
 {
     Task<IEnumerable<DeviceTransporterVm>> GetOrLoadAsync(

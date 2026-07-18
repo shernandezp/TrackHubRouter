@@ -48,7 +48,7 @@ public class GetPositionByTransporterQueryHandler(
     public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
         var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
-        // Mode split through the single resolver (spec 01.3 A3): integration enabled -> serve the
+        // Mode split through the single resolver: integration enabled -> serve the
         // stored projection; disabled -> read the provider on demand.
         var integrationEnabled = await modeResolver.IsIntegrationEnabledAsync(@operator.AccountId, cancellationToken);
         if (!@operator.Enabled || integrationEnabled)

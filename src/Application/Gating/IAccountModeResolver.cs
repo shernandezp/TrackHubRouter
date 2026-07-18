@@ -16,8 +16,7 @@
 namespace TrackHub.Router.Application.Gating;
 
 /// <summary>
-/// The single request-side resolver for the per-account GPS mode flags (spec 01.3 A3, resolves
-/// K4/K5). Wraps <c>IAccountReader.IsFeatureEnabledAsync</c> with a short memory cache so every
+/// The single request-side resolver for the per-account GPS mode flags. Wraps <c>IAccountReader.IsFeatureEnabledAsync</c> with a short memory cache so every
 /// request handler answers "is integration enabled?" / "is history enabled?" the same way, without
 /// re-querying Manager per operator. The SyncWorker keeps its own per-loop AccountSettingsVm
 /// snapshot (a loop cannot re-query per tick); the request path uses this resolver.
