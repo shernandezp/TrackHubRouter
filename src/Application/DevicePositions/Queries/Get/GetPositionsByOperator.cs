@@ -15,6 +15,7 @@
 
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Application.DevicePositions.Events;
@@ -31,7 +32,9 @@ public class GetPositionsByOperatorQueryHandler(
         IPublisher publisher,
         IConfiguration configuration,
         IPositionRegistry positionRegistry,
-        IDeviceTransporterReader deviceReader)
+        IDeviceTransporterReader deviceReader,
+        IDeviceCatalogCache deviceCatalogCache,
+        ILogger<GetPositionsByOperatorQueryHandler> logger)
         : IRequestHandler<GetPositionsByOperatorQuery, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -51,11 +54,15 @@ public class GetPositionsByOperatorQueryHandler(
             var correlationId = request.CorrelationId ?? Guid.NewGuid().ToString();
             var reader = positionRegistry.GetReader((ProtocolType)request.Operator.ProtocolTypeId);
             await reader.Init(request.Operator.Credential.Value.Decrypt(EncryptionKey), cancellationToken);
-            var devices = await deviceReader.GetDeviceTransporterAsync(
+            // The device→transporter catalog changes rarely; serve it from a short-TTL cache so the
+            // 10-second position loop does not re-fetch it from Manager every cycle per operator
+            // (router-audit A-12). The device-sync loop invalidates it on catalog changes.
+            var devices = await deviceCatalogCache.GetOrLoadAsync(
                 request.Settings.AccountId,
                 request.Operator.OperatorId,
+                ct => deviceReader.GetDeviceTransporterAsync(request.Settings.AccountId, request.Operator.OperatorId, ct),
                 cancellationToken);
-            var positions = await TryGetPositionsAsync(reader, devices, cancellationToken);
+            var (positions, errorCode, errorMessage) = await TryGetPositionsAsync(reader, request.Operator, devices, cancellationToken);
             await publisher.Publish(
                 new PositionsRetrieved.Notification(
                     positions,
@@ -63,24 +70,39 @@ public class GetPositionsByOperatorQueryHandler(
                     request.Operator,
                     startedAt,
                     request.TriggerType,
-                    correlationId),
+                    correlationId,
+                    errorCode,
+                    errorMessage),
                 cancellationToken);
         }
         return true;
     }
 
-    private static async Task<IEnumerable<PositionVm>> TryGetPositionsAsync(
+    // A provider position-fetch failure must NOT masquerade as a successful sync with zero fixes
+    // the error is logged and returned so PositionsRetrieved records the run
+    // as FAILED with the error code and raises the sync-failed alert. Returning empty here (rather
+    // than throwing) keeps the failure isolated to this operator — the notification still fires so
+    // the run is recorded, and cancellation propagates.
+    private async Task<(IEnumerable<PositionVm> Positions, string? ErrorCode, string? ErrorMessage)> TryGetPositionsAsync(
         IPositionReader reader,
+        OperatorVm @operator,
         IEnumerable<DeviceTransporterVm> devices,
         CancellationToken cancellationToken)
     {
         try
         {
-            return await reader.GetDevicePositionAsync(devices, cancellationToken);
+            var positions = await reader.GetDevicePositionAsync(devices, cancellationToken);
+            return (positions, null, null);
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return [];
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Provider position fetch failed for operator {OperatorId} (account {AccountId}).",
+                @operator.OperatorId, @operator.AccountId);
+            return ([], ex.GetType().Name, ex.Message);
         }
     }
 

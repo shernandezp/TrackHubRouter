@@ -35,11 +35,14 @@ public abstract class TraccarReaderBase(
         return Convert.ToBase64String(Encoding.ASCII.GetBytes(credentials));
     }
 
-    // Initializes the Traccar reader with the provided credential.
-    public virtual void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
+    // Initializes the Traccar reader with the provided credential. Traccar auth is header-only
+    // (no login round-trip), so this completes synchronously and returns a completed task — the
+    // reader implements the async port directly, no thread-pool-hopping adapter needed.
+    public virtual Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", GetCredentialString(credential));
         HttpClientService.Init(httpClient, $"{ProtocolType.Traccar}");
+        return Task.CompletedTask;
     }
 }

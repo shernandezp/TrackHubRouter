@@ -13,21 +13,21 @@
 //  limitations under the License.
 //
 
+using TrackHub.Router.Domain.Exceptions;
+
 namespace TrackHub.Router.Application.DevicePositions.Registry;
 
-public class PositionRegistry(IServiceScopeFactory scopeFactory) : IPositionRegistry
+// Scoped: resolves the keyed reader from the caller's own request scope (the reader and its scoped
+// dependencies share that live scope) — exactly one reader constructed per lookup, no
+// resolve-all-and-filter, no disposed-scope hand-off (router-audit A-07).
+public class PositionRegistry(IServiceProvider serviceProvider) : IPositionRegistry
 {
     public IEnumerable<IPositionReader> GetReaders(IEnumerable<ProtocolType> types)
-    {
-        using var scope = scopeFactory.CreateScope();
-        return scope.ServiceProvider.GetServices<IPositionReader>()
-            .Where(reader => types.Contains(reader.Protocol));
-    }
+        => types
+            .Select(type => serviceProvider.GetKeyedService<IPositionReader>(type))
+            .Where(reader => reader is not null)!;
 
     public IPositionReader GetReader(ProtocolType type)
-    {
-        using var scope = scopeFactory.CreateScope();
-        return scope.ServiceProvider.GetServices<IPositionReader>()
-            .First(reader => type == reader.Protocol);
-    }
+        => serviceProvider.GetKeyedService<IPositionReader>(type)
+            ?? throw new ProtocolNotSupportedException(type);
 }

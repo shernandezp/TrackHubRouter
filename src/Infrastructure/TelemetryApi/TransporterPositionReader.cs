@@ -41,6 +41,7 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
                             mileage
                             ignition
                             hourmeter
+                            extra
                         }
                         altitude
                         address
@@ -72,6 +73,7 @@ public class TransporterPositionReader(IGraphQLClientFactory graphQLClient)
                             mileage
                             ignition
                             hourmeter
+                            extra
                         }
                         altitude
                         address

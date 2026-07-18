@@ -25,7 +25,7 @@ public sealed class ConnectivityTester(ICredentialHttpClientFactory httpClientFa
     // Sends a ping request to the GpsGate server.
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
-        Init(credential, cancellationToken);
+        await Init(credential, cancellationToken);
         var url = $"api/v.1/applications";
         await HttpClientService.GetAsync<Pong>(url, cancellationToken: cancellationToken);
     }

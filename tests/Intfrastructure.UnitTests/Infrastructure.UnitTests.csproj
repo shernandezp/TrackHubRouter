@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Application\Application.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Common\Common.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\CommandTrack\CommandTrack.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Protack\Protrack.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Traccar\Traccar.csproj" />

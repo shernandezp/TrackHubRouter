@@ -53,7 +53,10 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
 
         if (newToken.Token is null)
         {
-            throw new Exception("Failed to retrieve a new token");
+            // Typed rather than a raw Exception (rules.md forbids raw throws): the provider
+            // authenticated but returned no token. Surfaces through the sync pipeline as a FAILED
+            // run (router-audit A-08/A-24).
+            throw new InvalidOperationException("CommandTrack authentication did not return a token.");
         }
 
         await credentialWriter.UpdateTokenAsync(credential.CredentialId, new UpdateTokenDto(

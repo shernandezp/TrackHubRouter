@@ -16,6 +16,7 @@
 using Common.Mediator;
 using TrackHub.Router.Application.DevicePositions.Commands.Health;
 using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.SyncWorker;
@@ -80,6 +81,7 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
         var accountReader = scope.ServiceProvider.GetRequiredService<IAccountReader>();
         var operatorReader = scope.ServiceProvider.GetRequiredService<IOperatorReader>();
+        var backoff = scope.ServiceProvider.GetRequiredService<IOperatorSyncBackoff>();
 
         var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
         var now = DateTimeOffset.UtcNow;
@@ -116,12 +118,28 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // Skip operators still inside their failure backoff window so a persistently
+                // failing operator is not re-attempted at full cadence (router-audit A-15).
+                if (backoff.IsInBackoff(op.OperatorId, now))
+                {
+                    continue;
+                }
+
                 try
                 {
-                    await sender.Send(new SyncOperatorDevicesCommand(op, "AUTOMATIC"), stoppingToken);
+                    var succeeded = await sender.Send(new SyncOperatorDevicesCommand(op, "AUTOMATIC"), stoppingToken);
+                    if (succeeded)
+                    {
+                        backoff.RecordSuccess(op.OperatorId);
+                    }
+                    else
+                    {
+                        backoff.RecordFailure(op.OperatorId, DateTimeOffset.UtcNow);
+                    }
                 }
                 catch (Exception ex)
                 {
+                    backoff.RecordFailure(op.OperatorId, DateTimeOffset.UtcNow);
                     _logger.LogError(ex, "Scheduled device sync failed for operator {OperatorId}.", op.OperatorId);
                 }
             }
@@ -134,6 +152,7 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
         var accountReader = scope.ServiceProvider.GetRequiredService<IAccountReader>();
         var operatorReader = scope.ServiceProvider.GetRequiredService<IOperatorReader>();
+        var backoff = scope.ServiceProvider.GetRequiredService<IOperatorSyncBackoff>();
 
         var accounts = await accountReader.GetAccountsToSyncAsync(stoppingToken);
         var now = DateTimeOffset.UtcNow;
@@ -169,12 +188,29 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : 
                     continue;
                 }
 
+                // Persistently unreachable operators back off (router-audit A-15): the offline
+                // alert is already deduped, so full-cadence probing only produced log spam; a
+                // recovered operator's first successful probe (within the backoff window) clears it.
+                if (backoff.IsInBackoff(op.OperatorId, now))
+                {
+                    continue;
+                }
+
                 try
                 {
-                    await sender.Send(new RecordOperatorHealthCommand(op), stoppingToken);
+                    var healthy = await sender.Send(new RecordOperatorHealthCommand(op), stoppingToken);
+                    if (healthy)
+                    {
+                        backoff.RecordSuccess(op.OperatorId);
+                    }
+                    else
+                    {
+                        backoff.RecordFailure(op.OperatorId, DateTimeOffset.UtcNow);
+                    }
                 }
                 catch (Exception ex)
                 {
+                    backoff.RecordFailure(op.OperatorId, DateTimeOffset.UtcNow);
                     _logger.LogError(ex, "Operator {OperatorId} health check failed.", op.OperatorId);
                 }
             }

@@ -27,7 +27,7 @@ public class Devices : EndpointGroupBase
             .MapGet(GetDevices);
     }
 
-    public async Task<IEnumerable<DeviceVm>> GetDevices(ISender sender, [AsParameters] GetDevicesQuery query)
-        => await sender.Send(query);
+    public async Task<IEnumerable<DeviceVm>> GetDevices(ISender sender, [AsParameters] GetDevicesQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 
 }

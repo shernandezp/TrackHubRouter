@@ -35,6 +35,8 @@ public class SyncOperatorDevicesCommandHandler(
     IOperatorSyncRunWriter syncRunWriter,
     IOperatorHealthCheckSystemWriter healthWriter,
     IAlertEventWriter alertWriter,
+    IOperatorSyncLock syncLock,
+    IDeviceCatalogCache deviceCatalogCache,
     ILogger<SyncOperatorDevicesCommandHandler> logger) : IRequestHandler<SyncOperatorDevicesCommand, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -46,6 +48,11 @@ public class SyncOperatorDevicesCommandHandler(
         {
             return false;
         }
+
+        // Serialize per operator: a manual "sync now" and the background sync loop (or two manual
+        // triggers) must not run concurrently for the same operator, or the ResetDeviceCatalog
+        // wipe/rebuild races.
+        using var operatorGate = await syncLock.AcquireAsync(request.Operator.OperatorId, cancellationToken);
 
         var startedAt = DateTimeOffset.UtcNow;
         var correlationId = request.CorrelationId ?? Guid.NewGuid().ToString();
@@ -90,6 +97,10 @@ public class SyncOperatorDevicesCommandHandler(
                 request.TriggerType,
                 request.AutoAssignNewDevices,
                 cancellationToken);
+
+            // The catalog may have changed (devices added/removed) — drop the cached copy so the
+            // position loop picks up the new set immediately (router-audit A-12).
+            deviceCatalogCache.Invalidate(request.Operator.OperatorId);
         }
         catch (Exception ex)
         {
@@ -100,7 +111,7 @@ public class SyncOperatorDevicesCommandHandler(
                 request.Operator.OperatorId, request.Operator.AccountId);
         }
 
-        // Single sync-run writer (spec 01.3 A6): the Router records exactly one run per attempt, with
+        // Single sync-run writer: the Router records exactly one run per attempt, with
         // identical field completeness for success (Manager's counts) and failure (counts default to
         // zero, DevicesSeen reflects what the provider returned before the failure). Best-effort:
         // telemetry failures never fail the sync itself.

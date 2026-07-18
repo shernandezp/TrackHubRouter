@@ -25,7 +25,7 @@ namespace TrackHub.Router.Infrastructure.Samsara;
 public sealed class PositionReader(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService)
-    : SamsaraReaderBase(httpClientFactory, httpClientService)
+    : SamsaraReaderBase(httpClientFactory, httpClientService), IPositionReader
 {
     /// <summary>
     /// Retrieves the last position of a single device asynchronously.

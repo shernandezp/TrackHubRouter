@@ -37,12 +37,17 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
     private Mock<IOperatorHealthCheckSystemWriter> _healthWriterMock = null!;
     private Mock<IAlertEventWriter> _alertWriterMock = null!;
     private Mock<IExternalDeviceReader> _readerMock = null!;
+    private Mock<IOperatorSyncLock> _syncLockMock = null!;
 
     [SetUp]
     public void SetUp()
     {
         _configurationMock = new Mock<IConfiguration>();
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
+
+        _syncLockMock = new Mock<IOperatorSyncLock>();
+        _syncLockMock.Setup(x => x.AcquireAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Mock.Of<IDisposable>());
 
         _deviceRegistryMock = new Mock<IDeviceRegistry>();
         _deviceSyncWriterMock = new Mock<IDeviceSyncWriter>();
@@ -63,6 +68,8 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         _syncRunWriterMock.Object,
         _healthWriterMock.Object,
         _alertWriterMock.Object,
+        _syncLockMock.Object,
+        Mock.Of<TrackHub.Router.Domain.Interfaces.IDeviceCatalogCache>(),
         Mock.Of<ILogger<SyncOperatorDevicesCommandHandler>>());
 
     private static OperatorVm OperatorWith(CredentialTokenVm? credential, Guid? accountId = null) =>

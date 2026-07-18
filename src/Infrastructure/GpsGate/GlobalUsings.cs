@@ -15,3 +15,5 @@
 
 global using TrackHub.Router.Domain.Models;
 global using TrackHub.Router.Infrastructure.GpsGate.Models;
+
+global using TrackHub.Router.Domain.Interfaces.Operator;

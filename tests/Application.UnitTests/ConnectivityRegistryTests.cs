@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Common.Domain.Enums;
 using TrackHub.Router.Application.PingOperator;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Application.UnitTests.PingOperator.Registry;
@@ -24,71 +25,39 @@ namespace TrackHub.Router.Application.UnitTests.PingOperator.Registry;
 [TestFixture]
 public class ConnectivityRegistryTests
 {
-    [Test]
-    public void GetTester_ReturnsMatchingTester()
+    private static IConnectivityTester TesterFor(ProtocolType protocol)
     {
-        // Arrange
-        var tester1 = new Mock<IConnectivityTester>();
-        tester1.SetupGet(t => t.Protocol).Returns(ProtocolType.CommandTrack);
+        var tester = new Mock<IConnectivityTester>();
+        tester.SetupGet(t => t.Protocol).Returns(protocol);
+        return tester.Object;
+    }
 
-        var tester2 = new Mock<IConnectivityTester>();
-        tester2.SetupGet(t => t.Protocol).Returns(ProtocolType.Samsara);
-
+    private static ConnectivityRegistry BuildRegistry(params ProtocolType[] protocols)
+    {
         var services = new ServiceCollection();
-        services.AddScoped(_ => tester1.Object);
-        services.AddScoped(_ => tester2.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+        foreach (var protocol in protocols)
+        {
+            var tester = TesterFor(protocol);
+            services.AddKeyedScoped<IConnectivityTester>(protocol, (_, _) => tester);
+        }
+        return new ConnectivityRegistry(services.BuildServiceProvider());
+    }
 
-        var registry = new ConnectivityRegistry(scopeFactory);
+    [Test]
+    public void GetTester_ReturnsTesterForRequestedProtocol()
+    {
+        var registry = BuildRegistry(ProtocolType.CommandTrack, ProtocolType.Samsara);
 
-        // Act
         var result = registry.GetTester(ProtocolType.Samsara);
 
-        // Assert
         Assert.That(result.Protocol, Is.EqualTo(ProtocolType.Samsara));
     }
 
     [Test]
-    public void GetTester_ReturnsFirstMatching_WhenMultipleRegistered()
+    public void GetTester_NoMatch_ThrowsProtocolNotSupportedException()
     {
-        // Arrange
-        var first = new Mock<IConnectivityTester>();
-        first.SetupGet(t => t.Protocol).Returns(ProtocolType.GpsGate);
+        var registry = BuildRegistry(ProtocolType.CommandTrack);
 
-        var second = new Mock<IConnectivityTester>();
-        second.SetupGet(t => t.Protocol).Returns(ProtocolType.GpsGate);
-
-        var services = new ServiceCollection();
-        services.AddScoped(_ => first.Object);
-        services.AddScoped(_ => second.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-
-        var registry = new ConnectivityRegistry(scopeFactory);
-
-        // Act
-        var result = registry.GetTester(ProtocolType.GpsGate);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(first.Object));
-    }
-
-    [Test]
-    public void GetTester_NoMatch_ThrowsInvalidOperationException()
-    {
-        // Arrange
-        var tester = new Mock<IConnectivityTester>();
-        tester.SetupGet(t => t.Protocol).Returns(ProtocolType.CommandTrack);
-
-        var services = new ServiceCollection();
-        services.AddScoped(_ => tester.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-
-        var registry = new ConnectivityRegistry(scopeFactory);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => registry.GetTester(ProtocolType.Samsara));
+        Assert.Throws<ProtocolNotSupportedException>(() => registry.GetTester(ProtocolType.Samsara));
     }
 }

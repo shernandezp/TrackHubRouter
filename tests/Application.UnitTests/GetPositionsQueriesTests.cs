@@ -18,6 +18,7 @@ using Moq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Registry;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Models;
@@ -52,6 +53,22 @@ public class GetPositionsQueriesTests : TestsContext
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
 
+    // A device-catalog cache that always invokes the loader (behaves as if disabled), so tests
+    // exercise the underlying device reader exactly as before the cache was introduced (A-12).
+    private static IDeviceCatalogCache PassThroughCache()
+    {
+        var cache = new Mock<IDeviceCatalogCache>();
+        cache
+            .Setup(c => c.GetOrLoadAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<Guid>(),
+                It.IsAny<Func<CancellationToken, Task<IEnumerable<DeviceTransporterVm>>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Guid, Guid, Func<CancellationToken, Task<IEnumerable<DeviceTransporterVm>>>, CancellationToken>(
+                (_, _, loader, ct) => loader(ct));
+        return cache.Object;
+    }
+
     [Test]
     public async Task GetPositionsByOperator_WithCredential_PublishesPositions()
     {
@@ -75,7 +92,9 @@ public class GetPositionsQueriesTests : TestsContext
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
-            _deviceReaderMock.Object);
+            _deviceReaderMock.Object,
+            PassThroughCache(),
+            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
 
         // Act
         var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
@@ -83,6 +102,44 @@ public class GetPositionsQueriesTests : TestsContext
         // Assert
         Assert.That(result, Is.True);
         publisherMock.Verify(x => x.Publish(It.IsAny<PositionsRetrieved.Notification>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GetPositionsByOperator_ProviderThrows_PublishesNotificationWithProviderError()
+    {
+        // Regression for router-audit A-08: a provider fetch that throws must be surfaced on the
+        // notification (ProviderErrorCode) rather than swallowed to an empty success.
+        var publisherMock = new Mock<IPublisher>();
+        var readerMock = new Mock<IPositionReader>();
+
+        var operatorId = Guid.NewGuid();
+        var operatorVm = new OperatorVm(operatorId, (int)ProtocolType.CommandTrack, Guid.NewGuid(), TestCredentialTokenVm);
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
+
+        readerMock.Setup(x => x.Init(It.IsAny<CredentialTokenDto>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        readerMock.SetupGet(x => x.Protocol).Returns(ProtocolType.CommandTrack);
+        readerMock.Setup(x => x.GetDevicePositionAsync(It.IsAny<IEnumerable<DeviceTransporterVm>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("provider down"));
+
+        _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
+        _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
+
+        var handler = new GetPositionsByOperatorQueryHandler(
+            publisherMock.Object,
+            _configurationMock.Object,
+            _positionRegistryMock.Object,
+            _deviceReaderMock.Object,
+            PassThroughCache(),
+            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+
+        // Act — must not throw; the error is carried on the notification.
+        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+
+        // Assert
+        Assert.That(result, Is.True);
+        publisherMock.Verify(x => x.Publish(
+            It.Is<PositionsRetrieved.Notification>(n => n.ProviderErrorCode == "InvalidOperationException"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -98,7 +155,9 @@ public class GetPositionsQueriesTests : TestsContext
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
-            _deviceReaderMock.Object);
+            _deviceReaderMock.Object,
+            PassThroughCache(),
+            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
 
         // Act
         var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);

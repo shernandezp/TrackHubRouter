@@ -28,7 +28,9 @@ public sealed class PositionsRetrieved
         OperatorVm Operator,
         DateTimeOffset StartedAt,
         string TriggerType,
-        string CorrelationId) : INotification
+        string CorrelationId,
+        string? ProviderErrorCode = null,
+        string? ProviderErrorMessage = null) : INotification
     {
         public class EventHandler(
             IPositionWriter positionWriter,
@@ -44,33 +46,23 @@ public sealed class PositionsRetrieved
                 var positions = notification.Positions?.ToArray() ?? [];
                 var positionsRead = positions.Length;
                 int positionsAccepted = 0;
-                string? errorCode = null;
-                string? errorMessage = null;
-                var result = "SUCCEEDED";
+                string? errorCode = notification.ProviderErrorCode;
+                string? errorMessage = notification.ProviderErrorMessage;
+                // A provider fetch that threw is a FAILED run, not a silent "0 fixes" success
+                //The provider error is carried on the notification.
+                var providerFailed = notification.ProviderErrorCode is not null;
+                var result = providerFailed ? "FAILED" : "SUCCEEDED";
 
                 var validPositionCandidates = positions
                     .Where(IsValidPosition)
                     .ToArray();
                 var invalidPositionCount = positionsRead - validPositionCandidates.Length;
 
-                // Bounded address enrichment: resolve addresses for rows the GPS provider
-                // left blank, up to the per-cycle budget, honoring the active provider's
-                // throttle. Failures are logged and never block or delay position storage.
-                // Enrich the full set of valid fixes so both the latest projection and the stored
-                // history carry addresses.
-                validPositionCandidates = await EnrichAddressesAsync(validPositionCandidates, cancellationToken);
-
                 // The per-transporter dedupe (freshest fix per transporter wins) applies ONLY to the
-                // latest-position projection (spec 01.3 A4 / K6). The history append below receives
-                // every valid fix — a transporter with two active devices records both — while the
-                // idempotency key prevents duplicates.
-                var validPositions = validPositionCandidates
-                    .GroupBy(p => p.TransporterId)
-                    .Select(g => g
-                        .OrderByDescending(p => p.DeviceDateTime)
-                        .ThenByDescending(p => p.ServerDateTime ?? DateTimeOffset.MinValue)
-                        .First())
-                    .ToArray();
+                // latest-position projection. The history append below receives every valid fix — a
+                // transporter with two active devices records both — while the idempotency key
+                // prevents duplicates.
+                var validPositions = LatestPerTransporter(validPositionCandidates);
                 positionsAccepted = validPositions.Length;
                 if (invalidPositionCount > 0)
                 {
@@ -83,6 +75,10 @@ public sealed class PositionsRetrieved
                 {
                     if (validPositions.Length > 0)
                     {
+                        // Phase 1 — freshness-critical: store the latest projection and run geofence
+                        // detection with the addresses the provider already supplied. Reverse-
+                        // geocoding (with its fleet-wide throttle) is deferred to phase 2 so it can
+                        // never delay position storage or detection (router-audit A-10).
                         var writeSucceeded = await positionWriter.AddOrUpdatePositionAsync(validPositions, cancellationToken);
                         if (!writeSucceeded)
                         {
@@ -94,28 +90,57 @@ public sealed class PositionsRetrieved
 
                         if (writeSucceeded && notification.Settings.GeofencingEnabled)
                         {
-                            await geofenceWriter.ProcessPositionsAsync(validPositions, notification.Settings.AccountId, cancellationToken);
-                        }
-
-                        // Stored history: the account-level sync cadence already runs at the
-                        // configured storing interval, so every accepted batch is appended for
-                        // accounts with gps.positionHistory. History receives ALL valid fixes (not the
-                        // deduped latest set) so multi-device transporters keep every fix (spec 01.3
-                        // A4 / K6). Failures never fail the sync run.
-                        if (writeSucceeded && notification.Settings.GpsPositionHistoryEnabled)
-                        {
+                            // Best-effort, isolated from the sync-run classification: a Geofencing
+                            // outage must not flip an already-stored position batch to FAILED nor
+                            // raise a false position-sync-failed alert (router-audit A-09).
                             try
                             {
-                                await historyWriter.AppendRangeAsync(
-                                    notification.Settings.AccountId,
-                                    notification.Operator.OperatorId,
-                                    validPositionCandidates,
-                                    cancellationToken);
+                                await geofenceWriter.ProcessPositionsAsync(validPositions, notification.Settings.AccountId, cancellationToken);
                             }
                             catch (Exception ex)
                             {
-                                logger.LogWarning(ex, "Position history append failed for operator {OperatorId} (account {AccountId}).",
+                                logger.LogWarning(ex, "Geofence processing failed for operator {OperatorId} (account {AccountId}); positions were stored.",
                                     notification.Operator.OperatorId, notification.Settings.AccountId);
+                            }
+                        }
+
+                        // Phase 2 — best-effort enrichment off the freshness path: fill blank
+                        // addresses, re-upsert the projection ONLY if enrichment resolved something
+                        // (avoids a pointless second write), and append the enriched history.
+                        if (writeSucceeded)
+                        {
+                            var (enrichedCandidates, anyResolved) = await EnrichAddressesAsync(validPositionCandidates, cancellationToken);
+
+                            if (anyResolved)
+                            {
+                                try
+                                {
+                                    await positionWriter.AddOrUpdatePositionAsync(LatestPerTransporter(enrichedCandidates), cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogWarning(ex, "Address back-fill update failed for operator {OperatorId} (account {AccountId}); the fresh projection is already stored.",
+                                        notification.Operator.OperatorId, notification.Settings.AccountId);
+                                }
+                            }
+
+                            // Stored history receives ALL valid fixes (not the deduped latest set) so
+                            // multi-device transporters keep every fix. Failures never fail the run.
+                            if (notification.Settings.GpsPositionHistoryEnabled)
+                            {
+                                try
+                                {
+                                    await historyWriter.AppendRangeAsync(
+                                        notification.Settings.AccountId,
+                                        notification.Operator.OperatorId,
+                                        enrichedCandidates,
+                                        cancellationToken);
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogWarning(ex, "Position history append failed for operator {OperatorId} (account {AccountId}).",
+                                        notification.Operator.OperatorId, notification.Settings.AccountId);
+                                }
                             }
                         }
                     }
@@ -172,14 +197,27 @@ public sealed class PositionsRetrieved
                 }
             }
 
-            private async Task<PositionVm[]> EnrichAddressesAsync(PositionVm[] positions, CancellationToken cancellationToken)
+            // Freshest fix per transporter wins — the latest-position projection (spec 01.3 A4/K6).
+            private static PositionVm[] LatestPerTransporter(IEnumerable<PositionVm> candidates)
+                => candidates
+                    .GroupBy(p => p.TransporterId)
+                    .Select(g => g
+                        .OrderByDescending(p => p.DeviceDateTime)
+                        .ThenByDescending(p => p.ServerDateTime ?? DateTimeOffset.MinValue)
+                        .First())
+                    .ToArray();
+
+            // Returns the enriched positions plus whether any blank address was actually resolved
+            // (so the caller only re-writes the projection when enrichment changed something).
+            private async Task<(PositionVm[] Positions, bool AnyResolved)> EnrichAddressesAsync(PositionVm[] positions, CancellationToken cancellationToken)
             {
+                var anyResolved = false;
                 try
                 {
                     var budget = await geocodingService.GetEnrichmentBudgetAsync(cancellationToken);
                     if (budget <= 0)
                     {
-                        return positions;
+                        return (positions, false);
                     }
 
                     for (var i = 0; i < positions.Length && budget > 0; i++)
@@ -200,6 +238,7 @@ public sealed class PositionsRetrieved
                                 State = address.Value.State,
                                 Country = address.Value.Country
                             };
+                            anyResolved = true;
                         }
                     }
                 }
@@ -208,7 +247,7 @@ public sealed class PositionsRetrieved
                     logger.LogWarning(ex, "Address enrichment failed; storing positions without addresses.");
                 }
 
-                return positions;
+                return (positions, anyResolved);
             }
 
             private static bool IsValidPosition(PositionVm position)

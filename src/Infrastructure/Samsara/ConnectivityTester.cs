@@ -31,7 +31,7 @@ public sealed class ConnectivityTester(
     /// </summary>
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
-        Init(credential, cancellationToken);
+        await Init(credential, cancellationToken);
         // Make a simple API call to verify connectivity
         var url = "fleet/vehicles/stats?limit=1";
         await HttpClientService.GetAsync<VehicleStatsResponse>(url, cancellationToken: cancellationToken);

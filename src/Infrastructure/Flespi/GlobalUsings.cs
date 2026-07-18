@@ -16,3 +16,5 @@
 global using TrackHub.Router.Domain.Models;
 global using TrackHub.Router.Domain.Records;
 global using TrackHub.Router.Infrastructure.Flespi.Models;
+
+global using TrackHub.Router.Domain.Interfaces.Operator;

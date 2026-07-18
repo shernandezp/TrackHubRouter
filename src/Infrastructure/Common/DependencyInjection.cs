@@ -33,31 +33,36 @@ public static class DependencyInjection
         var protocols = configuration.GetSection("AppSettings:Protocols").Get<IEnumerable<string>>();
         Guard.Against.Null(protocols, message: $"Client configuration for Protocols not loaded");
 
-        var protocolsWithAdapters = new HashSet<string>
-        {
-            ProtocolType.Traccar.ToString(),
-            ProtocolType.GpsGate.ToString(),
-            ProtocolType.Samsara.ToString(),
-            ProtocolType.Flespi.ToString()
-        };
-
+        // Uniform registration for every provider (no adapter special-casing — router-audit A-18);
+        // each provider's readers are registered keyed by ProtocolType (router-audit A-07).
         foreach (var protocol in protocols)
         {
-            var hasAdapters = protocolsWithAdapters.Contains(protocol);
-            services.RegisterProtocol(protocol, hasAdapters);
+            services.RegisterProtocol(protocol);
         }
 
         services.AddHttpClient(NominatimReverseGeocoder.HttpClientName);
+
+        // Provider credential clients: auto-redirect disabled so an operator-configured base URL
+        // cannot be used to 302-redirect the Router to an internal endpoint (router-audit A-20).
+        services.AddHttpClient(CredentialHttpClientFactory.ProviderHttpClientName)
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+
         services.AddScoped<IReverseGeocoder, NominatimReverseGeocoder>();
         services.AddScoped<IReverseGeocodingService, ReverseGeocodingService>();
 
         services.AddSingleton<IExecutionIntervalManager, ExecutionIntervalManager>();
+        services.AddSingleton<IOperatorSyncLock, OperatorSyncLock>();
+        services.AddSingleton<IOperatorSyncBackoff, OperatorSyncBackoff>();
+        services.AddSingleton<IDeviceCatalogCache, DeviceCatalogCache>();
         services.AddScoped<ICredentialHttpClientFactory, CredentialHttpClientFactory>();
-        services.AddScoped<IHttpClientService, HttpClientService>();
-        services.AddScoped<IRefreshTokenHelper, RefreshTokenHelper>();
-        services.AddSingleton<IConnectivityRegistry, ConnectivityRegistry>();
-        services.AddSingleton<IDeviceRegistry, DeviceRegistry>();
-        services.AddSingleton<IPositionRegistry, PositionRegistry>();
+        // Transient: each provider reader gets its OWN HttpClientService, so two concurrent
+        // same-protocol operators in one sync scope never share the mutable Init state
+        // (router-audit A-07/ARCH-12). Paired with keyed-transient readers below.
+        services.AddTransient<IHttpClientService, HttpClientService>();
+        // Scoped: the registries resolve keyed readers from the caller's live request scope.
+        services.AddScoped<IConnectivityRegistry, ConnectivityRegistry>();
+        services.AddScoped<IDeviceRegistry, DeviceRegistry>();
+        services.AddScoped<IPositionRegistry, PositionRegistry>();
         return services;
     }
 }

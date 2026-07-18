@@ -14,6 +14,7 @@
 //
 
 using Application.UnitTests;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Common.Mediator;
 using TrackHub.Router.Application.DevicePositions.Commands.Sync;
@@ -46,7 +47,9 @@ public class SyncPositionCommandHandlerTests : TestsContext
             _accountReaderMock.Object,
             _operatorReaderMock.Object,
             _intervalManagerMock.Object,
-            _publisherMock.Object);
+            _publisherMock.Object,
+            Mock.Of<Microsoft.Extensions.Configuration.IConfiguration>(),
+            Mock.Of<ILogger<UpdateTransporterCommandHandler>>());
     }
 
     [Test]
@@ -98,6 +101,42 @@ public class SyncPositionCommandHandlerTests : TestsContext
         _publisherMock.Verify(x => x.Publish(It.IsAny<OperatorRetrieved.Notification>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         _intervalManagerMock.Verify(x => x.UpdateLastExecutionTime(accountId), Times.Once);
         _operatorReaderMock.Verify(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Handle_OneOperatorThrows_IsolatesFailureAndStillUpdatesInterval()
+    {
+        // Regression for router-audit A-05: a single failing operator (e.g. bad credentials, an
+        // unregistered protocol) must not abort the account fan-out nor skip the interval update —
+        // otherwise the account re-polls every loop tick instead of at its storing interval.
+        var accountId = Guid.NewGuid();
+        var account = new AccountSettingsVm(accountId, 10, false, false, GpsIntegrationEnabled: true);
+
+        var badOperatorId = Guid.NewGuid();
+        var goodOperatorId = Guid.NewGuid();
+        var operators = new[]
+        {
+            new OperatorVm(badOperatorId, 1, accountId, TestCredentialTokenVm),
+            new OperatorVm(goodOperatorId, 1, accountId, TestCredentialTokenVm)
+        };
+
+        _accountReaderMock.Setup(x => x.GetAccountsToSyncAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([account]);
+        _intervalManagerMock.Setup(x => x.ShouldExecuteTask(account)).Returns(true);
+        _operatorReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(operators);
+
+        _publisherMock
+            .Setup(x => x.Publish(It.Is<OperatorRetrieved.Notification>(n => n.Operator.OperatorId == badOperatorId), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("provider down"));
+
+        // Act — must NOT throw despite the failing operator.
+        var result = await _handler.Handle(new SyncPositionCommand(), CancellationToken.None);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _publisherMock.Verify(x => x.Publish(It.Is<OperatorRetrieved.Notification>(n => n.Operator.OperatorId == goodOperatorId), It.IsAny<CancellationToken>()), Times.Once);
+        _intervalManagerMock.Verify(x => x.UpdateLastExecutionTime(accountId), Times.Once);
     }
 
     [Test]

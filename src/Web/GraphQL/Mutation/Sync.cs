@@ -19,6 +19,6 @@ namespace TrackHub.Router.Web.GraphQL.Mutation;
 
 public partial class Mutation
 {
-    public async Task<bool> TriggerOperatorSync([Service] ISender sender, TriggerOperatorSyncCommand command)
-        => await sender.Send(command);
+    public async Task<bool> TriggerOperatorSync([Service] ISender sender, TriggerOperatorSyncCommand command, CancellationToken cancellationToken)
+        => await sender.Send(command, cancellationToken);
 }

@@ -20,6 +20,6 @@ namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
-    public async Task<AddressVm> GetReverseGeocode([Service] ISender sender, [AsParameters] ReverseGeocodeQuery query)
-        => await sender.Send(query);
+    public async Task<AddressVm> GetReverseGeocode([Service] ISender sender, [AsParameters] ReverseGeocodeQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 }
