@@ -20,7 +20,8 @@ namespace TrackHub.Router.Infrastructure.Wialon.Models;
 /// Eid = Session ID, User = User name, Uid = User ID
 /// </summary>
 internal sealed record LoginResponse(
-    string Eid,   // Session ID
-    string User,  // User name
-    long Uid      // User ID
-);
+    string? Eid,          // Session ID
+    string? User,         // User name
+    long Uid,             // User ID
+    long? Error = null    // Wialon error code (e.g. 8 = invalid token)
+) : IWialonResponse;

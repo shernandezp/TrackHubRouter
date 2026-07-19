@@ -21,5 +21,5 @@ public interface IResolvedAddressWriter
 }
 
 // Same write with the Router's own service identity (never the user token), mirroring
-// the IPositionSystemWriter pattern from the spec-01 on-demand position upsert.
+// the IPositionSystemWriter pattern from the on-demand position upsert.
 public interface IResolvedAddressSystemWriter : IResolvedAddressWriter;

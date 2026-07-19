@@ -18,7 +18,7 @@ namespace TrackHub.Router.Domain.Interfaces.Manager;
 public interface IDeviceTransporterReader
 {
     // Reads Manager's group-scoped device/transporter catalog (deviceTransporterByUserByOperator),
-    // NOT the GPS provider. Named to disambiguate from the provider passthrough (spec 01.3 A5 / K7).
+    // NOT the GPS provider. Named to disambiguate from the provider passthrough.
     Task<IEnumerable<DeviceTransporterVm>> GetVisibleDeviceTransportersByOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
     Task<IEnumerable<DeviceTransporterVm>> GetDeviceTransporterAsync(Guid accountId, Guid operatorId, CancellationToken cancellationToken);
     Task<DeviceTransporterVm> GetDevicesTransporterAsync(Guid transporterId, CancellationToken cancellationToken);

@@ -24,8 +24,9 @@ namespace TrackHub.Router.Infrastructure.CommandTrack;
 // This class represents a device reader that retrieves device information from CommandTrack API
 public sealed class DeviceReader(ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter
-    ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IExternalDeviceReader
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore
+    ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter, sessionStore), IExternalDeviceReader
 {
     public async Task<DeviceVm> GetDeviceAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {

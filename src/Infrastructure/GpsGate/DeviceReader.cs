@@ -22,7 +22,7 @@ namespace TrackHub.Router.Infrastructure.GpsGate;
 public sealed class DeviceReader(
     ICredentialHttpClientFactory httpClientFactory, 
     IHttpClientService httpClientService)
-    : GpsGateReaderBase(httpClientFactory, httpClientService)
+    : GpsGateReaderBase(httpClientFactory, httpClientService), IExternalDeviceReader
 {
 
     /// <summary>

@@ -41,11 +41,12 @@ public class SamsaraReaderBase
     /// Initializes the Samsara reader with the provided credential.
     /// Sets up Bearer token authentication.
     /// </summary>
-    public virtual void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
+    public virtual Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credential.Token);
         HttpClientService.Init(httpClient, $"{ProtocolType.Samsara}");
+        return Task.CompletedTask;
     }
 }

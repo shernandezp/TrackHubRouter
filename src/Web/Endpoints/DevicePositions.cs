@@ -27,7 +27,7 @@ public class DevicePositions : EndpointGroupBase
             .MapGet(GetDevicePositions);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetDevicePositions(ISender sender, [AsParameters] GetPositionsByUserQuery query)
-        => await sender.Send(query);
+    public async Task<IEnumerable<PositionVm>> GetDevicePositions(ISender sender, [AsParameters] GetPositionsByUserQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 
 }

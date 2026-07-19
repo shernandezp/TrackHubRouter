@@ -24,7 +24,7 @@ namespace TrackHub.Router.Infrastructure.Flespi;
 public sealed class PositionReader(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService)
-    : FlespiReaderBase(httpClientFactory, httpClientService)
+    : FlespiReaderBase(httpClientFactory, httpClientService), IPositionReader
 {
     /// <summary>
     /// Retrieves the last position of a single device asynchronously.

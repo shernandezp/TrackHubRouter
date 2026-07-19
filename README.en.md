@@ -26,7 +26,7 @@
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/shernandezp/TrackHub.Router.git
+   git clone https://github.com/shernandezp/TrackHubRouter.git
    cd TrackHubRouter
    ```
 

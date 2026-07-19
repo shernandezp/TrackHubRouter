@@ -26,7 +26,7 @@ public class DeviceReaderTests
     [SetUp]
     public void Setup()
     {
-        _deviceReader = new DeviceReader();
+        _deviceReader = new DeviceReader(new Mock<IProviderSessionStore>().Object);
     }
 
     [Test]

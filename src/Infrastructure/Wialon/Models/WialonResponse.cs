@@ -13,9 +13,15 @@
 //  limitations under the License.
 //
 
-namespace TrackHub.Router.Domain.Interfaces;
+namespace TrackHub.Router.Infrastructure.Wialon.Models;
 
-public interface IRefreshTokenHelper
+/// <summary>
+/// Wialon reports failures as HTTP 200 with an <c>{"error": N}</c> body — a payload that
+/// deserializes into any response model with all-default fields. Every response model carries the
+/// error code so the reader base can distinguish "empty result" from "failed call"
+/// (error 1 = invalid session → re-login and retry once; anything else → throw).
+/// </summary>
+internal interface IWialonResponse
 {
-    Task<string> GetTokenAsync(HttpClient httpClient, CredentialTokenDto credential, CancellationToken cancellationToken);
+    long? Error { get; }
 }

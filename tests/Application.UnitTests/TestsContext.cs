@@ -87,7 +87,7 @@ public abstract class TestsContext
 
     /// <summary>
     /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration ENABLED for the
-    /// given account ids (spec 01.3 A3): the map serves the stored projection, never the provider.
+    /// given account ids: the map serves the stored projection, never the provider.
     /// </summary>
     protected static Mock<IAccountModeResolver> ModeResolverForEnabled(params Guid[] accountIds)
     {
@@ -101,7 +101,7 @@ public abstract class TestsContext
 
     /// <summary>
     /// Creates an <see cref="IAccountModeResolver"/> mock reporting gps.integration DISABLED for the
-    /// given account ids (spec 01.3 A3): the map reads the provider on demand.
+    /// given account ids: the map reads the provider on demand.
     /// </summary>
     protected static Mock<IAccountModeResolver> ModeResolverForDisabled(params Guid[] accountIds)
     {

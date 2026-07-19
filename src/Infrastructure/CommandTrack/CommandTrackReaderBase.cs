@@ -25,7 +25,8 @@ namespace TrackHub.Router.Infrastructure.CommandTrack;
 // It provides common functionality and properties for CommandTrack readers.
 public abstract class CommandTrackReaderBase(ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter)
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore)
 {
     private HttpClient? _httpClient;
 
@@ -41,7 +42,7 @@ public abstract class CommandTrackReaderBase(ICredentialHttpClientFactory httpCl
         Guard.Against.Null(credential, message: $"No CredentialToken configurations provided for {credential.CredentialId}");
         Guard.Against.Null(credential.Key, message: $"No Credential key found for {credential.CredentialId}");
 
-        var tokenHelper = new TokenHelper(credentialWriter);
+        var tokenHelper = new TokenHelper(credentialWriter, sessionStore);
         _httpClient = httpClientFactory.CreateClientAsync(credential, cancellationToken);
         var token = await tokenHelper.GetTokenAsync(_httpClient, credential, cancellationToken);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");

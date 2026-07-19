@@ -19,7 +19,7 @@ namespace TrackHub.Router.Application.Gating;
 
 /// <summary>
 /// Pure predicate for the provider-vs-stored map read split. The per-account "integration enabled"
-/// decision is owned by <see cref="IAccountModeResolver"/> (spec 01.3 A3); this only turns that set
+/// decision is owned by <see cref="IAccountModeResolver"/>; this only turns that set
 /// plus the operator's own enabled flag into the on-demand decision, so there is one source of truth.
 /// </summary>
 public static class GpsFeatureGate

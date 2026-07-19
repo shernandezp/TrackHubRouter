@@ -24,7 +24,7 @@ using TrackHub.Router.Domain.Extensions;
 
 namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
-// The account-configurable map refresh has a 10-second floor (spec 07 §17.4), i.e. up
+// The account-configurable map refresh has a 10-second floor, i.e. up
 // to 6 legitimate calls per minute per user, plus page loads and tab returns on top.
 // 12/min accommodates that legal cadence; provider protection remains the cached
 // projection and the per-operator fallback, not this limiter.
@@ -60,8 +60,8 @@ public class GetPositionsByUserQueryHandler(
             return [];
         }
 
-        // Mode split per account (spec 01 §3), resolved through the single IAccountModeResolver
-        // (spec 01.3 A3):
+        // Mode split per account, resolved through the single IAccountModeResolver
+        //:
         // - gps.integration DISABLED  -> on-demand: read the GPS provider directly, persist
         //   what was read, and fall back to the stored projection if the provider fails.
         // - gps.integration ENABLED   -> always serve the stored latest-position projection;
@@ -110,8 +110,8 @@ public class GetPositionsByUserQueryHandler(
             .Select(g => g.OrderByDescending(p => p.DeviceDateTime).First())
             .ToList();
 
-        // Diagnosability (spec 01.3 A8 / K10): an empty map for an account that actually has active
-        // assignments is the §2.1 defect signature. Name the branch that produced nothing so it is
+        // Diagnosability: an empty map for an account that actually has active
+        // assignments is the known defect signature. Name the branch that produced nothing so it is
         // never silent. No contract change — empty remains a valid response.
         if (result.Count == 0 && operators.Any(o => o.Enabled))
         {

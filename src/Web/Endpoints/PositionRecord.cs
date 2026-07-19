@@ -27,6 +27,6 @@ public class PositionRecord : EndpointGroupBase
             .MapGet(GetPositionsRecord);
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionsRecord(ISender sender, [AsParameters] GetPositionsRecordQuery query)
-        => await sender.Send(query);
+    public async Task<IEnumerable<PositionVm>> GetPositionsRecord(ISender sender, [AsParameters] GetPositionsRecordQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 }

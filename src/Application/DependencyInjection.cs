@@ -26,7 +26,7 @@ public static class DependencyInjection
         services.AddApplicationServices(assembly);
         services.AddDistributedMemoryCache();
         services.AddMemoryCache();
-        // Single request-side mode resolver (spec 01.3 A3): all position handlers resolve the
+        // Single request-side mode resolver: all position handlers resolve the
         // gps.integration / gps.positionHistory flags through here, with a 60-second cache.
         services.AddScoped<TrackHub.Router.Application.Gating.IAccountModeResolver, TrackHub.Router.Application.Gating.AccountModeResolver>();
         return services;

@@ -20,13 +20,15 @@ using TrackHub.Router.Domain.Records;
 namespace TrackHub.Router.Infrastructure.Geotab;
 
 // This class represents a connectivity tester for TrackHub Router infrastructure.
-public class ConnectivityTester() : GeotabReaderBase(), IConnectivityTester
+public class ConnectivityTester(IProviderSessionStore sessionStore)
+    : GeotabReaderBase(sessionStore), IConnectivityTester
 {
-    // Method to ping the TrackHub Router infrastructure.
-    // It takes in a CredentialTokenDto and a CancellationToken.
+    // Pings the provider with a 1-result Get — a real round-trip even when Init reused a cached
+    // session (the SDK re-authenticates transparently if that session already expired).
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         await Init(credential, cancellationToken);
         await GeotabApi!.CallAsync<IEnumerable<Device>>("Get", typeof(Device), new { resultsLimit = 1 }, cancellationToken);
+        PersistSession();
     }
 }

@@ -24,7 +24,7 @@ public sealed class ConnectivityTester(ICredentialHttpClientFactory httpClientFa
     // Sends a ping request to the Traccar server.
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
-        Init(credential, cancellationToken);
+        await Init(credential, cancellationToken);
         var url = $"api/server";
         await HttpClientService.GetAsync<Pong>(url, cancellationToken: cancellationToken);
     }

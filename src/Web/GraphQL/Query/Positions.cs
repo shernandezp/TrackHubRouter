@@ -21,9 +21,9 @@ namespace TrackHub.Router.Web.GraphQL.Query;
 
 public partial class Query
 {
-    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query)
-        => await sender.Send(query);
+    public async Task<IEnumerable<PositionVm>> GetPositionsByTransporter([Service] ISender sender, [AsParameters] GetPositionsRecordQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 
-    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query)
-        => await sender.Send(query);
+    public async Task<IEnumerable<TripVm>> GetTripsByTransporter([Service] ISender sender, [AsParameters] GetPositionTripsQuery query, CancellationToken cancellationToken)
+        => await sender.Send(query, cancellationToken);
 }

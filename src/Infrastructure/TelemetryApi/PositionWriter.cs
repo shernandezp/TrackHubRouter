@@ -51,6 +51,9 @@ public class PositionWriter : GraphQLService, IPositionWriter
                         city = p.City,
                         altitude = p.Altitude,
                         address = p.Address,
+                        // AttributesVm now carries the open Extra bag (a JSON string) alongside the
+                        // 5 promoted fields; it maps 1:1 onto Telemetry's AttributesDtoInput
+                        // (extra: String) with no explicit projection needed (router-audit A-03).
                         attributes = p.Attributes
                     }).ToArray()
                 }

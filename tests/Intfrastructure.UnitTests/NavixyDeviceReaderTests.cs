@@ -24,7 +24,7 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
     protected override DeviceReader CreateDeviceReader(
         ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService)
-        => new(httpClientFactory, httpClientService);
+        => new(httpClientFactory, httpClientService, SessionStoreMock.Object);
 
     [Test]
     public async Task GetDeviceAsync_WithValidDeviceDto_ReturnsDeviceVm()

@@ -13,11 +13,20 @@
 //  limitations under the License.
 //
 
+using Common.Application.Attributes;
+using Common.Domain.Constants;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Exceptions;
 
 namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
+// Manual sync is an expected user feature: it is authorized with the same Credentials/Custom grant
+// that portal roles hold for PingOperator (NOT restricted to service clients), so users keep the
+// "sync now" capability while the pipeline enforces authentication + permission instead of relying
+// solely on Manager's upstream check. Rate-limited because each accepted trigger reaches the
+// external provider on demand.
+[Authorize(Resource = Resources.Credentials, Action = Actions.Custom)]
+[RateLimiting(PermitLimit = 6, WindowSeconds = 60)]
 public readonly record struct TriggerOperatorSyncCommand(
     Guid AccountId,
     Guid OperatorId,

@@ -30,11 +30,11 @@ public class ExecutionIntervalManager : IExecutionIntervalManager
         }
 
         var interval = TimeSpan.FromSeconds(account.StoringInterval);
-        return (DateTimeOffset.Now - lastExecutionTime) >= interval;
+        return (DateTimeOffset.UtcNow - lastExecutionTime) >= interval;
     }
 
     public void UpdateLastExecutionTime(Guid accountId)
     {
-        _lastExecutionTimes[accountId] = DateTimeOffset.Now;
+        _lastExecutionTimes[accountId] = DateTimeOffset.UtcNow;
     }
 }

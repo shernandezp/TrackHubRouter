@@ -24,8 +24,9 @@ namespace TrackHub.Router.Infrastructure.Navixy;
 /// </summary>
 public sealed class PositionReader(
     ICredentialHttpClientFactory httpClientFactory,
-    IHttpClientService httpClientService)
-    : NavixyReaderBase(httpClientFactory, httpClientService), IPositionReader
+    IHttpClientService httpClientService,
+    IProviderSessionStore sessionStore)
+    : NavixyReaderBase(httpClientFactory, httpClientService, sessionStore), IPositionReader
 {
     /// <summary>
     /// Retrieves the last position of a single device asynchronously.
@@ -33,9 +34,9 @@ public sealed class PositionReader(
     /// </summary>
     public async Task<PositionVm> GetDevicePositionAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
-        
+        var result = await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
+
         var tracker = result?.List?.FirstOrDefault(t => t.Tracker_id == deviceDto.Identifier);
         return tracker is null
             ? throw new InvalidOperationException($"Device not found: {deviceDto.Identifier}")
@@ -47,9 +48,9 @@ public sealed class PositionReader(
     /// </summary>
     public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceTransporterVm> devices, CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
-        
+        var result = await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
+
         if (result?.List is null || !result.List.Any())
         {
             return [];
@@ -68,11 +69,11 @@ public sealed class PositionReader(
     /// </summary>
     public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackReadResponse>(
-            $"{BaseUrl}/v2/track/read",
-            new
+        var result = await PostNavixyAsync<TrackReadResponse>(
+            "/v2/track/read",
+            hash => new
             {
-                hash = Hash,
+                hash,
                 tracker_id = deviceDto.Identifier,
                 from = FormatNavixyDate(from),
                 to = FormatNavixyDate(to)

@@ -36,7 +36,7 @@ public class GpsGateReaderBase
     }
 
     // Initializes the GpsGate reader with the provided credential.
-    public virtual void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
+    public virtual Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -44,5 +44,6 @@ public class GpsGateReaderBase
         HttpClientService.Init(httpClient, $"{ProtocolType.GpsGate}");
         ApplicationId = credential.Key ?? ApplicationId;
         UserId = credential.Key2 ?? UserId;
+        return Task.CompletedTask;
     }
 }

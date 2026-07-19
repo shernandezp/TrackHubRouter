@@ -27,8 +27,9 @@ namespace TrackHub.Router.Infrastructure.Protrack;
 public sealed class DeviceReader(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter)
-    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IExternalDeviceReader
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore)
+    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter, sessionStore), IExternalDeviceReader
 {
     /// <summary>
     /// Retrieves a single device asynchronously based on the provided device DTO.

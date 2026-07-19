@@ -41,11 +41,12 @@ public class FlespiReaderBase
     /// Initializes the Flespi reader with the provided credential.
     /// Sets up FlespiToken authentication header.
     /// </summary>
-    public virtual void Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
+    public virtual Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("FlespiToken", credential.Token);
         HttpClientService.Init(httpClient, "Flespi");
+        return Task.CompletedTask;
     }
 }

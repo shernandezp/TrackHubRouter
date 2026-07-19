@@ -25,8 +25,9 @@ namespace TrackHub.Router.Infrastructure.Protrack;
 public sealed class ConnectivityTester(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter)
-    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IConnectivityTester
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore)
+    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter, sessionStore), IConnectivityTester
 {
     /// <summary>
     /// Tests connectivity by attempting to authenticate and retrieve device list from Protrack API.

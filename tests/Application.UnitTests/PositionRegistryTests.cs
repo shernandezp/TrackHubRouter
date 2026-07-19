@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Common.Domain.Enums;
 using TrackHub.Router.Application.DevicePositions.Registry;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Application.UnitTests.DevicePositions.Registry;
@@ -24,93 +25,62 @@ namespace TrackHub.Router.Application.UnitTests.DevicePositions.Registry;
 [TestFixture]
 public class PositionRegistryTests
 {
-    [Test]
-    public void GetReaders_ReturnsOnlyMatchingProtocols()
+    private static IPositionReader ReaderFor(ProtocolType protocol)
     {
-        // Arrange
-        var reader1 = new Mock<IPositionReader>();
-        reader1.SetupGet(r => r.Protocol).Returns(ProtocolType.CommandTrack);
+        var reader = new Mock<IPositionReader>();
+        reader.SetupGet(r => r.Protocol).Returns(protocol);
+        return reader.Object;
+    }
 
-        var reader2 = new Mock<IPositionReader>();
-        reader2.SetupGet(r => r.Protocol).Returns(ProtocolType.Samsara);
-
+    // Registers the given readers keyed by ProtocolType (mirroring RegisterProtocol's keyed
+    // registration) and returns a registry backed by the built provider.
+    private static PositionRegistry BuildRegistry(params ProtocolType[] protocols)
+    {
         var services = new ServiceCollection();
-        services.AddScoped(_ => reader1.Object);
-        services.AddScoped(_ => reader2.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-
-        var registry = new PositionRegistry(scopeFactory);
-
-        // Act
-        var results = registry.GetReaders([ProtocolType.CommandTrack]).ToList();
-
-        // Assert
-        Assert.That(results, Has.Count.EqualTo(1));
-        Assert.That(results.First().Protocol, Is.EqualTo(ProtocolType.CommandTrack));
+        foreach (var protocol in protocols)
+        {
+            var reader = ReaderFor(protocol);
+            services.AddKeyedScoped<IPositionReader>(protocol, (_, _) => reader);
+        }
+        return new PositionRegistry(services.BuildServiceProvider());
     }
 
     [Test]
-    public void GetReader_ReturnsFirstMatchingReader()
+    public void GetReaders_ReturnsOnlyMatchingProtocols()
     {
-        // Arrange
-        var reader1 = new Mock<IPositionReader>();
-        reader1.SetupGet(r => r.Protocol).Returns(ProtocolType.GpsGate);
+        var registry = BuildRegistry(ProtocolType.CommandTrack, ProtocolType.Samsara);
 
-        var reader2 = new Mock<IPositionReader>();
-        reader2.SetupGet(r => r.Protocol).Returns(ProtocolType.Samsara);
+        var results = registry.GetReaders([ProtocolType.CommandTrack]).ToList();
 
-        var services = new ServiceCollection();
-        services.AddScoped(_ => reader1.Object);
-        services.AddScoped(_ => reader2.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+        Assert.That(results, Has.Count.EqualTo(1));
+        Assert.That(results[0].Protocol, Is.EqualTo(ProtocolType.CommandTrack));
+    }
 
-        var registry = new PositionRegistry(scopeFactory);
+    [Test]
+    public void GetReader_ReturnsReaderForRequestedProtocol()
+    {
+        var registry = BuildRegistry(ProtocolType.GpsGate, ProtocolType.Samsara);
 
-        // Act
         var result = registry.GetReader(ProtocolType.Samsara);
 
-        // Assert
         Assert.That(result.Protocol, Is.EqualTo(ProtocolType.Samsara));
     }
 
     [Test]
     public void GetReaders_NoMatch_ReturnsEmpty()
     {
-        // Arrange
-        var reader = new Mock<IPositionReader>();
-        reader.SetupGet(r => r.Protocol).Returns(ProtocolType.GpsGate);
+        var registry = BuildRegistry(ProtocolType.GpsGate);
 
-        var services = new ServiceCollection();
-        services.AddScoped(_ => reader.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-
-        var registry = new PositionRegistry(scopeFactory);
-
-        // Act
         var results = registry.GetReaders([ProtocolType.CommandTrack]).ToList();
 
-        // Assert
         Assert.That(results, Is.Empty);
     }
 
     [Test]
-    public void GetReader_NoMatch_ThrowsInvalidOperationException()
+    public void GetReader_NoMatch_ThrowsProtocolNotSupportedException()
     {
-        // Arrange
-        var reader = new Mock<IPositionReader>();
-        reader.SetupGet(r => r.Protocol).Returns(ProtocolType.GpsGate);
+        var registry = BuildRegistry(ProtocolType.GpsGate);
 
-        var services = new ServiceCollection();
-        services.AddScoped(_ => reader.Object);
-        var provider = services.BuildServiceProvider();
-        var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-
-        var registry = new PositionRegistry(scopeFactory);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => registry.GetReader(ProtocolType.CommandTrack));
+        Assert.Throws<ProtocolNotSupportedException>(() => registry.GetReader(ProtocolType.CommandTrack));
     }
 }

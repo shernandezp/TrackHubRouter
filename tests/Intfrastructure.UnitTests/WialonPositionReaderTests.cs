@@ -24,7 +24,7 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
     protected override PositionReader CreatePositionReader(
         ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService)
-        => new(httpClientFactory, httpClientService);
+        => new(httpClientFactory, httpClientService, SessionStoreMock.Object);
 
     [Test]
     public void GetDevicePositionAsync_WithNullResponse_ThrowsInvalidOperationException()

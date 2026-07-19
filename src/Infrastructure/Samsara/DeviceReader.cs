@@ -24,7 +24,7 @@ namespace TrackHub.Router.Infrastructure.Samsara;
 public sealed class DeviceReader(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService)
-    : SamsaraReaderBase(httpClientFactory, httpClientService)
+    : SamsaraReaderBase(httpClientFactory, httpClientService), IExternalDeviceReader
 {
     /// <summary>
     /// Retrieves a single device asynchronously based on the provided device DTO.

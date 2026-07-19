@@ -24,9 +24,15 @@ namespace TrackHub.Router.Infrastructure.Protrack.Helpers;
 /// Helper class for managing Protrack access tokens.
 /// Protrack uses MD5-based signature authentication:
 /// signature = md5(md5(password) + time)
+/// The durable token copy lives on the Manager credential (UpdateTokenAsync); the in-process
+/// session store is a fast path that keeps the token usable while the Manager write-back is
+/// still propagating through cached operator reads.
 /// </summary>
-internal class TokenHelper(ICredentialWriter credentialWriter)
+internal class TokenHelper(ICredentialWriter credentialWriter, IProviderSessionStore sessionStore)
 {
+    // Do not hand out a token that dies mid-sync.
+    private static readonly TimeSpan ExpiryMargin = TimeSpan.FromMinutes(1);
+
     /// <summary>
     /// Gets a valid access token, refreshing if necessary.
     /// </summary>
@@ -36,9 +42,28 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
         CredentialTokenDto credential,
         CancellationToken cancellationToken)
     {
-        return string.IsNullOrEmpty(credential.Token) || IsTokenExpired(credential)
-            ? await RefreshTokenAsync(httpClientService, baseUrl, credential, cancellationToken)
-            : credential.Token;
+        if (sessionStore.TryGet(credential, out var cachedToken))
+        {
+            return cachedToken;
+        }
+
+        if (!string.IsNullOrEmpty(credential.Token) && !IsTokenExpired(credential))
+        {
+            CacheToken(credential, credential.Token, credential.TokenExpiration);
+            return credential.Token;
+        }
+
+        return await RefreshTokenAsync(httpClientService, baseUrl, credential, cancellationToken);
+    }
+
+    // Non-sliding: a bearer token has an absolute expiry regardless of use. Tokens without an
+    // expiry are not cached (no TTL basis) — the durable credential copy covers them.
+    private void CacheToken(CredentialTokenDto credential, string tokenValue, DateTimeOffset? expiration)
+    {
+        if (expiration is { } expiresAt)
+        {
+            sessionStore.Set(credential, tokenValue, expiresAt - DateTimeOffset.UtcNow - ExpiryMargin, sliding: false);
+        }
     }
 
     /// <summary>
@@ -71,6 +96,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
             null
         ), cancellationToken);
 
+        CacheToken(credential, response.Record.Access_token, tokenExpiration);
         return response.Record.Access_token;
     }
 
