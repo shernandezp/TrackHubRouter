@@ -28,6 +28,8 @@ public abstract class DeviceReaderTestsBase<TDeviceReader>
 {
     protected Mock<ICredentialHttpClientFactory> HttpClientFactoryMock { get; private set; } = null!;
     protected Mock<IHttpClientService> HttpClientServiceMock { get; private set; } = null!;
+    // Default mock: TryGet misses (out param stays default), so readers behave as before caching.
+    protected Mock<IProviderSessionStore> SessionStoreMock { get; private set; } = null!;
     protected TDeviceReader DeviceReader { get; private set; } = default!;
     protected CancellationToken TestCancellationToken { get; } = CancellationToken.None;
 
@@ -43,6 +45,7 @@ public abstract class DeviceReaderTestsBase<TDeviceReader>
     {
         HttpClientFactoryMock = new Mock<ICredentialHttpClientFactory>();
         HttpClientServiceMock = new Mock<IHttpClientService>();
+        SessionStoreMock = new Mock<IProviderSessionStore>();
         DeviceReader = CreateDeviceReader(HttpClientFactoryMock.Object, HttpClientServiceMock.Object);
     }
 

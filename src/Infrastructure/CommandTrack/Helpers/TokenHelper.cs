@@ -17,20 +17,35 @@ using System.Text;
 using System.Text.Json;
 using Ardalis.GuardClauses;
 using Common.Domain.Extensions;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Manager;
 
 namespace TrackHub.Router.Infrastructure.CommandTrack.Helpers;
-// Helper class for managing tokens
-internal class TokenHelper(ICredentialWriter credentialWriter)
+// Helper class for managing tokens. The durable copy lives on the Manager credential
+// (UpdateTokenAsync); the in-process session store is a fast path that keeps the token usable
+// while the Manager write-back is still propagating through cached operator reads.
+internal class TokenHelper(ICredentialWriter credentialWriter, IProviderSessionStore sessionStore)
 {
+    // Do not hand out a token that dies mid-sync.
+    private static readonly TimeSpan ExpiryMargin = TimeSpan.FromMinutes(1);
+
     // Retrieves a token asynchronously
     public async Task<string> GetTokenAsync(HttpClient httpClient,
         CredentialTokenDto credential,
         CancellationToken token)
     {
-        return string.IsNullOrEmpty(credential.Token) || IsTokenExpired(credential)
-            ? await RefreshTokenAsync(httpClient, credential, token)
-            : credential.Token;
+        if (sessionStore.TryGet(credential, out var cachedToken))
+        {
+            return cachedToken;
+        }
+
+        if (!string.IsNullOrEmpty(credential.Token) && !IsTokenExpired(credential))
+        {
+            CacheToken(credential, credential.Token, credential.TokenExpiration);
+            return credential.Token;
+        }
+
+        return await RefreshTokenAsync(httpClient, credential, token);
     }
 
     // Refreshes the token asynchronously
@@ -55,7 +70,7 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
         {
             // Typed rather than a raw Exception (rules.md forbids raw throws): the provider
             // authenticated but returned no token. Surfaces through the sync pipeline as a FAILED
-            // run (router-audit A-08/A-24).
+            // run.
             throw new InvalidOperationException("CommandTrack authentication did not return a token.");
         }
 
@@ -67,7 +82,18 @@ internal class TokenHelper(ICredentialWriter credentialWriter)
                 null
             ), token);
 
+        CacheToken(credential, newToken.Token, newToken.Expires);
         return newToken.Token;
+    }
+
+    // Non-sliding: a bearer token has an absolute expiry regardless of use. Tokens without an
+    // expiry are not cached (no TTL basis) — the durable credential copy covers them.
+    private void CacheToken(CredentialTokenDto credential, string tokenValue, DateTimeOffset? expiration)
+    {
+        if (expiration is { } expiresAt)
+        {
+            sessionStore.Set(credential, tokenValue, expiresAt - DateTimeOffset.UtcNow - ExpiryMargin, sliding: false);
+        }
     }
 
     // Checks if the token has expired

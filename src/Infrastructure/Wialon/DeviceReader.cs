@@ -24,8 +24,9 @@ namespace TrackHub.Router.Infrastructure.Wialon;
 /// </summary>
 public sealed class DeviceReader(
     ICredentialHttpClientFactory httpClientFactory,
-    IHttpClientService httpClientService)
-    : WialonReaderBase(httpClientFactory, httpClientService), IExternalDeviceReader
+    IHttpClientService httpClientService,
+    IProviderSessionStore sessionStore)
+    : WialonReaderBase(httpClientFactory, httpClientService, sessionStore), IExternalDeviceReader
 {
     // Wialon search flags
     private const int FlagBasicInfo = 1;       // Basic unit info (id, name)

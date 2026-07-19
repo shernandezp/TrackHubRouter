@@ -21,11 +21,22 @@ namespace TrackHub.Router.Infrastructure.Navixy;
 
 /// <summary>
 /// Base class for Navixy readers providing common functionality for API communication.
-/// Navixy uses session hash authentication obtained via user/auth endpoint.
+/// Navixy uses session hash authentication obtained via the user/auth endpoint; the hash is
+/// reused across sync/ping cycles through <see cref="IProviderSessionStore"/> A dropped
+/// session surfaces as <c>success: false</c> with status code 3/4 and triggers one re-auth + retry.
 /// </summary>
 public class NavixyReaderBase
 {
+    // Navixy status codes that mean the session hash is invalid or expired.
+    private const int WrongUserHashError = 3;
+    private const int SessionNotFoundError = 4;
+
+    // Sliding reuse window for the session hash; a stale hash self-heals via re-auth + retry.
+    private static readonly TimeSpan SessionTtl = TimeSpan.FromMinutes(30);
+
     private readonly ICredentialHttpClientFactory _httpClientFactory;
+    private readonly IProviderSessionStore _sessionStore;
+    private CredentialTokenDto _credential;
 
     protected IHttpClientService HttpClientService { get; }
 
@@ -50,32 +61,94 @@ public class NavixyReaderBase
     protected static string FormatNavixyDate(DateTimeOffset date)
         => date.ToString(NavixyDateFormat);
 
-    protected NavixyReaderBase(ICredentialHttpClientFactory httpClientFactory, IHttpClientService httpClientService)
+    protected NavixyReaderBase(
+        ICredentialHttpClientFactory httpClientFactory,
+        IHttpClientService httpClientService,
+        IProviderSessionStore sessionStore)
     {
         HttpClientService = httpClientService;
         _httpClientFactory = httpClientFactory;
+        _sessionStore = sessionStore;
     }
 
     /// <summary>
-    /// Initializes the Navixy reader with the provided credential.
-    /// Authenticates using user/auth to obtain a session hash.
+    /// Initializes the Navixy reader with the provided credential, reusing a cached session hash
+    /// when one is live; otherwise authenticates via user/auth and caches the new hash.
     /// </summary>
     public virtual async Task Init(CredentialTokenDto credential, CancellationToken cancellationToken = default)
     {
         var httpClient = _httpClientFactory.CreateClientAsync(credential, cancellationToken);
         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        _credential = credential;
         BaseUrl = credential.Uri.TrimEnd('/');
 
         HttpClientService.Init(httpClient, $"{ProtocolType.Navixy}");
 
-        // Authenticate to get session hash
+        if (_sessionStore.TryGet(credential, out var cachedHash))
+        {
+            Hash = cachedHash;
+            return;
+        }
+
+        await AuthenticateAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Authenticates via user/auth, stores the fresh session hash in the session store.
+    /// </summary>
+    private async Task AuthenticateAsync(CancellationToken cancellationToken)
+    {
         var authUrl = $"{BaseUrl}/v2/user/auth";
-        var authResponse = await HttpClientService.PostAsync<AuthResponse>(authUrl, 
-            new { login = credential.Username, password = credential.Password }, cancellationToken);
+        var authResponse = await HttpClientService.PostAsync<AuthResponse>(authUrl,
+            new { login = _credential.Username, password = _credential.Password }, cancellationToken);
+
+        if (authResponse is { Success: false })
+        {
+            throw new InvalidOperationException(
+                $"Navixy authentication failed with status {authResponse.Status?.Code}: {authResponse.Status?.Description}");
+        }
 
         Hash = string.IsNullOrEmpty(authResponse?.Hash)
             ? throw new InvalidOperationException("Failed to obtain session hash from Navixy")
             : authResponse.Hash;
+
+        _sessionStore.Set(_credential, Hash, SessionTtl);
+    }
+
+    /// <summary>
+    /// Makes a POST request to the Navixy API. <paramref name="parameterFactory"/> receives the
+    /// current session hash so the request can be rebuilt after a re-auth. An invalid-session
+    /// status (3/4) re-authenticates and retries ONCE; any other <c>success: false</c> throws —
+    /// it must never be mistaken for an empty result (Navixy errors arrive as HTTP 200).
+    /// </summary>
+    private protected async Task<T?> PostNavixyAsync<T>(
+        string path,
+        Func<string, object> parameterFactory,
+        CancellationToken cancellationToken)
+        where T : class, INavixyResponse
+    {
+        var result = await HttpClientService.PostAsync<T>(
+            $"{BaseUrl}{path}", parameterFactory(Hash), cancellationToken);
+        if (result is not { Success: false })
+        {
+            return result;
+        }
+
+        if (result.Status?.Code is not (WrongUserHashError or SessionNotFoundError))
+        {
+            throw new InvalidOperationException(
+                $"Navixy API error {result.Status?.Code} calling '{path}': {result.Status?.Description}");
+        }
+
+        _sessionStore.Invalidate(_credential.CredentialId);
+        await AuthenticateAsync(cancellationToken);
+
+        result = await HttpClientService.PostAsync<T>(
+            $"{BaseUrl}{path}", parameterFactory(Hash), cancellationToken);
+        return result is { Success: false }
+            ? throw new InvalidOperationException(
+                $"Navixy API error {result.Status?.Code} calling '{path}' after re-auth: {result.Status?.Description}")
+            : result;
     }
 
     /// <summary>

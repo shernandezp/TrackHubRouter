@@ -23,7 +23,7 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
     protected override PositionReader CreatePositionReader(
         ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService)
-        => new();
+        => new(SessionStoreMock.Object);
 
     [Test]
     public void GetDevicePositionAsync_WithNullGeotabApi_ThrowsNullReferenceException()

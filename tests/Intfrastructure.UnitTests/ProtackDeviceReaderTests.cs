@@ -29,7 +29,7 @@ public class DeviceReaderTests : DeviceReaderTestsBase<DeviceReader>
         IHttpClientService httpClientService)
     {
         _credentialWriterMock = new Mock<ICredentialWriter>();
-        return new DeviceReader(httpClientFactory, httpClientService, _credentialWriterMock.Object);
+        return new DeviceReader(httpClientFactory, httpClientService, _credentialWriterMock.Object, SessionStoreMock.Object);
     }
 
     [Test]

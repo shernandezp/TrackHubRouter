@@ -24,17 +24,18 @@ namespace TrackHub.Router.Infrastructure.Navixy;
 /// </summary>
 public sealed class DeviceReader(
     ICredentialHttpClientFactory httpClientFactory,
-    IHttpClientService httpClientService)
-    : NavixyReaderBase(httpClientFactory, httpClientService), IExternalDeviceReader
+    IHttpClientService httpClientService,
+    IProviderSessionStore sessionStore)
+    : NavixyReaderBase(httpClientFactory, httpClientService, sessionStore), IExternalDeviceReader
 {
     /// <summary>
     /// Retrieves a single device asynchronously based on the provided device DTO.
     /// </summary>
     public async Task<DeviceVm> GetDeviceAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
-        
+        var result = await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
+
         var tracker = result?.List?.FirstOrDefault(t => t.Tracker_id == deviceDto.Identifier);
         return tracker is null
             ? throw new InvalidOperationException($"Device not found: {deviceDto.Identifier}")
@@ -46,9 +47,9 @@ public sealed class DeviceReader(
     /// </summary>
     public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(IEnumerable<DeviceTransporterVm> devices, CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
-        
+        var result = await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
+
         if (result?.List is null || !result.List.Any())
         {
             return [];
@@ -65,8 +66,8 @@ public sealed class DeviceReader(
     /// </summary>
     public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
-        var result = await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
+        var result = await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
 
         return result?.List is null ? [] : result.List.MapToDeviceVm().Distinct();
     }

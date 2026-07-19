@@ -15,12 +15,14 @@
 
 using Geotab.Checkmate.ObjectModel;
 using TrackHub.Router.Infrastructure.Geotab.Mappers;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Operator;
 using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Infrastructure.Geotab;
 
-public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
+public sealed class PositionReader(IProviderSessionStore sessionStore)
+    : GeotabReaderBase(sessionStore), IPositionReader
 {
     public async Task<PositionVm> GetDevicePositionAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
@@ -32,6 +34,7 @@ public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
             }
         };
         var position = await GeotabApi!.CallAsync<DeviceStatusInfo>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
+        PersistSession();
         return position!.MapToPositionVm(deviceDto);
     }
 
@@ -45,6 +48,7 @@ public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
             }
         };
         var positions = await GeotabApi!.CallAsync<IEnumerable<DeviceStatusInfo>>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
+        PersistSession();
         if (positions is null)
         {
             return [];
@@ -63,6 +67,7 @@ public sealed class PositionReader() : GeotabReaderBase(), IPositionReader
             ToDate = to.UtcDateTime
         };
         var positions = await GeotabApi!.CallAsync<IEnumerable<LogRecord>>("Get", typeof(LogRecord), new { search = logRecordSearch }, cancellationToken);
+        PersistSession();
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);
     }
 }

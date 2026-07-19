@@ -23,17 +23,18 @@ namespace TrackHub.Router.Infrastructure.Navixy;
 /// </summary>
 public sealed class ConnectivityTester(
     ICredentialHttpClientFactory httpClientFactory,
-    IHttpClientService httpClientService)
-    : NavixyReaderBase(httpClientFactory, httpClientService), IConnectivityTester
+    IHttpClientService httpClientService,
+    IProviderSessionStore sessionStore)
+    : NavixyReaderBase(httpClientFactory, httpClientService, sessionStore), IConnectivityTester
 {
     /// <summary>
-    /// Tests connectivity by attempting to authenticate with the Navixy API.
+    /// Tests connectivity by authenticating (or reusing the cached session hash) and fetching
+    /// the tracker list — a REAL provider round-trip even on a session-cache hit.
     /// </summary>
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         await Init(credential, cancellationToken);
-        // Make a simple API call to verify the session hash is valid
-        await HttpClientService.PostAsync<TrackerListResponse>(
-            $"{BaseUrl}/v2/tracker/list", new { hash = Hash }, cancellationToken);
+        await PostNavixyAsync<TrackerListResponse>(
+            "/v2/tracker/list", hash => new { hash }, cancellationToken);
     }
 }

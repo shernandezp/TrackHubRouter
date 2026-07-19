@@ -54,6 +54,9 @@ public static class DependencyInjection
         services.AddSingleton<IOperatorSyncLock, OperatorSyncLock>();
         services.AddSingleton<IOperatorSyncBackoff, OperatorSyncBackoff>();
         services.AddSingleton<IDeviceCatalogCache, DeviceCatalogCache>();
+        // Singleton: provider sessions (Wialon sid, Navixy hash, Geotab session id, bearer tokens)
+        // outlive the transient readers so a login survives across sync/ping cycles.
+        services.AddSingleton<IProviderSessionStore, ProviderSessionStore>();
         services.AddScoped<ICredentialHttpClientFactory, CredentialHttpClientFactory>();
         // Transient: each provider reader gets its OWN HttpClientService, so two concurrent
         // same-protocol operators in one sync scope never share the mutable Init state

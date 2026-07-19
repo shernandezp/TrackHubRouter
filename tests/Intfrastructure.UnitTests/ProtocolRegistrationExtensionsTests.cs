@@ -49,6 +49,30 @@ public class ProtocolRegistrationExtensionsTests
     }
 
     [Test]
+    public void RegisterProtocol_Protrack_ResolvesReadersFromTheProtackFolderAssembly()
+    {
+        // Protrack's repo FOLDER is "Protack" but its assembly/namespace are
+        // "TrackHub.Router.Infrastructure.Protrack" (matching the enum). Wired into
+        // Infrastructure/Common 2026-07-18 — this guards the assembly reference so configuring
+        // "Protrack" keeps resolving instead of failing at startup.
+        var services = new ServiceCollection();
+
+        services.RegisterProtocol(ProtocolType.Protrack.ToString());
+
+        var positionReader = services.FirstOrDefault(d => d.ServiceType == typeof(IPositionReader) && d.IsKeyedService);
+        var deviceReader = services.FirstOrDefault(d => d.ServiceType == typeof(IExternalDeviceReader) && d.IsKeyedService);
+        var connectivityTester = services.FirstOrDefault(d => d.ServiceType == typeof(IConnectivityTester) && d.IsKeyedService);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(positionReader?.ServiceKey, Is.EqualTo(ProtocolType.Protrack));
+            Assert.That(positionReader?.KeyedImplementationType?.Namespace, Is.EqualTo("TrackHub.Router.Infrastructure.Protrack"));
+            Assert.That(deviceReader?.KeyedImplementationType?.Namespace, Is.EqualTo("TrackHub.Router.Infrastructure.Protrack"));
+            Assert.That(connectivityTester?.KeyedImplementationType?.Namespace, Is.EqualTo("TrackHub.Router.Infrastructure.Protrack"));
+        });
+    }
+
+    [Test]
     public void RegisterProtocol_UnknownConfiguredProtocol_ThrowsToFailFast()
     {
         // Regression for router-audit A-06: a configured protocol with no provider assembly must

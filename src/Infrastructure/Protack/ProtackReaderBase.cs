@@ -48,11 +48,12 @@ public class ProtrackReaderBase
     protected ProtrackReaderBase(
         ICredentialHttpClientFactory httpClientFactory,
         IHttpClientService httpClientService,
-        ICredentialWriter credentialWriter)
+        ICredentialWriter credentialWriter,
+        IProviderSessionStore sessionStore)
     {
         HttpClientService = httpClientService;
         _httpClientFactory = httpClientFactory;
-        _tokenHelper = new TokenHelper(credentialWriter);
+        _tokenHelper = new TokenHelper(credentialWriter, sessionStore);
     }
 
     /// <summary>

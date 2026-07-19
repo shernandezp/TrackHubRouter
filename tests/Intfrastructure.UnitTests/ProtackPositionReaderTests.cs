@@ -29,7 +29,7 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
         IHttpClientService httpClientService)
     {
         _credentialWriterMock = new Mock<ICredentialWriter>();
-        return new PositionReader(httpClientFactory, httpClientService, _credentialWriterMock.Object);
+        return new PositionReader(httpClientFactory, httpClientService, _credentialWriterMock.Object, SessionStoreMock.Object);
     }
 
     [Test]

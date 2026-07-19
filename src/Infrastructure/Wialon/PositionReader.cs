@@ -24,8 +24,9 @@ namespace TrackHub.Router.Infrastructure.Wialon;
 /// </summary>
 public sealed class PositionReader(
     ICredentialHttpClientFactory httpClientFactory,
-    IHttpClientService httpClientService)
-    : WialonReaderBase(httpClientFactory, httpClientService), IPositionReader
+    IHttpClientService httpClientService,
+    IProviderSessionStore sessionStore)
+    : WialonReaderBase(httpClientFactory, httpClientService, sessionStore), IPositionReader
 {
     // Wialon search flags
     private const int FlagBasicInfo = 1;       // Basic unit info (id, name)

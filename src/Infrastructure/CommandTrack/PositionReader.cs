@@ -23,10 +23,11 @@ using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Interfaces.Operator;
 
-public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory, 
+public sealed class PositionReader(ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter
-    ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IPositionReader
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore
+    ) : CommandTrackReaderBase(httpClientFactory, httpClientService, credentialWriter, sessionStore), IPositionReader
 {
     public async Task<PositionVm> GetDevicePositionAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {

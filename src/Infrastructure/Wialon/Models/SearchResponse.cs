@@ -20,12 +20,14 @@ namespace TrackHub.Router.Infrastructure.Wialon.Models;
 /// </summary>
 internal sealed record SearchResponse(
     IEnumerable<Unit>? Items,
-    int TotalItemsCount
-);
+    int TotalItemsCount,
+    long? Error = null
+) : IWialonResponse;
 
 /// <summary>
 /// Response from Wialon core/search_item API (single item)
 /// </summary>
 internal sealed record SingleItemResponse(
-    Unit? Item
-);
+    Unit? Item,
+    long? Error = null
+) : IWialonResponse;

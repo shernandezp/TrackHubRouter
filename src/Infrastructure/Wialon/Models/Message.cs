@@ -20,8 +20,9 @@ namespace TrackHub.Router.Infrastructure.Wialon.Models;
 /// </summary>
 internal sealed record MessageResponse(
     IEnumerable<Message>? Messages,
-    int Count
-);
+    int Count,
+    long? Error = null
+) : IWialonResponse;
 
 /// <summary>
 /// Wialon message (historical position data)

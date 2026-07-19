@@ -29,8 +29,9 @@ namespace TrackHub.Router.Infrastructure.Protrack;
 public sealed class PositionReader(
     ICredentialHttpClientFactory httpClientFactory,
     IHttpClientService httpClientService,
-    ICredentialWriter credentialWriter)
-    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter), IPositionReader
+    ICredentialWriter credentialWriter,
+    IProviderSessionStore sessionStore)
+    : ProtrackReaderBase(httpClientFactory, httpClientService, credentialWriter, sessionStore), IPositionReader
 {
     // Maximum number of records returned per playback request
     private const int PlaybackPageSize = 1000;

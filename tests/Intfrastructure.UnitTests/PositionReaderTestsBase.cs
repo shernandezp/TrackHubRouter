@@ -23,6 +23,8 @@ public abstract class PositionReaderTestsBase<TPositionReader>
 {
     protected Mock<ICredentialHttpClientFactory> HttpClientFactoryMock { get; private set; } = null!;
     protected Mock<IHttpClientService> HttpClientServiceMock { get; private set; } = null!;
+    // Default mock: TryGet misses (out param stays default), so readers behave as before caching.
+    protected Mock<IProviderSessionStore> SessionStoreMock { get; private set; } = null!;
     protected TPositionReader PositionReader { get; private set; } = default!;
     protected CancellationToken TestCancellationToken { get; } = CancellationToken.None;
 
@@ -38,6 +40,7 @@ public abstract class PositionReaderTestsBase<TPositionReader>
     {
         HttpClientFactoryMock = new Mock<ICredentialHttpClientFactory>();
         HttpClientServiceMock = new Mock<IHttpClientService>();
+        SessionStoreMock = new Mock<IProviderSessionStore>();
         PositionReader = CreatePositionReader(HttpClientFactoryMock.Object, HttpClientServiceMock.Object);
     }
 

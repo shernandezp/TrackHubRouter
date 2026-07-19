@@ -16,12 +16,12 @@
 namespace TrackHub.Router.Infrastructure.Wialon.Models;
 
 /// <summary>
-/// Response from Wialon token/login API
-/// Eid = Session ID, User = User name, Uid = User ID
+/// Wialon reports failures as HTTP 200 with an <c>{"error": N}</c> body — a payload that
+/// deserializes into any response model with all-default fields. Every response model carries the
+/// error code so the reader base can distinguish "empty result" from "failed call"
+/// (error 1 = invalid session → re-login and retry once; anything else → throw).
 /// </summary>
-internal sealed record LoginResponse(
-    string? Eid,          // Session ID
-    string? User,         // User name
-    long Uid,             // User ID
-    long? Error = null    // Wialon error code (e.g. 8 = invalid token)
-) : IWialonResponse;
+internal interface IWialonResponse
+{
+    long? Error { get; }
+}
