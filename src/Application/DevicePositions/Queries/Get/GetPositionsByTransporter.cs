@@ -30,6 +30,7 @@ public class GetPositionByTransporterQueryHandler(
         IConfiguration configuration,
         Application.Gating.IAccountModeResolver modeResolver,
         IOperatorReader operatorReader,
+        IOperatorSystemReader operatorSystemReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
@@ -47,15 +48,20 @@ public class GetPositionByTransporterQueryHandler(
     /// <returns></returns>
     public async Task<PositionVm> Handle(GetPositionByTransporterQuery request, CancellationToken cancellationToken)
     {
-        var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        // Resolved under the caller's identity, so Manager applies their account scope.
+        var scoped = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+
         // Mode split through the single resolver: integration enabled -> serve the
         // stored projection; disabled -> read the provider on demand.
-        var integrationEnabled = await modeResolver.IsIntegrationEnabledAsync(@operator.AccountId, cancellationToken);
-        if (!@operator.Enabled || integrationEnabled)
+        var integrationEnabled = await modeResolver.IsIntegrationEnabledAsync(scoped.AccountId, cancellationToken);
+        if (!scoped.Enabled || integrationEnabled)
         {
-            return await GetFallbackPositionAsync(@operator.OperatorId, request.TransporterId, cancellationToken);
+            return await GetFallbackPositionAsync(scoped.OperatorId, request.TransporterId, cancellationToken);
         }
 
+        // Only the provider branch needs the decrypted credential, which the Router reads with its own
+        // service identity so callers never require credential-viewing permission.
+        var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
         return await TryGetDevicePositionAsync(@operator, request.TransporterId, cancellationToken);
     }
 

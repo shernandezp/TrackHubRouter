@@ -34,6 +34,7 @@ public class GetDevicesQueriesTests : TestsContext
     private Mock<IDeviceRegistry> _deviceRegistryMock = null!;
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
+    private Mock<IOperatorSystemReader> _operatorSystemReaderMock = null!;
 
     [SetUp]
     public void SetUp()
@@ -42,6 +43,15 @@ public class GetDevicesQueriesTests : TestsContext
         _deviceRegistryMock = new Mock<IDeviceRegistry>();
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _operatorReaderMock = new Mock<IOperatorReader>();
+        // The system reader is the same operator set, read with the Router service identity, so it
+        // mirrors whatever the caller-scoped reader is configured to return.
+        _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
 
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
@@ -66,6 +76,7 @@ public class GetDevicesQueriesTests : TestsContext
         var handler = new GetDevicesByOperatorQueryHandler(
             _configurationMock.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _deviceRegistryMock.Object);
 
         // Act
@@ -97,6 +108,7 @@ public class GetDevicesQueriesTests : TestsContext
         var handler = new GetDevicesQueryHandler(
             _configurationMock.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _deviceRegistryMock.Object,
             _deviceReaderMock.Object);
 
@@ -124,6 +136,7 @@ public class GetDevicesQueriesTests : TestsContext
         var handler = new GetDevicesQueryHandler(
             _configurationMock.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _deviceRegistryMock.Object,
             _deviceReaderMock.Object);
 

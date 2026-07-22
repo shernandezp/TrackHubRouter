@@ -18,6 +18,7 @@ using System.Diagnostics;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Domain.Constants;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
@@ -30,7 +31,7 @@ namespace TrackHub.Router.Application.DevicePositions.Commands.Health;
 [AllowCrossAccount("SyncWorker operator-health loop: one global syncworker_client identity enumerates every account's operators and probes them in turn, so the OperatorVm's AccountId is by definition not the worker's own (it has none).")]
 public readonly record struct RecordOperatorHealthCommand(
     OperatorVm Operator,
-    string CheckType = "PING") : IRequest<bool>;
+    string CheckType = OperatorHealthCheckTypes.Ping) : IRequest<bool>;
 
 public class RecordOperatorHealthCommandHandler(
     IConfiguration configuration,

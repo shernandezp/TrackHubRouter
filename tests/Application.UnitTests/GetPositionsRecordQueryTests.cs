@@ -33,6 +33,7 @@ public class GetPositionsRecordQueryTests : TestsContext
 {
     private Mock<IConfiguration> _configurationMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
+    private Mock<IOperatorSystemReader> _operatorSystemReaderMock = null!;
     private Mock<IPositionRegistry> _positionRegistryMock = null!;
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<IAccountModeResolver> _modeResolverMock = null!;
@@ -45,6 +46,15 @@ public class GetPositionsRecordQueryTests : TestsContext
     {
         _configurationMock = new Mock<IConfiguration>();
         _operatorReaderMock = new Mock<IOperatorReader>();
+        // The system reader is the same operator set, read with the Router service identity, so it
+        // mirrors whatever the caller-scoped reader is configured to return.
+        _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
         _positionRegistryMock = new Mock<IPositionRegistry>();
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _modeResolverMock = new Mock<IAccountModeResolver>();
@@ -59,6 +69,7 @@ public class GetPositionsRecordQueryTests : TestsContext
         => new(
             _configurationMock.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _modeResolverMock.Object,

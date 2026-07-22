@@ -17,6 +17,7 @@ using Common.Application.Attributes;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Domain.Constants;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
@@ -153,8 +154,7 @@ public class SyncOperatorDevicesCommandHandler(
             await healthWriter.RecordAsync(new OperatorHealthCheckDto(
                 AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
-                // Telemetry's OperatorHealthCheckType enum, GraphQL form (like the worker's "PING").
-                CheckType: "DEVICE_SYNC",
+                CheckType: OperatorHealthCheckTypes.DeviceSync,
                 Status: providerReached ? "HEALTHY" : "OFFLINE",
                 LatencyMs: (int)(checkCompletedAt - startedAt).TotalMilliseconds,
                 StartedAt: startedAt,

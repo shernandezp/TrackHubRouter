@@ -36,6 +36,7 @@ public class GetPositionsByUserQueryHandler(
         IConfiguration configuration,
         Application.Gating.IAccountModeResolver modeResolver,
         IOperatorReader operatorReader,
+        IOperatorSystemReader operatorSystemReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterPositionReader transporterPositionReader,
@@ -53,8 +54,24 @@ public class GetPositionsByUserQueryHandler(
     /// <returns>Returns the collection of PositionVm</returns>
     public async Task<IEnumerable<PositionVm>> Handle(GetPositionsByUserQuery request, CancellationToken cancellationToken)
     {
-        var allOperators = await operatorReader.GetOperatorsAsync(cancellationToken);
-        var operators = allOperators.ToList();
+        // Visibility is resolved under the caller's identity (Manager applies their account and group
+        // scope). Those rows carry no credential, so the operators the caller may see are then matched
+        // against a service-identity read of the same accounts, which does carry credentials — needed
+        // whenever an account falls on the on-demand branch below and the provider must be contacted.
+        var visibleOperators = (await operatorReader.GetOperatorsAsync(cancellationToken)).ToList();
+        if (visibleOperators.Count == 0)
+        {
+            return [];
+        }
+
+        var visibleIds = visibleOperators.Select(o => o.OperatorId).ToHashSet();
+        var operators = new List<OperatorVm>(visibleOperators.Count);
+        foreach (var accountId in visibleOperators.Select(o => o.AccountId).Where(id => id != Guid.Empty).Distinct())
+        {
+            var withCredentials = await operatorSystemReader.GetOperatorsByAccountsAsync(accountId, cancellationToken);
+            operators.AddRange(withCredentials.Where(o => visibleIds.Contains(o.OperatorId)));
+        }
+
         if (operators.Count == 0)
         {
             return [];

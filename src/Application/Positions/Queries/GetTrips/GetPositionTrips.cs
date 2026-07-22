@@ -32,6 +32,7 @@ public readonly record struct GetPositionTripsQuery(Guid TransporterId, DateTime
 public class GetPositionTripsQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
+        IOperatorSystemReader operatorSystemReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterTypeReader transporterTypeReader,
@@ -53,22 +54,25 @@ public class GetPositionTripsQueryHandler(
     public async Task<IEnumerable<TripVm>> Handle(GetPositionTripsQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        // Resolved under the caller's identity, so Manager applies their account scope.
+        var scoped = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
         var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
-        await EnsureTransporterVisibilityAsync(groupVisibilityReader, principal, @operator.AccountId, request.TransporterId, cancellationToken);
+        await EnsureTransporterVisibilityAsync(groupVisibilityReader, principal, scoped.AccountId, request.TransporterId, cancellationToken);
 
         IEnumerable<PositionVm> positions;
         if (request.Source == PositionSourceType.Stored)
         {
-            if (!await modeResolver.IsPositionHistoryEnabledAsync(@operator.AccountId, cancellationToken))
+            if (!await modeResolver.IsPositionHistoryEnabledAsync(scoped.AccountId, cancellationToken))
             {
-                throw new FeatureDisabledException(FeatureKeys.GpsPositionHistory, @operator.AccountId);
+                throw new FeatureDisabledException(FeatureKeys.GpsPositionHistory, scoped.AccountId);
             }
 
-            positions = await positionHistoryReader.GetPositionHistoryRangeAsync(@operator.AccountId, request.TransporterId, request.From, request.To, cancellationToken);
+            positions = await positionHistoryReader.GetPositionHistoryRangeAsync(scoped.AccountId, request.TransporterId, request.From, request.To, cancellationToken);
         }
         else
         {
+            // PROVIDER replay needs the decrypted credential, read with the Router's service identity.
+            var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
             positions = await GetDevicePositionAsync(
                 positionRegistry,
                 EncryptionKey,

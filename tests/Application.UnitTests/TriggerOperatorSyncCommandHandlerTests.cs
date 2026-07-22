@@ -32,22 +32,30 @@ namespace Application.UnitTests;
 public class TriggerOperatorSyncCommandHandlerTests : TestsContext
 {
     private Mock<IOperatorReader> _operatorReaderMock = null!;
+    private Mock<IOperatorSystemReader> _operatorSystemReaderMock = null!;
     private Mock<ISender> _senderMock = null!;
 
     [SetUp]
     public void SetUp()
     {
         _operatorReaderMock = new Mock<IOperatorReader>();
+        _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
         _senderMock = new Mock<ISender>();
     }
 
     private TriggerOperatorSyncCommandHandler CreateHandler() => new(
         _operatorReaderMock.Object,
+        _operatorSystemReaderMock.Object,
         _senderMock.Object,
         Mock.Of<ILogger<TriggerOperatorSyncCommandHandler>>());
 
-    private void SetupOperator(OperatorVm op) =>
+    // The caller-scoped read authorizes; the system read supplies the same operator with its
+    // credential, so both are configured together.
+    private void SetupOperator(OperatorVm op)
+    {
         _operatorReaderMock.Setup(x => x.GetOperatorAsync(op.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync(op);
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(op.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync(op);
+    }
 
     [Test]
     public void Handle_CrossAccountOperator_ThrowsOperatorNotFound()

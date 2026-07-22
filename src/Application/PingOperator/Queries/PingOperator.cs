@@ -19,18 +19,24 @@ using Common.Application.Attributes;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Domain.Constants;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Application.PingOperator.Queries;
 
-[Authorize(Resource = Resources.Credentials, Action = Actions.Custom)]
+// Operators/Custom means "may operate this GPS integration" — ping it, sync it. It is held by the
+// Manager and User roles. Credential material is fetched by the Router's own service identity and
+// never reaches the caller, so operating an integration does not require Credentials/Custom, which
+// governs viewing decrypted credentials and stays with credential administration.
+[Authorize(Resource = Resources.Operators, Action = Actions.Custom)]
 public readonly record struct PingOperatorQuery(Guid OperatorId) : IRequest<bool>;
 
 // This class handles the PingOperatorQuery and implements the IRequestHandler interface
 public class PingOperatorQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader,
+    IOperatorSystemReader operatorSystemReader,
     IConnectivityRegistry connectivityRegistry,
     IOperatorHealthCheckSystemWriter healthWriter,
     ILogger<PingOperatorQueryHandler> logger)
@@ -42,13 +48,16 @@ public class PingOperatorQueryHandler(
     // This method handles the PingOperatorQuery and returns a boolean indicating the success of the operation
     public async Task<bool> Handle(PingOperatorQuery request, CancellationToken cancellationToken)
     {
-        // Get the operator details using the operatorReader
-        var @operator = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
-        if (!@operator.Enabled)
+        // Resolve under the caller's identity first: Manager applies the caller's account scope and
+        // rejects an operator belonging to another tenant. Only then re-read with the Router's service
+        // identity to obtain the decrypted credential the connectivity tester needs.
+        var scoped = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
+        if (!scoped.Enabled)
         {
             return false;
         }
-        // Ping the operator asynchronously
+
+        var @operator = await operatorSystemReader.GetOperatorAsync(scoped.OperatorId, cancellationToken);
         return await PingAsync(@operator, cancellationToken);
     }
 
@@ -110,7 +119,10 @@ public class PingOperatorQueryHandler(
             await healthWriter.RecordAsync(new OperatorHealthCheckDto(
                 AccountId: @operator.AccountId,
                 OperatorId: @operator.OperatorId,
-                CheckType: "MANUAL",
+                // Telemetry's OperatorHealthCheckType — distinct from the SyncTriggerType the manual
+                // sync path uses. The write below is best-effort, so an unaccepted literal would be
+                // swallowed rather than surfaced.
+                CheckType: OperatorHealthCheckTypes.Ping,
                 Status: status,
                 LatencyMs: latencyMs,
                 StartedAt: startedAt,

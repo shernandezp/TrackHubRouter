@@ -25,7 +25,9 @@ namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 // "sync now" capability while the pipeline enforces authentication + permission instead of relying
 // solely on Manager's upstream check. Rate-limited because each accepted trigger reaches the
 // external provider on demand.
-[Authorize(Resource = Resources.Credentials, Action = Actions.Custom)]
+// Operators/Custom — see PingOperator. Operating an integration does not require credential-viewing
+// permission; the Router fetches the credential with its own service identity.
+[Authorize(Resource = Resources.Operators, Action = Actions.Custom)]
 [RateLimiting(PermitLimit = 6, WindowSeconds = 60)]
 public readonly record struct TriggerOperatorSyncCommand(
     Guid AccountId,
@@ -37,6 +39,7 @@ public readonly record struct TriggerOperatorSyncCommand(
 
 public class TriggerOperatorSyncCommandHandler(
     IOperatorReader operatorReader,
+    IOperatorSystemReader operatorSystemReader,
     ISender sender,
     ILogger<TriggerOperatorSyncCommandHandler> logger) : IRequestHandler<TriggerOperatorSyncCommand, bool>
 {
@@ -62,8 +65,12 @@ public class TriggerOperatorSyncCommandHandler(
             throw new OperatorDisabledException(request.OperatorId);
         }
 
+        // The account/enabled checks above run on the caller-scoped read. Re-read with the Router's
+        // service identity so the device sync receives the decrypted credential.
+        var authorized = await operatorSystemReader.GetOperatorAsync(op.OperatorId, cancellationToken);
+
         return await sender.Send(new SyncOperatorDevicesCommand(
-            op,
+            authorized,
             request.TriggerType,
             request.CorrelationId,
             request.ResetDeviceCatalog,
