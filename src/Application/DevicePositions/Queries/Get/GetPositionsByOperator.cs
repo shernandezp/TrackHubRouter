@@ -13,6 +13,7 @@
 //  limitations under the License.
 //
 
+using Common.Application.Attributes;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,10 @@ using TrackHub.Router.Application.DevicePositions.Events;
 
 namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
+// In-process only (no [Authorize]): the SyncWorker's position loop dispatches it. The account rides
+// inside OperatorVm (and again inside AccountSettingsVm — the resolver takes the ordinally-first
+// depth-1 path, Operator, and both name the same account).
+[AllowCrossAccount("SyncWorker position loop: one global syncworker_client identity enumerates every account's operators and fetches their positions, so the OperatorVm's AccountId is by definition not the worker's own (it has none).")]
 public readonly record struct GetPositionsByOperatorQuery(
     OperatorVm Operator,
     AccountSettingsVm Settings,

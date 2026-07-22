@@ -33,6 +33,7 @@
     <Project Path="src/Infrastructure/Samsara/Samsara.csproj" />
     <Project Path="src/Infrastructure/TelemetryApi/TelemetryApi.csproj" />
     <Project Path="src/Infrastructure/Traccar/Traccar.csproj" />
+    <Project Path="src/Infrastructure/TripApi/TripApi.csproj" />
     <Project Path="src/Infrastructure/Wialon/Wialon.csproj" />
   </Folder>
   <Folder Name="/tests/">

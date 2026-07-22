@@ -34,6 +34,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext();
 builder.Services.AddAppTelemetryContext();
 builder.Services.AddGeofenceManagerContext();
+builder.Services.AddAppTripManagementContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();

@@ -16,6 +16,7 @@
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Interfaces.Geocoding;
 using TrackHub.Router.Domain.Interfaces.Geofence;
+using TrackHub.Router.Domain.Interfaces.Trip;
 using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Application.DevicePositions.Events;
@@ -35,6 +36,7 @@ public sealed class PositionsRetrieved
         public class EventHandler(
             IPositionWriter positionWriter,
             IGeofenceWriter geofenceWriter,
+            ITripPositionWriter tripPositionWriter,
             IOperatorSyncRunWriter syncRunWriter,
             IAlertEventWriter alertWriter,
             IReverseGeocodingService geocodingService,
@@ -100,6 +102,21 @@ public sealed class PositionsRetrieved
                             catch (Exception ex)
                             {
                                 logger.LogWarning(ex, "Geofence processing failed for operator {OperatorId} (account {AccountId}); positions were stored.",
+                                    notification.Operator.OperatorId, notification.Settings.AccountId);
+                            }
+                        }
+
+                        if (writeSucceeded && notification.Settings.TripManagementEnabled)
+                        {
+                            // Best-effort and isolated, exactly like the geofence feed above: a TripManagement
+                            // outage must never flip an already-stored position batch to FAILED.
+                            try
+                            {
+                                await tripPositionWriter.ProcessTripPositionsAsync(validPositions, notification.Settings.AccountId, cancellationToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(ex, "Trip position processing failed for operator {OperatorId} (account {AccountId}); positions were stored.",
                                     notification.Operator.OperatorId, notification.Settings.AccountId);
                             }
                         }

@@ -28,13 +28,16 @@ public class PositionsRetrievedTests : TestsContext
         Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter> positionWriterMock,
         Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter> geofenceWriterMock,
         Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter> syncRunMock,
-        Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter> alertMock)
+        Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter> alertMock,
+        Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>? tripWriterMock = null)
     {
         // Enrichment disabled in tests: budget 0 keeps the geocoder out of the write path.
         var geocodingMock = new Mock<TrackHub.Router.Domain.Interfaces.Geocoding.IReverseGeocodingService>();
         geocodingMock.Setup(x => x.GetEnrichmentBudgetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(0);
         var historyMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionHistorySystemWriter>();
-        return new(positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
+        return new(positionWriterMock.Object, geofenceWriterMock.Object,
+            (tripWriterMock ?? new Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>()).Object,
+            syncRunMock.Object, alertMock.Object,
             geocodingMock.Object,
             historyMock.Object,
             Mock.Of<ILogger<PositionsRetrieved.Notification.EventHandler>>());
@@ -157,6 +160,86 @@ public class PositionsRetrievedTests : TestsContext
     }
 
     [Test]
+    public async Task EventHandler_CallsTripWriter_WhenTripManagementEnabled()
+    {
+        // Spec 11 §15: the trip position feed runs right after the geofence feed, gated by the
+        // already-populated AccountSettingsVm.TripManagementEnabled.
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var tripWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock, tripWriterMock);
+
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0 } };
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, GeofencingEnabled: false, TripManagementEnabled: true);
+        var notification = BuildNotification(positions, account);
+
+        positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        tripWriterMock.Setup(x => x.ProcessTripPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TripProcessingResultVm(1, 1, 0, 0));
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        tripWriterMock.Verify(x => x.ProcessTripPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()), Times.Once);
+        syncRunMock.Verify(x => x.RecordAsync(It.Is<OperatorSyncRunDto>(d => d.Result == "SUCCEEDED" && d.PositionsAccepted == 1), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task EventHandler_DoesNotCallTripWriter_WhenTripManagementDisabled()
+    {
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var tripWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock, tripWriterMock);
+
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0 } };
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, GeofencingEnabled: true, TripManagementEnabled: false);
+        var notification = BuildNotification(positions, account);
+
+        positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await handler.Handle(notification, CancellationToken.None);
+
+        tripWriterMock.Verify(x => x.ProcessTripPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        geofenceWriterMock.Verify(x => x.ProcessPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task EventHandler_TripFeedFailureDoesNotFailRun_WhenPositionsStored()
+    {
+        // Mirrors the geofence isolation guarantee (router-audit A-09): a TripManagement outage
+        // after a successful position write must not flip the run to FAILED nor raise an alert.
+        var positionWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IPositionWriter>();
+        var geofenceWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Geofence.IGeofenceWriter>();
+        var syncRunMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IOperatorSyncRunWriter>();
+        var alertMock = new Mock<TrackHub.Router.Domain.Interfaces.Manager.IAlertEventWriter>();
+        var tripWriterMock = new Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>();
+
+        var handler = CreateHandler(positionWriterMock, geofenceWriterMock, syncRunMock, alertMock, tripWriterMock);
+
+        var positions = new[] { new PositionVm { TransporterId = Guid.NewGuid(), DeviceDateTime = DateTimeOffset.UtcNow, Latitude = 0, Longitude = 0 } };
+        var account = new AccountSettingsVm(Guid.NewGuid(), 10, GeofencingEnabled: false, TripManagementEnabled: true);
+        var notification = BuildNotification(positions, account);
+
+        positionWriterMock.Setup(x => x.AddOrUpdatePositionAsync(It.IsAny<IEnumerable<PositionVm>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        tripWriterMock.Setup(x => x.ProcessTripPositionsAsync(It.IsAny<IEnumerable<PositionVm>>(), account.AccountId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("trip management down"));
+
+        Assert.DoesNotThrowAsync(async () => await handler.Handle(notification, CancellationToken.None));
+
+        syncRunMock.Verify(x => x.RecordAsync(It.Is<OperatorSyncRunDto>(d => d.Result == "SUCCEEDED" && d.PositionsAccepted == 1), It.IsAny<CancellationToken>()), Times.Once);
+        alertMock.Verify(x => x.RecordAsync(It.IsAny<AlertEventDto>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
     public async Task EventHandler_WritesFreshProjectionFirstThenReUpsertsEnrichedAddresses()
     {
         // Regression for router-audit A-10: the fresh projection is written BEFORE reverse-geocoding
@@ -176,7 +259,9 @@ public class PositionsRetrievedTests : TestsContext
             .ReturnsAsync(new AddressVm("Resolved St 123", "Bogota", "DC", "CO"));
 
         var handler = new PositionsRetrieved.Notification.EventHandler(
-            positionWriterMock.Object, geofenceWriterMock.Object, syncRunMock.Object, alertMock.Object,
+            positionWriterMock.Object, geofenceWriterMock.Object,
+            new Mock<TrackHub.Router.Domain.Interfaces.Trip.ITripPositionWriter>().Object,
+            syncRunMock.Object, alertMock.Object,
             geocodingMock.Object, historyMock.Object,
             Mock.Of<ILogger<PositionsRetrieved.Notification.EventHandler>>());
 
