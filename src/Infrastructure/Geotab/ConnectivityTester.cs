@@ -28,7 +28,7 @@ public class ConnectivityTester(IProviderSessionStore sessionStore)
     public async Task Ping(CredentialTokenDto credential, CancellationToken cancellationToken)
     {
         await Init(credential, cancellationToken);
-        await GeotabApi!.CallAsync<IEnumerable<Device>>("Get", typeof(Device), new { resultsLimit = 1 }, cancellationToken);
+        await Api.CallAsync<IEnumerable<Device>>("Get", typeof(Device), new { resultsLimit = 1 }, cancellationToken);
         PersistSession();
     }
 }

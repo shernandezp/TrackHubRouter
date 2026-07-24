@@ -19,7 +19,13 @@ namespace ManagerApi;
 
 // This class represents a CredentialWriter that implements the ICredentialWriter interface.
 // It is responsible for updating a token asynchronously.
-public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), ICredentialWriter
+//
+// asService: token refresh is CREDENTIAL MATERIAL handling, so it always runs under the Router's
+// own identity regardless of which flow triggered it (interactive provider reads propagate the
+// user's token; the SyncWorker host is already service-only). This mirrors the read twin
+// (getToken via OperatorSystemReader) and lets Manager gate updateToken ServiceClient-only —
+// never widen a user's permissions to write credential material.
+public class CredentialWriter(IGraphQLClientFactory graphQLClient) : GraphQLService(graphQLClient.CreateClient(Clients.Manager, asService: true)), ICredentialWriter
 {
     internal const string UpdateTokenMutation = @"
                     mutation($id:UUID!, $credentialId: UUID!, $refreshToken: String, $refreshTokenExpiration: DateTime, $token: String, $tokenExpiration: DateTime) {

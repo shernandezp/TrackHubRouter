@@ -13,6 +13,8 @@
 //  limitations under the License.
 //
 
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Infrastructure.GpsGate.Models;
 using TrackHub.Router.Infrastructure.Tests;
 
@@ -63,7 +65,7 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
     }
 
     [Test]
-    public void GetPositionAsync_WithDateRange_ThrowsNotImplementedException()
+    public void GetPositionAsync_WithDateRange_ThrowsProviderCapabilityNotSupported()
     {
         // Arrange
         var deviceDto = CreateDeviceTransporterVm(1, "TestDevice");
@@ -71,7 +73,12 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
         var to = DateTimeOffset.Now;
 
         // Act & Assert
-        Assert.ThrowsAsync<NotImplementedException>(
+        var ex = Assert.ThrowsAsync<ProviderCapabilityNotSupportedException>(
             async () => await PositionReader.GetPositionAsync(from, to, deviceDto, TestCancellationToken));
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Protocol, Is.EqualTo(ProtocolType.GpsGate));
+            Assert.That(ex.Capability, Is.EqualTo(ProviderCapability.PositionHistory));
+        });
     }
 }

@@ -21,26 +21,26 @@ using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Application.DevicePositions.Events;
 
-namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
+namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
 // In-process only (no [Authorize]): the SyncWorker's position loop dispatches it. The account rides
 // inside OperatorVm (and again inside AccountSettingsVm — the resolver takes the ordinally-first
 // depth-1 path, Operator, and both name the same account).
 [AllowCrossAccount("SyncWorker position loop: one global syncworker_client identity enumerates every account's operators and fetches their positions, so the OperatorVm's AccountId is by definition not the worker's own (it has none).")]
-public readonly record struct GetPositionsByOperatorQuery(
+public readonly record struct GetPositionsByOperatorCommand(
     OperatorVm Operator,
     AccountSettingsVm Settings,
     string TriggerType = "AUTOMATIC",
     string? CorrelationId = null) : IRequest<bool>;
 
-public class GetPositionsByOperatorQueryHandler(
+public class GetPositionsByOperatorCommandHandler(
         IPublisher publisher,
         IConfiguration configuration,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         IDeviceCatalogCache deviceCatalogCache,
-        ILogger<GetPositionsByOperatorQueryHandler> logger)
-        : IRequestHandler<GetPositionsByOperatorQuery, bool>
+        ILogger<GetPositionsByOperatorCommandHandler> logger)
+        : IRequestHandler<GetPositionsByOperatorCommand, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
 
@@ -50,7 +50,7 @@ public class GetPositionsByOperatorQueryHandler(
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Returns the collection of PositionVm</returns>
-    public async Task<bool> Handle(GetPositionsByOperatorQuery request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(GetPositionsByOperatorCommand request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is not null)

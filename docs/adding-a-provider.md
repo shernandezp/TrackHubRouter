@@ -9,7 +9,7 @@ loading — a misconfigured or missing provider fails **at startup**, loudly, on
 
 Existing providers to crib from: `Traccar` (simplest — static Basic-auth header),
 `Samsara`/`Flespi`/`GpsGate` (static token header), `Wialon`/`Navixy` (login → session id,
-cached), `Geotab` (vendor SDK, cached session), `CommandTrack`/`Protack` (bearer token with
+cached), `Geotab` (vendor SDK, cached session), `CommandTrack`/`Protrack` (bearer token with
 absolute expiry, persisted back to Manager). **Traccar is the recommended template.**
 
 ---
@@ -26,7 +26,28 @@ own class with an **exact, convention-bound name**:
 | `ConnectivityTester` | `IConnectivityTester` | 1-minute health PING loop + operator "ping" button |
 
 Registering at least one of the three is enough to pass startup validation, but a production
-provider should implement all three.
+provider should implement all three. **The two capabilities clients actually depend on are
+real-time positions and position history** (both on `IPositionReader`); everything else supports
+the platform's own plumbing (catalog reconciliation, health monitoring).
+
+### Capability declaration
+
+What your provider supports is declared centrally in
+`Domain/Constants/ProviderCapabilityCatalog.cs` (`ProtocolType` → `ProviderCapability` flags:
+`RealTimePositions`, `PositionHistory`, `DeviceCatalog`, `ConnectivityPing`). This catalog is the
+**client-facing truth**: the `providerCapabilities` GraphQL query exposes it, and a request for an
+undeclared capability fails with the typed error `PROVIDER_CAPABILITY_NOT_SUPPORTED`
+(`ProviderCapabilityNotSupportedException`), whose message attributes the limitation to the GPS
+provider — never a masked server error a paying client would read as a TrackHub defect, and never
+confused with `FEATURE_DISABLED` (TrackHub account gating).
+
+If the provider's API genuinely lacks position history (GpsGate is the precedent), declare the
+entry without `PositionHistory` and implement `GetPositionAsync(from, to, ...)` as a stub that
+throws `ProviderCapabilityNotSupportedException` — callers check the catalog first, the stub is
+defense in depth. History is the only capability a shipped `PositionReader` may stub out; startup
+cross-checks every other declaration against the reader classes actually present in your assembly
+and throws on any mismatch (a declared capability with no backing reader, or an implemented reader
+the catalog hides).
 
 Shared semantics:
 
@@ -103,10 +124,10 @@ the portal.
 
 ---
 
-## 2. The four alignment points
+## 2. The five alignment points
 
 Registration (`ProtocolRegistrationExtensions`, called from `AddCommonContext`) resolves
-everything by convention. Four names must line up (case-insensitively):
+everything by convention. Five things must line up (names case-insensitively):
 
 | # | Where | What |
 |---|---|---|
@@ -114,15 +135,16 @@ everything by convention. Four names must line up (case-insensitively):
 | 2 | Provider `.csproj` | `AssemblyName` + `RootNamespace` = `TrackHub.Router.Infrastructure.{Protocol}` |
 | 3 | Reader classes | `Protocol` property returns the enum value; class names exactly `DeviceReader` / `PositionReader` / `ConnectivityTester` in the root namespace |
 | 4 | `AppSettings:Protocols` (Web + SyncWorker `appsettings.json`) | The enum spelling listed |
+| 5 | `Domain/Constants/ProviderCapabilityCatalog.cs` | The capability declaration matching the reader classes (§1 *Capability declaration*) |
 
 Any mismatch fails at startup with a message naming the protocol: unknown enum value,
-missing assembly, or an assembly with no matching reader types. An operator whose
-`ProtocolTypeId` has no registered reader gets `ProtocolNotSupportedException` (naming the
-protocol) instead of a masked error.
+missing assembly, an assembly with no matching reader types, or a capability declaration
+that doesn't match the readers. An operator whose `ProtocolTypeId` has no registered reader
+gets `ProtocolNotSupportedException` (naming the protocol) instead of a masked error.
 
 > Casing may drift between config, enum, and namespace (`GeoTab` ↔ `Geotab`) — resolution is
-> case-insensitive — but keep new providers consistent; the folder name is the only place
-> history allows divergence (`Protack` folder builds the `Protrack` assembly).
+> case-insensitive — but keep new providers consistent: folder, project, assembly, and
+> namespace should all carry the same name as the enum value.
 
 `Mettax = 10` is **reserved** in the enum with no provider assembly; configuring it throws at
 startup until someone builds the project.
@@ -149,7 +171,7 @@ provider's auth model:
 | Static header (Basic auth, permanent API token) | No caching needed — `Init` is already free | Traccar, Samsara, Flespi, GpsGate |
 | Login → inactivity-timeout session | `TryGet` in `Init`; on miss login + `Set` with a **sliding** TTL below the provider's inactivity timeout; on an invalid-session error mid-call: `Invalidate` + re-login + **retry once**, then throw | Wialon (sid, 4 min sliding), Navixy (hash, 30 min sliding) |
 | Vendor SDK with session id | Cache the SDK session id; on a hit construct the SDK client with password **and** session id so the SDK self-heals an expired session; persist the current id after successful calls | Geotab |
-| Bearer token with absolute expiry | Durable copy already lives on the Manager credential (`ICredentialWriter.UpdateTokenAsync`); `Set` with a **non-sliding** TTL of `expiry − now − margin` as an in-process fast path | CommandTrack, Protack |
+| Bearer token with absolute expiry | Durable copy already lives on the Manager credential (`ICredentialWriter.UpdateTokenAsync`); `Set` with a **non-sliding** TTL of `expiry − now − margin` as an in-process fast path | CommandTrack, Protrack |
 
 Rules regardless of pattern:
 
@@ -188,21 +210,24 @@ Rules regardless of pattern:
    helpers), `DeviceReader`, `PositionReader`, `ConnectivityTester`, `Models/` (provider DTOs,
    `internal`), `Mappers/` (static extension methods to `DeviceVm`/`PositionVm` — mapping is
    manual, no AutoMapper).
-4. **Wire the build** — add the project to `TrackHub.Router.slnx` and a `ProjectReference` in
+4. **Declare capabilities** — add the protocol's entry to
+   `Domain/Constants/ProviderCapabilityCatalog.cs` (§1 *Capability declaration*). Startup
+   cross-checks the declaration against your reader classes.
+5. **Wire the build** — add the project to `TrackHub.Router.slnx` and a `ProjectReference` in
    `src/Infrastructure/Common/Common.csproj` (that reference is what puts your DLL in the
    Web/SyncWorker output).
-5. **Activate** — add the protocol name to `AppSettings:Protocols` in **both**
+6. **Activate** — add the protocol name to `AppSettings:Protocols` in **both**
    `src/Web/appsettings.json` and `src/SyncWorker/appsettings.json` (deployed environments:
    `AppSettings__Protocols__N` env vars, see `TrackHub.Deployment`).
-6. **Portal** — add `{ value: N, label: '{PROTOCOL}' }` to `TrackHub/src/data/protocolTypes.ts`
+7. **Portal** — add `{ value: N, label: '{PROTOCOL}' }` to `TrackHub/src/data/protocolTypes.ts`
    (values mirror the enum — this list feeds the operator dialog's protocol select).
-7. **Tests** — add `{Protocol}DeviceReaderTests` / `{Protocol}PositionReaderTests` in
+8. **Tests** — add `{Protocol}DeviceReaderTests` / `{Protocol}PositionReaderTests` in
    `tests/Intfrastructure.UnitTests` deriving from `DeviceReaderTestsBase<T>` /
    `PositionReaderTestsBase<T>` (mocks for `ICredentialHttpClientFactory`,
    `IHttpClientService`, `IProviderSessionStore` are provided). Cover: happy-path mapping,
    empty results, provider-error payloads (must throw), and — if you cache sessions — the
    re-login-and-retry path.
-8. **Verify** — `dotnet build TrackHub.Router.slnx && dotnet test TrackHub.Router.slnx`, then
+9. **Verify** — `dotnet build TrackHub.Router.slnx && dotnet test TrackHub.Router.slnx`, then
    start the Web project: startup throws if any alignment point is off. Finally create an
    operator with the new protocol and use **Ping** + **Sync now** in the portal against a live
    account.

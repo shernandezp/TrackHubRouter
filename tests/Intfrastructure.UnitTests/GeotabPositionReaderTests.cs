@@ -26,29 +26,29 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
         => new(SessionStoreMock.Object);
 
     [Test]
-    public void GetDevicePositionAsync_WithNullGeotabApi_ThrowsNullReferenceException()
+    public void GetDevicePositionAsync_WithNullGeotabApi_ThrowsInvalidOperationException()
     {
         // Arrange
         var deviceDto = CreateDeviceTransporterVm(1, "TestDevice");
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(
+        Assert.ThrowsAsync<InvalidOperationException>(
             async () => await PositionReader.GetDevicePositionAsync(deviceDto, TestCancellationToken));
     }
 
     [Test]
-    public void GetDevicePositionAsync_WithMultipleDevices_ThrowsNullReferenceException()
+    public void GetDevicePositionAsync_WithMultipleDevices_ThrowsInvalidOperationException()
     {
         // Arrange
         var devices = CreateDeviceTransporterVmList(1, 2);
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(
+        Assert.ThrowsAsync<InvalidOperationException>(
             async () => await PositionReader.GetDevicePositionAsync(devices, TestCancellationToken));
     }
 
     [Test]
-    public void GetPositionAsync_WithDateRange_ThrowsNullReferenceException()
+    public void GetPositionAsync_WithDateRange_ThrowsInvalidOperationException()
     {
         // Arrange
         var deviceDto = CreateDeviceTransporterVm(1, "TestDevice");
@@ -56,7 +56,7 @@ public class PositionReaderTests : PositionReaderTestsBase<PositionReader>
         var to = DateTimeOffset.Now;
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(
+        Assert.ThrowsAsync<InvalidOperationException>(
             async () => await PositionReader.GetPositionAsync(from, to, deviceDto, TestCancellationToken));
     }
 }

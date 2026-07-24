@@ -18,7 +18,6 @@ using Common.Mediator;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TrackHub.Router.Application.DevicePositions.Commands.Sync;
-using TrackHub.Router.Application.DevicePositions.Queries.Get;
 using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Models;
@@ -109,7 +108,7 @@ public class TriggerOperatorSyncCommandHandlerTests : TestsContext
                 && !c.ResetDeviceCatalog
                 && c.AutoAssignNewDevices),
             It.IsAny<CancellationToken>()), Times.Once);
-        _senderMock.Verify(s => s.Send(It.IsAny<GetPositionsByOperatorQuery>(), It.IsAny<CancellationToken>()), Times.Never);
+        _senderMock.Verify(s => s.Send(It.IsAny<GetPositionsByOperatorCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]

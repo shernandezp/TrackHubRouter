@@ -54,6 +54,9 @@ public class SyncOperatorDevicesCommandHandler(
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is null)
         {
+            logger.LogWarning(
+                "Device sync skipped for operator {OperatorId} (account {AccountId}): no stored credential. Correlation {CorrelationId}.",
+                request.Operator.OperatorId, request.Operator.AccountId, request.CorrelationId);
             return false;
         }
 
@@ -124,6 +127,11 @@ public class SyncOperatorDevicesCommandHandler(
         // zero, DevicesSeen reflects what the provider returned before the failure). Best-effort:
         // telemetry failures never fail the sync itself.
         var succeeded = result == "SUCCEEDED";
+        logger.LogInformation(
+            "Device sync {Result} for operator {OperatorId} (account {AccountId}): {Seen} seen, {Added} added, {Updated} updated, {Removed} removed in {ElapsedMs} ms. Trigger {TriggerType}, correlation {CorrelationId}.",
+            result, request.Operator.OperatorId, request.Operator.AccountId,
+            succeeded ? counts.DevicesSeen : devices.Length, counts.DevicesAdded, counts.DevicesUpdated, counts.DevicesRemoved,
+            (int)(DateTimeOffset.UtcNow - startedAt).TotalMilliseconds, request.TriggerType, correlationId);
         try
         {
             await syncRunWriter.RecordAsync(new OperatorSyncRunDto(

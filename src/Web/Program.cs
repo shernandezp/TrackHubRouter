@@ -43,7 +43,8 @@ builder.Services.AddHealthChecks();
 // Shared TrackHub GraphQL hardening + the Router-specific error filters.
 builder.Services.AddTrackHubGraphQLServer<Query, Mutation>(builder.Environment.IsDevelopment())
     .AddErrorFilter<GeocodingErrorFilter>()
-    .AddErrorFilter<OperatorSyncErrorFilter>();
+    .AddErrorFilter<OperatorSyncErrorFilter>()
+    .AddErrorFilter<ProviderCapabilityErrorFilter>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 

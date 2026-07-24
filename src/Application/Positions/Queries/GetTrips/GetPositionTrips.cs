@@ -27,6 +27,8 @@ using TrackHub.Router.Domain.Models;
 namespace TrackHub.Router.Application.Positions.Queries.GetTrips;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
+[RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct GetPositionTripsQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To, PositionSourceType Source = PositionSourceType.Provider) : IRequest<IEnumerable<TripVm>>;
 
 public class GetPositionTripsQueryHandler(
@@ -88,4 +90,23 @@ public class GetPositionTripsQueryHandler(
 
     }
 
+}
+
+public sealed class GetPositionTripsQueryValidator : AbstractValidator<GetPositionTripsQuery>
+{
+    private const int MaxRangeDays = 31;
+
+    public GetPositionTripsQueryValidator()
+    {
+        RuleFor(v => v.TransporterId)
+            .NotEmpty();
+
+        RuleFor(v => v)
+            .Must(v => v.From < v.To)
+            .WithMessage("From must be earlier than To.");
+
+        RuleFor(v => v)
+            .Must(v => (v.To - v.From) <= TimeSpan.FromDays(MaxRangeDays))
+            .WithMessage($"The requested range exceeds the maximum of {MaxRangeDays} days.");
+    }
 }

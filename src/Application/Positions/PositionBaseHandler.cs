@@ -16,6 +16,8 @@
 using Common.Application.Exceptions;
 using Common.Application.Interfaces;
 using Common.Domain.Constants;
+using TrackHub.Router.Domain.Constants;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Domain.Extensions;
@@ -75,6 +77,10 @@ public abstract class PositionBaseHandler
         DeviceTransporterVm device,
         CancellationToken cancellationToken)
     {
+        // Provider-side history is a per-provider capability (e.g. GpsGate has no history API);
+        // fail with the client-facing provider-limitation error before touching the provider.
+        ProviderCapabilityCatalog.EnsureSupports((ProtocolType)@operator.ProtocolTypeId, ProviderCapability.PositionHistory);
+
         var reader = positionRegistry.GetReader((ProtocolType)@operator.ProtocolTypeId);
         if (@operator.Credential is not null)
         {

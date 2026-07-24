@@ -24,6 +24,7 @@ namespace TrackHub.Router.Application.Devices.Queries.GetByOperator;
 
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct GetDevicesByOperatorQuery(Guid OperatorId) : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesByOperatorQueryHandler(

@@ -24,6 +24,7 @@ using TrackHub.Router.Domain.Extensions;
 namespace TrackHub.Router.Application.DevicePositions.Queries.Get;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct GetPositionByTransporterQuery(Guid TransporterId) : IRequest<PositionVm>;
 
 public class GetPositionByTransporterQueryHandler(

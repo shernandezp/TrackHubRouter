@@ -13,21 +13,13 @@
 //  limitations under the License.
 //
 
-using TrackHub.Router.Application.DevicePositions.Commands.Sync;
+using TrackHub.Router.Application.Providers.Queries;
 using TrackHub.Router.Domain.Models;
 
-namespace TrackHub.Router.Application.DevicePositions.Events;
+namespace TrackHub.Router.Web.GraphQL.Query;
 
-public sealed class OperatorRetrieved
+public partial class Query
 {
-    public readonly record struct Notification(OperatorVm Operator, AccountSettingsVm Settings) : INotification
-    {
-        public class EventHandler(ISender sender) : INotificationHandler<Notification>
-        {
-            public async Task Handle(Notification notification, CancellationToken cancellationToken)
-                => await sender.Send(new GetPositionsByOperatorCommand(notification.Operator, notification.Settings), cancellationToken);
-            
-        }
-    }
+    public async Task<IEnumerable<ProviderCapabilitiesVm>> GetProviderCapabilities([Service] ISender sender, CancellationToken cancellationToken)
+        => await sender.Send(new GetProviderCapabilitiesQuery(), cancellationToken);
 }
-

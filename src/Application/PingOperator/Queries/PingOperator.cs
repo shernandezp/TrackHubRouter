@@ -30,6 +30,7 @@ namespace TrackHub.Router.Application.PingOperator.Queries;
 // never reaches the caller, so operating an integration does not require Credentials/Custom, which
 // governs viewing decrypted credentials and stays with credential administration.
 [Authorize(Resource = Resources.Operators, Action = Actions.Custom)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct PingOperatorQuery(Guid OperatorId) : IRequest<bool>;
 
 // This class handles the PingOperatorQuery and implements the IRequestHandler interface

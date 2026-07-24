@@ -16,7 +16,7 @@
 using Application.UnitTests;
 using Moq;
 using TrackHub.Router.Application.DevicePositions.Events;
-using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
 using TrackHub.Router.Domain.Models;
 using Common.Mediator;
 
@@ -26,7 +26,7 @@ namespace TrackHub.Router.Application.UnitTests.DevicePositions.Events;
 public class OperatorRetrievedTests : TestsContext
 {
     [Test]
-    public async Task EventHandler_SendsGetPositionsByOperatorQuery()
+    public async Task EventHandler_SendsGetPositionsByOperatorCommand()
     {
         // Arrange
         var senderMock = new Mock<ISender>();
@@ -40,6 +40,6 @@ public class OperatorRetrievedTests : TestsContext
         await handler.Handle(notification, CancellationToken.None);
 
         // Assert
-        senderMock.Verify(x => x.Send(It.Is<GetPositionsByOperatorQuery>(q => q.Operator == operatorVm && q.Settings == account), It.IsAny<CancellationToken>()), Times.Once);
+        senderMock.Verify(x => x.Send(It.Is<GetPositionsByOperatorCommand>(q => q.Operator == operatorVm && q.Settings == account), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -17,6 +17,7 @@ using Application.UnitTests;
 using Moq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
 using TrackHub.Router.Application.DevicePositions.Queries.Get;
 using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Registry;
@@ -98,16 +99,16 @@ public class GetPositionsQueriesTests : TestsContext
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);
@@ -134,16 +135,16 @@ public class GetPositionsQueriesTests : TestsContext
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act — must not throw; the error is carried on the notification.
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);
@@ -161,16 +162,16 @@ public class GetPositionsQueriesTests : TestsContext
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, Guid.NewGuid(), null);
         var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);

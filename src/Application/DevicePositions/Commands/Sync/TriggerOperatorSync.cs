@@ -65,6 +65,10 @@ public class TriggerOperatorSyncCommandHandler(
             throw new OperatorDisabledException(request.OperatorId);
         }
 
+        logger.LogInformation(
+            "Sync trigger accepted for operator {OperatorId} (account {AccountId}), trigger {TriggerType}, correlation {CorrelationId}.",
+            request.OperatorId, request.AccountId, request.TriggerType, request.CorrelationId);
+
         // The account/enabled checks above run on the caller-scoped read. Re-read with the Router's
         // service identity so the device sync receives the decrypted credential.
         var authorized = await operatorSystemReader.GetOperatorAsync(op.OperatorId, cancellationToken);

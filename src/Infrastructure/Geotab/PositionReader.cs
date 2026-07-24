@@ -33,9 +33,11 @@ public sealed class PositionReader(IProviderSessionStore sessionStore)
                 Id = Id.Create(deviceDto.Identifier)
             }
         };
-        var position = await GeotabApi!.CallAsync<DeviceStatusInfo>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
+        var position = await Api.CallAsync<DeviceStatusInfo>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
         PersistSession();
-        return position!.MapToPositionVm(deviceDto);
+        return position is null
+            ? throw new InvalidOperationException($"Device not found: {deviceDto.Identifier}")
+            : position.MapToPositionVm(deviceDto);
     }
 
     public async Task<IEnumerable<PositionVm>> GetDevicePositionAsync(IEnumerable<DeviceTransporterVm> devices, CancellationToken cancellationToken)
@@ -47,7 +49,7 @@ public sealed class PositionReader(IProviderSessionStore sessionStore)
                 DeviceIds = devices.Select(device => Id.Create(device.Identifier))
             }
         };
-        var positions = await GeotabApi!.CallAsync<IEnumerable<DeviceStatusInfo>>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
+        var positions = await Api.CallAsync<IEnumerable<DeviceStatusInfo>>("Get", typeof(DeviceStatusInfo), search, cancellationToken);
         PersistSession();
         if (positions is null)
         {
@@ -66,7 +68,7 @@ public sealed class PositionReader(IProviderSessionStore sessionStore)
             FromDate = from.UtcDateTime,
             ToDate = to.UtcDateTime
         };
-        var positions = await GeotabApi!.CallAsync<IEnumerable<LogRecord>>("Get", typeof(LogRecord), new { search = logRecordSearch }, cancellationToken);
+        var positions = await Api.CallAsync<IEnumerable<LogRecord>>("Get", typeof(LogRecord), new { search = logRecordSearch }, cancellationToken);
         PersistSession();
         return positions is null ? ([]) : positions.MapToPositionVm(deviceDto);
     }

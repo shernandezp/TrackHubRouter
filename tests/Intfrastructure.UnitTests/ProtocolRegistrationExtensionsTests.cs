@@ -49,12 +49,10 @@ public class ProtocolRegistrationExtensionsTests
     }
 
     [Test]
-    public void RegisterProtocol_Protrack_ResolvesReadersFromTheProtackFolderAssembly()
+    public void RegisterProtocol_Protrack_ResolvesReadersFromTheProtrackAssembly()
     {
-        // Protrack's repo FOLDER is "Protack" but its assembly/namespace are
-        // "TrackHub.Router.Infrastructure.Protrack" (matching the enum). Wired into
-        // Infrastructure/Common 2026-07-18 — this guards the assembly reference so configuring
-        // "Protrack" keeps resolving instead of failing at startup.
+        // Wired into Infrastructure/Common 2026-07-18 — this guards the assembly reference so
+        // configuring "Protrack" keeps resolving instead of failing at startup.
         var services = new ServiceCollection();
 
         services.RegisterProtocol(ProtocolType.Protrack.ToString());
@@ -70,6 +68,20 @@ public class ProtocolRegistrationExtensionsTests
             Assert.That(deviceReader?.KeyedImplementationType?.Namespace, Is.EqualTo("TrackHub.Router.Infrastructure.Protrack"));
             Assert.That(connectivityTester?.KeyedImplementationType?.Namespace, Is.EqualTo("TrackHub.Router.Infrastructure.Protrack"));
         });
+    }
+
+    [Test]
+    public void RegisterProtocol_GpsGate_RegistersWithUndeclaredPositionHistory()
+    {
+        // GpsGate ships a PositionReader whose history method is a capability-guarded stub, so the
+        // catalog declares no PositionHistory. The startup cross-check must accept that shape:
+        // history is the one capability a PositionReader may stub out.
+        var services = new ServiceCollection();
+
+        Assert.DoesNotThrow(() => services.RegisterProtocol(ProtocolType.GpsGate.ToString()));
+        Assert.That(
+            services.Any(d => d.ServiceType == typeof(IPositionReader) && Equals(d.ServiceKey, ProtocolType.GpsGate)),
+            Is.True);
     }
 
     [Test]

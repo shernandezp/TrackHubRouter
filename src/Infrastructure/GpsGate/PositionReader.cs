@@ -14,6 +14,8 @@
 //
 
 using TrackHub.Router.Infrastructure.GpsGate.Mappers;
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Interfaces;
 
 namespace TrackHub.Router.Infrastructure.GpsGate;
@@ -47,8 +49,9 @@ public sealed class PositionReader(
         return results.Distinct();
     }
 
-    public async Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException("GpsGate position history API is not implemented yet.");
-    }
+    public Task<IEnumerable<PositionVm>> GetPositionAsync(DateTimeOffset from, DateTimeOffset to, DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
+        // GpsGate exposes no usable track-history endpoint. Callers are expected to check
+        // ProviderCapabilityCatalog first; this throw is defense in depth so a bypassing call
+        // still attributes the limitation to the provider instead of a masked server error.
+        => throw new ProviderCapabilityNotSupportedException(Protocol, ProviderCapability.PositionHistory);
 }

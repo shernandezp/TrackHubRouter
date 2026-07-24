@@ -29,7 +29,7 @@
     <Project Path="src/Infrastructure/GpsGate/GpsGate.csproj" />
     <Project Path="src/Infrastructure/ManagerApi/ManagerApi.csproj" />
     <Project Path="src/Infrastructure/Navixy/Navixy.csproj" />
-    <Project Path="src/Infrastructure/Protack/Protrack.csproj" />
+    <Project Path="src/Infrastructure/Protrack/Protrack.csproj" />
     <Project Path="src/Infrastructure/Samsara/Samsara.csproj" />
     <Project Path="src/Infrastructure/TelemetryApi/TelemetryApi.csproj" />
     <Project Path="src/Infrastructure/Traccar/Traccar.csproj" />
@@ -38,6 +38,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Application.UnitTests/Application.UnitTests.csproj" />
+    <Project Path="tests/Web.UnitTests/Web.UnitTests.csproj" />
     <Project Path="tests/Intfrastructure.UnitTests/Infrastructure.UnitTests.csproj" />
   </Folder>
 </Solution>

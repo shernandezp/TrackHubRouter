@@ -23,10 +23,12 @@ using TrackHub.Router.Domain.Models;
 namespace TrackHub.Router.Application.Geocoding.Queries;
 
 // Resolves a single coordinate through the geocoding abstraction. When the coordinate
-// corresponds to a TrackHub-stored row (ids supplied), the resolved address is written
-// back best-effort with the Router's own service identity — never the user token.
+// corresponds to a TrackHub-stored row (ids supplied), the resolved address is written back
+// best-effort — but ONLY after confirming the caller may see the referenced transporter, so a
+// foreign id cannot stamp an address onto another tenant's row (see CanCacheForCallerAsync).
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 [RateLimiting(PermitLimit = 10, WindowSeconds = 60)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct ReverseGeocodeQuery(
     double Latitude,
     double Longitude,
@@ -36,6 +38,7 @@ public readonly record struct ReverseGeocodeQuery(
 public class ReverseGeocodeQueryHandler(
     IReverseGeocodingService geocodingService,
     IResolvedAddressSystemWriter addressWriter,
+    IOperatorReader operatorReader,
     ILogger<ReverseGeocodeQueryHandler> logger) : IRequestHandler<ReverseGeocodeQuery, AddressVm>
 {
     public async Task<AddressVm> Handle(ReverseGeocodeQuery request, CancellationToken cancellationToken)
@@ -46,8 +49,11 @@ public class ReverseGeocodeQueryHandler(
             return new AddressVm(null, null, null, null);
         }
 
-        if ((request.TransporterId.HasValue || request.TransporterPositionHistoryId.HasValue)
-            && !string.IsNullOrWhiteSpace(address.Value.Address))
+        // The write-back stamps the resolved address onto a tenant-owned stored position row. Cache it
+        // only when the caller may actually see the referenced transporter — otherwise a foreign
+        // TransporterId would let one tenant write onto another tenant's row.
+        if (!string.IsNullOrWhiteSpace(address.Value.Address)
+            && await CanCacheForCallerAsync(request, cancellationToken))
         {
             try
             {
@@ -65,6 +71,29 @@ public class ReverseGeocodeQueryHandler(
         }
 
         return address.Value;
+    }
+
+    // Enforces caller access to the row the address would be cached onto. The caller-scoped operator
+    // read goes through Manager under the caller's token, so a transporter outside the caller's
+    // account/groups resolves to nothing and the write-back is skipped. A write-back keyed only by
+    // TransporterPositionHistoryId is not caller-verifiable at this layer, so it is not cached.
+    private async Task<bool> CanCacheForCallerAsync(ReverseGeocodeQuery request, CancellationToken cancellationToken)
+    {
+        if (request.TransporterId is not { } transporterId)
+        {
+            return false;
+        }
+
+        try
+        {
+            var scoped = await operatorReader.GetOperatorByTransporterAsync(transporterId, cancellationToken);
+            return scoped.OperatorId != Guid.Empty;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Ownership resolve failed for transporter {TransporterId}; skipping address write-back.", transporterId);
+            return false;
+        }
     }
 }
 
