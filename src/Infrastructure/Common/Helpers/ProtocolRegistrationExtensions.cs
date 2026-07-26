@@ -16,8 +16,8 @@
 using System.Reflection;
 using Common.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
-using TrackHub.Router.Domain.Constants;
 using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Common.Helpers;
@@ -26,10 +26,18 @@ namespace TrackHub.Router.Infrastructure.Common.Helpers;
 // resolve exactly one implementation per protocol from the caller's own scope — no O(N)
 // resolve-all-and-filter, no disposed-scope hand-off (router-audit A-07). All providers register
 // through one uniform path (the fake-async adapters were removed — provider Init is a real Task,
-// router-audit A-18).
+// router-audit A-18). Each provider assembly is self-describing: its ProviderDescriptor declares
+// protocol, display name and capabilities, so adding a provider touches no central registry here.
 public static class ProtocolRegistrationExtensions
 {
-    public static IServiceCollection RegisterProtocol(
+    /// <summary>
+    /// Enum values reserved without a provider assembly. They surface in the capability
+    /// matrix with no capabilities so clients can name them without a registered provider.
+    /// </summary>
+    public static IReadOnlyList<IProviderDescriptor> ReservedDescriptors { get; } =
+        [new ReservedProviderDescriptor(ProtocolType.Mettax)];
+
+    public static IProviderDescriptor RegisterProtocol(
         this IServiceCollection services,
         string protocolName)
     {
@@ -71,28 +79,57 @@ public static class ProtocolRegistrationExtensions
                 + "provider's type names and namespace.");
         }
 
-        ValidateDeclaredCapabilities(protocolName, protocol, deviceReader, positionReader, connectivityTester);
+        var descriptor = ResolveDescriptor(protocolAssembly, protocolNamespace, protocolName, protocol);
+        ValidateDeclaredCapabilities(descriptor, protocolName, deviceReader, positionReader, connectivityTester);
 
-        return services;
+        return descriptor;
     }
 
-    // The capability catalog is the client-facing truth about what a provider supports; a
-    // declaration that its assembly cannot back (or an implemented reader the catalog hides)
-    // would misattribute limitations to the provider or to TrackHub. Same fail-fast policy as
-    // the other alignment points: a mismatch is a development error, caught at startup.
-    private static void ValidateDeclaredCapabilities(
+    // The descriptor is the provider assembly's own declaration of protocol, display name and
+    // capabilities — the client-facing truth about what the provider supports.
+    private static IProviderDescriptor ResolveDescriptor(
+        Assembly assembly,
+        string protocolNamespace,
         string protocolName,
-        ProtocolType protocol,
+        ProtocolType protocol)
+    {
+        var descriptorType = GetProtocolType(assembly, protocolNamespace, "ProviderDescriptor");
+        if (descriptorType is null || !typeof(IProviderDescriptor).IsAssignableFrom(descriptorType))
+        {
+            throw new InvalidOperationException(
+                $"Configured protocol '{protocolName}' resolved assembly "
+                + $"'{assembly.GetName().Name}' but it declares no "
+                + $"'{protocolNamespace}.ProviderDescriptor' implementing {nameof(IProviderDescriptor)}. "
+                + "Add the descriptor class to the provider assembly.");
+        }
+
+        var descriptor = (IProviderDescriptor)Activator.CreateInstance(descriptorType)!;
+        if (descriptor.Protocol != protocol)
+        {
+            throw new InvalidOperationException(
+                $"Configured protocol '{protocolName}' resolved a descriptor declaring "
+                + $"'{descriptor.Protocol}'. Align the descriptor's Protocol with the assembly.");
+        }
+
+        return descriptor;
+    }
+
+    // A declaration that the assembly cannot back (or an implemented reader the declaration
+    // hides) would misattribute limitations to the provider or to TrackHub. Same fail-fast
+    // policy as the other alignment points: a mismatch is a development error, caught at startup.
+    private static void ValidateDeclaredCapabilities(
+        IProviderDescriptor descriptor,
+        string protocolName,
         bool deviceReader,
         bool positionReader,
         bool connectivityTester)
     {
-        var declared = ProviderCapabilityCatalog.Get(protocol);
+        var declared = descriptor.Capabilities;
         if (declared == ProviderCapability.None)
         {
             throw new InvalidOperationException(
-                $"Configured protocol '{protocolName}' has no capability declaration. Add its entry "
-                + $"to {nameof(ProviderCapabilityCatalog)} (docs/adding-a-provider.md).");
+                $"Configured protocol '{protocolName}' declares no capabilities in its "
+                + "ProviderDescriptor. Declare what the provider's API supports.");
         }
 
         var expected = (positionReader
@@ -112,9 +149,17 @@ public static class ProtocolRegistrationExtensions
         {
             throw new InvalidOperationException(
                 $"Configured protocol '{protocolName}' declares capabilities that don't match its "
-                + $"readers ({nameof(ProviderCapabilityCatalog)}: '{declared}', assembly supports: "
-                + $"'{expected}'). Align the catalog entry with the provider's reader classes.");
+                + $"readers (ProviderDescriptor: '{declared}', assembly supports: "
+                + $"'{expected}'). Align the descriptor with the provider's reader classes.");
         }
+    }
+
+    // Placeholder declaration for reserved enum values: named, but with no capabilities.
+    private sealed class ReservedProviderDescriptor(ProtocolType protocol) : IProviderDescriptor
+    {
+        public ProtocolType Protocol => protocol;
+        public string DisplayName => protocol.ToString();
+        public ProviderCapability Capabilities => ProviderCapability.None;
     }
 
     private static Type? GetProtocolType(Assembly assembly, string protocolNamespace, string typeName)

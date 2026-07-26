@@ -72,6 +72,7 @@ public class GetPositionTripsQueryTests : TestsContext
             _configurationMock.Object,
             _operatorReaderMock.Object,
             _operatorSystemReaderMock.Object,
+            TestProviderDescriptors.DefaultCatalog,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterTypeReaderMock.Object,

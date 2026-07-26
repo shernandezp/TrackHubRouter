@@ -20,6 +20,7 @@ using Common.Application.Interfaces;
 using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Models;
 
@@ -34,6 +35,7 @@ public class GetPositionsRecordQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IOperatorSystemReader operatorSystemReader,
+        IProviderCapabilityCatalog capabilityCatalog,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         Application.Gating.IAccountModeResolver modeResolver,
@@ -75,6 +77,7 @@ public class GetPositionsRecordQueryHandler(
         var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
 
         return await GetDevicePositionAsync(
+            capabilityCatalog,
             positionRegistry,
             EncryptionKey,
             @operator,

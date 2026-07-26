@@ -21,6 +21,7 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Application.Positions.Mappers;
 using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Domain.Models;
 
@@ -35,6 +36,7 @@ public class GetPositionTripsQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
         IOperatorSystemReader operatorSystemReader,
+        IProviderCapabilityCatalog capabilityCatalog,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         ITransporterTypeReader transporterTypeReader,
@@ -76,6 +78,7 @@ public class GetPositionTripsQueryHandler(
             // PROVIDER replay needs the decrypted credential, read with the Router's service identity.
             var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
             positions = await GetDevicePositionAsync(
+                capabilityCatalog,
                 positionRegistry,
                 EncryptionKey,
                 @operator,
