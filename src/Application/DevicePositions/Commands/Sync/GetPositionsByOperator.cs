@@ -17,6 +17,7 @@ using Common.Application.Attributes;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Application.DevicePositions.Events;
@@ -39,6 +40,7 @@ public class GetPositionsByOperatorCommandHandler(
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         IDeviceCatalogCache deviceCatalogCache,
+        IProviderCapabilityCatalog capabilityCatalog,
         ILogger<GetPositionsByOperatorCommandHandler> logger)
         : IRequestHandler<GetPositionsByOperatorCommand, bool>
 {
@@ -53,6 +55,19 @@ public class GetPositionsByOperatorCommandHandler(
     public async Task<bool> Handle(GetPositionsByOperatorCommand request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
+
+        // A provider that declares no RealTimePositions is a DECLARED capability gap, not a
+        // failure — polling it would record a FAILED run every cycle for a limitation of the
+        // provider's API. The position loop skips it quietly.
+        var protocol = (ProtocolType)request.Operator.ProtocolTypeId;
+        if (!capabilityCatalog.Supports(protocol, ProviderCapability.RealTimePositions))
+        {
+            logger.LogDebug(
+                "Position sync skipped for operator {OperatorId} (account {AccountId}): provider {Protocol} declares no real-time positions.",
+                request.Operator.OperatorId, request.Operator.AccountId, protocol);
+            return false;
+        }
+
         if (request.Operator.Credential is not null)
         {
             var startedAt = DateTimeOffset.UtcNow;

@@ -70,7 +70,19 @@ public class SyncOperatorDevicesCommandHandlerTests : TestsContext
         _alertWriterMock.Object,
         _syncLockMock.Object,
         Mock.Of<TrackHub.Router.Domain.Interfaces.IDeviceCatalogCache>(),
+        AllCapabilities(),
         Mock.Of<ILogger<SyncOperatorDevicesCommandHandler>>());
+
+    // Reports every capability supported, so these tests exercise the handler exactly as
+    // before the partial-provider guard was introduced.
+    private static IProviderCapabilityCatalog AllCapabilities()
+    {
+        var catalog = new Mock<IProviderCapabilityCatalog>();
+        catalog
+            .Setup(c => c.Supports(It.IsAny<ProtocolType>(), It.IsAny<TrackHub.Router.Domain.Enumerators.ProviderCapability>()))
+            .Returns(true);
+        return catalog.Object;
+    }
 
     private static OperatorVm OperatorWith(CredentialTokenVm? credential, Guid? accountId = null) =>
         new(Guid.NewGuid(), (int)ProtocolType.CommandTrack, accountId ?? Guid.NewGuid(), credential);

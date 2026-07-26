@@ -18,6 +18,8 @@ using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Constants;
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
@@ -45,6 +47,7 @@ public class SyncOperatorDevicesCommandHandler(
     IAlertEventWriter alertWriter,
     IOperatorSyncLock syncLock,
     IDeviceCatalogCache deviceCatalogCache,
+    IProviderCapabilityCatalog capabilityCatalog,
     ILogger<SyncOperatorDevicesCommandHandler> logger) : IRequestHandler<SyncOperatorDevicesCommand, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -57,6 +60,24 @@ public class SyncOperatorDevicesCommandHandler(
             logger.LogWarning(
                 "Device sync skipped for operator {OperatorId} (account {AccountId}): no stored credential. Correlation {CorrelationId}.",
                 request.Operator.OperatorId, request.Operator.AccountId, request.CorrelationId);
+            return false;
+        }
+
+        // A provider that declares no DeviceCatalog is a DECLARED capability gap, not a failure —
+        // its devices are registered manually in the UI. The background loop skips quietly (no
+        // FAILED run, no OFFLINE health mark, no recurring alert); a manual "sync now" gets the
+        // client-facing provider-limitation error instead.
+        var protocol = (ProtocolType)request.Operator.ProtocolTypeId;
+        if (!capabilityCatalog.Supports(protocol, ProviderCapability.DeviceCatalog))
+        {
+            if (request.TriggerType == "MANUAL")
+            {
+                throw new ProviderCapabilityNotSupportedException(protocol, ProviderCapability.DeviceCatalog);
+            }
+
+            logger.LogDebug(
+                "Device sync skipped for operator {OperatorId} (account {AccountId}): provider {Protocol} declares no device catalog.",
+                request.Operator.OperatorId, request.Operator.AccountId, protocol);
             return false;
         }
 

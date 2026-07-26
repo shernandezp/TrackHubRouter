@@ -64,6 +64,17 @@ public class GetPositionsQueriesTests : TestsContext
         _configurationMock.Setup(x => x["AppSettings:EncryptionKey"]).Returns("4F2C2E66-107F-452A-ACDE-402DFD47B84C");
     }
 
+    // A capability catalog that reports every capability supported, so tests exercise the
+    // handlers exactly as before the partial-provider guards were introduced.
+    private static IProviderCapabilityCatalog AllCapabilities()
+    {
+        var catalog = new Mock<IProviderCapabilityCatalog>();
+        catalog
+            .Setup(c => c.Supports(It.IsAny<ProtocolType>(), It.IsAny<TrackHub.Router.Domain.Enumerators.ProviderCapability>()))
+            .Returns(true);
+        return catalog.Object;
+    }
+
     // A device-catalog cache that always invokes the loader (behaves as if disabled), so tests
     // exercise the underlying device reader exactly as before the cache was introduced (A-12).
     private static IDeviceCatalogCache PassThroughCache()
@@ -105,6 +116,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
+            AllCapabilities(),
             Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act
@@ -141,6 +153,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
+            AllCapabilities(),
             Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act — must not throw; the error is carried on the notification.
@@ -168,6 +181,7 @@ public class GetPositionsQueriesTests : TestsContext
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
+            AllCapabilities(),
             Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act

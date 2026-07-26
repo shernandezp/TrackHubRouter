@@ -19,6 +19,7 @@ using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Constants;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
@@ -38,6 +39,7 @@ public class RecordOperatorHealthCommandHandler(
     IConnectivityRegistry connectivityRegistry,
     IOperatorHealthCheckWriter healthWriter,
     IAlertEventWriter alertWriter,
+    IProviderCapabilityCatalog capabilityCatalog,
     ILogger<RecordOperatorHealthCommandHandler> logger) : IRequestHandler<RecordOperatorHealthCommand, bool>
 {
     private string? EncryptionKey { get; } = configuration["AppSettings:EncryptionKey"];
@@ -47,6 +49,18 @@ public class RecordOperatorHealthCommandHandler(
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is null)
         {
+            return false;
+        }
+
+        // A provider that declares no ConnectivityPing is a DECLARED capability gap, not an
+        // outage — probing it would fabricate OFFLINE marks and critical alerts for a limitation
+        // of the provider's API. The health loop skips it quietly.
+        var protocol = (ProtocolType)request.Operator.ProtocolTypeId;
+        if (!capabilityCatalog.Supports(protocol, ProviderCapability.ConnectivityPing))
+        {
+            logger.LogDebug(
+                "Health probe skipped for operator {OperatorId} (account {AccountId}): provider {Protocol} declares no connectivity ping.",
+                request.Operator.OperatorId, request.Operator.AccountId, protocol);
             return false;
         }
 

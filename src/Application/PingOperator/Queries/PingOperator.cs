@@ -20,6 +20,7 @@ using Common.Domain.Constants;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Domain.Constants;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
@@ -40,6 +41,7 @@ public class PingOperatorQueryHandler(
     IOperatorSystemReader operatorSystemReader,
     IConnectivityRegistry connectivityRegistry,
     IOperatorHealthCheckSystemWriter healthWriter,
+    IProviderCapabilityCatalog capabilityCatalog,
     ILogger<PingOperatorQueryHandler> logger)
     : IRequestHandler<PingOperatorQuery, bool>
 {
@@ -67,6 +69,10 @@ public class PingOperatorQueryHandler(
         OperatorVm @operator,
         CancellationToken cancellationToken)
     {
+        // A provider without ConnectivityPing is a declared limitation of the provider's API —
+        // fail with the client-facing provider-limitation error before touching the registry.
+        capabilityCatalog.EnsureSupports((ProtocolType)@operator.ProtocolTypeId, ProviderCapability.ConnectivityPing);
+
         // Get the connectivity tester based on the protocol type of the operator
         var reader = connectivityRegistry.GetTester((ProtocolType)@operator.ProtocolTypeId);
         // Test the connectivity asynchronously
