@@ -20,6 +20,8 @@ using TrackHub.Router.Domain.Interfaces.Registry;
 using TrackHub.Router.Domain.Interfaces.Operator;
 using TrackHub.Router.Domain.Interfaces.Manager;
 using TrackHub.Router.Application.Gating;
+using TrackHub.Router.Domain.Enumerators;
+using TrackHub.Router.Domain.Exceptions;
 using TrackHub.Router.Domain.Models;
 using TrackHub.Router.Domain.Records;
 using Common.Application.Interfaces;
@@ -33,6 +35,7 @@ public class GetPositionsRecordQueryTests : TestsContext
 {
     private Mock<IConfiguration> _configurationMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
+    private Mock<IOperatorSystemReader> _operatorSystemReaderMock = null!;
     private Mock<IPositionRegistry> _positionRegistryMock = null!;
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<IAccountModeResolver> _modeResolverMock = null!;
@@ -45,6 +48,15 @@ public class GetPositionsRecordQueryTests : TestsContext
     {
         _configurationMock = new Mock<IConfiguration>();
         _operatorReaderMock = new Mock<IOperatorReader>();
+        // The system reader is the same operator set, read with the Router service identity, so it
+        // mirrors whatever the caller-scoped reader is configured to return.
+        _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
         _positionRegistryMock = new Mock<IPositionRegistry>();
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _modeResolverMock = new Mock<IAccountModeResolver>();
@@ -59,6 +71,7 @@ public class GetPositionsRecordQueryTests : TestsContext
         => new(
             _configurationMock.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _modeResolverMock.Object,
@@ -94,6 +107,35 @@ public class GetPositionsRecordQueryTests : TestsContext
         // Assert
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Handle_ProviderWithoutHistoryCapability_ThrowsProviderCapabilityNotSupported()
+    {
+        // GpsGate declares no PositionHistory in ProviderCapabilityCatalog: the handler must fail
+        // with the client-facing provider-limitation error before touching registry or provider,
+        // never a masked server error that reads as a TrackHub restriction.
+        var transporterId = Guid.NewGuid();
+        var from = DateTimeOffset.UtcNow.AddHours(-1);
+        var to = DateTimeOffset.UtcNow;
+
+        var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.GpsGate, Guid.NewGuid(), TestCredentialTokenVm);
+        var device = new DeviceTransporterVm { TransporterId = transporterId };
+
+        _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
+        _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(device);
+
+        var handler = CreateHandler();
+
+        var ex = Assert.ThrowsAsync<ProviderCapabilityNotSupportedException>(
+            async () => await handler.Handle(new GetPositionsRecordQuery(transporterId, from, to), CancellationToken.None));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Protocol, Is.EqualTo(ProtocolType.GpsGate));
+            Assert.That(ex.Capability, Is.EqualTo(ProviderCapability.PositionHistory));
+        });
+        _positionRegistryMock.Verify(x => x.GetReader(It.IsAny<ProtocolType>()), Times.Never);
     }
 
     [Test]

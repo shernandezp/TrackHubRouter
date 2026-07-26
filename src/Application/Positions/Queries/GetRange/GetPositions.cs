@@ -27,11 +27,13 @@ namespace TrackHub.Router.Application.Positions.Queries.GetRange;
 
 [Authorize(Resource = Resources.Positions, Action = Actions.Read)]
 [RateLimiting(PermitLimit = 3, WindowSeconds = 60)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct GetPositionsRecordQuery(Guid TransporterId, DateTimeOffset From, DateTimeOffset To, PositionSourceType Source = PositionSourceType.Provider) : IRequest<IEnumerable<PositionVm>>;
 
 public class GetPositionsRecordQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
+        IOperatorSystemReader operatorSystemReader,
         IPositionRegistry positionRegistry,
         IDeviceTransporterReader deviceReader,
         Application.Gating.IAccountModeResolver modeResolver,
@@ -53,20 +55,24 @@ public class GetPositionsRecordQueryHandler(
     public async Task<IEnumerable<PositionVm>> Handle(GetPositionsRecordQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
-        var @operator = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        // Resolved under the caller's identity, so Manager applies their account scope.
+        var scoped = await operatorReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
         var device = await deviceReader.GetDevicesTransporterAsync(request.TransporterId, cancellationToken);
-        await EnsureTransporterVisibilityAsync(groupVisibilityReader, principal, @operator.AccountId, request.TransporterId, cancellationToken);
+        await EnsureTransporterVisibilityAsync(groupVisibilityReader, principal, scoped.AccountId, request.TransporterId, cancellationToken);
 
         if (request.Source == PositionSourceType.Stored)
         {
-            if (!await modeResolver.IsPositionHistoryEnabledAsync(@operator.AccountId, cancellationToken))
+            if (!await modeResolver.IsPositionHistoryEnabledAsync(scoped.AccountId, cancellationToken))
             {
-                throw new FeatureDisabledException(FeatureKeys.GpsPositionHistory, @operator.AccountId);
+                throw new FeatureDisabledException(FeatureKeys.GpsPositionHistory, scoped.AccountId);
             }
 
-            var stored = await positionHistoryReader.GetPositionHistoryRangeAsync(@operator.AccountId, request.TransporterId, request.From, request.To, cancellationToken);
+            var stored = await positionHistoryReader.GetPositionHistoryRangeAsync(scoped.AccountId, request.TransporterId, request.From, request.To, cancellationToken);
             return stored.Select(p => p with { DeviceName = device.Name, TransporterType = device.TransporterType });
         }
+
+        // PROVIDER replay needs the decrypted credential, read with the Router's service identity.
+        var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
 
         return await GetDevicePositionAsync(
             positionRegistry,
@@ -79,4 +85,23 @@ public class GetPositionsRecordQueryHandler(
 
     }
 
+}
+
+public sealed class GetPositionsRecordQueryValidator : AbstractValidator<GetPositionsRecordQuery>
+{
+    private const int MaxRangeDays = 31;
+
+    public GetPositionsRecordQueryValidator()
+    {
+        RuleFor(v => v.TransporterId)
+            .NotEmpty();
+
+        RuleFor(v => v)
+            .Must(v => v.From < v.To)
+            .WithMessage("From must be earlier than To.");
+
+        RuleFor(v => v)
+            .Must(v => (v.To - v.From) <= TimeSpan.FromDays(MaxRangeDays))
+            .WithMessage($"The requested range exceeds the maximum of {MaxRangeDays} days.");
+    }
 }

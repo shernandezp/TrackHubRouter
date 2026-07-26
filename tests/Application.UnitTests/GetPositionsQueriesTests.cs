@@ -17,6 +17,7 @@ using Application.UnitTests;
 using Moq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
 using TrackHub.Router.Application.DevicePositions.Queries.Get;
 using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Registry;
@@ -37,6 +38,7 @@ public class GetPositionsQueriesTests : TestsContext
     private Mock<IPositionRegistry> _positionRegistryMock = null!;
     private Mock<IDeviceTransporterReader> _deviceReaderMock = null!;
     private Mock<IOperatorReader> _operatorReaderMock = null!;
+    private Mock<IOperatorSystemReader> _operatorSystemReaderMock = null!;
     private Mock<ITransporterPositionReader> _transporterPositionReaderMock = null!;
     private Mock<IPositionSystemWriter> _positionSystemWriterMock = null!;
 
@@ -47,6 +49,15 @@ public class GetPositionsQueriesTests : TestsContext
         _positionRegistryMock = new Mock<IPositionRegistry>();
         _deviceReaderMock = new Mock<IDeviceTransporterReader>();
         _operatorReaderMock = new Mock<IOperatorReader>();
+        // The system reader is the same operator set, read with the Router service identity, so it
+        // mirrors whatever the caller-scoped reader is configured to return.
+        _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
+        _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
         _transporterPositionReaderMock = new Mock<ITransporterPositionReader>();
         _positionSystemWriterMock = new Mock<IPositionSystemWriter>();
 
@@ -88,16 +99,16 @@ public class GetPositionsQueriesTests : TestsContext
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);
@@ -124,16 +135,16 @@ public class GetPositionsQueriesTests : TestsContext
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _deviceReaderMock.Setup(x => x.GetDeviceTransporterAsync(account.AccountId, operatorId, It.IsAny<CancellationToken>())).ReturnsAsync([new DeviceTransporterVm { TransporterId = Guid.NewGuid() }]);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act — must not throw; the error is carried on the notification.
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);
@@ -151,16 +162,16 @@ public class GetPositionsQueriesTests : TestsContext
         var operatorVm = new OperatorVm(Guid.NewGuid(), (int)ProtocolType.CommandTrack, Guid.NewGuid(), null);
         var account = new AccountSettingsVm(Guid.NewGuid(), 10, false, false);
 
-        var handler = new GetPositionsByOperatorQueryHandler(
+        var handler = new GetPositionsByOperatorCommandHandler(
             publisherMock.Object,
             _configurationMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             PassThroughCache(),
-            Mock.Of<ILogger<GetPositionsByOperatorQueryHandler>>());
+            Mock.Of<ILogger<GetPositionsByOperatorCommandHandler>>());
 
         // Act
-        var result = await handler.Handle(new GetPositionsByOperatorQuery(operatorVm, account), CancellationToken.None);
+        var result = await handler.Handle(new GetPositionsByOperatorCommand(operatorVm, account), CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.True);
@@ -189,6 +200,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             modeResolver.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -222,6 +234,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForEnabled(accountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -267,6 +280,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -311,6 +325,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -345,6 +360,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForDisabled(operatorVm.AccountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -382,6 +398,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             modeResolver.Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -423,6 +440,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForEnabled(accountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,
@@ -468,6 +486,7 @@ public class GetPositionsQueriesTests : TestsContext
             _configurationMock.Object,
             ModeResolverForDisabled(accountId).Object,
             _operatorReaderMock.Object,
+            _operatorSystemReaderMock.Object,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _transporterPositionReaderMock.Object,

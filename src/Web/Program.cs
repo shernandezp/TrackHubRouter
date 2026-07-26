@@ -34,6 +34,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddAppManagerContext();
 builder.Services.AddAppTelemetryContext();
 builder.Services.AddGeofenceManagerContext();
+builder.Services.AddAppTripManagementContext();
 builder.Services.AddCommonContext(builder.Configuration);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();
@@ -42,7 +43,8 @@ builder.Services.AddHealthChecks();
 // Shared TrackHub GraphQL hardening + the Router-specific error filters.
 builder.Services.AddTrackHubGraphQLServer<Query, Mutation>(builder.Environment.IsDevelopment())
     .AddErrorFilter<GeocodingErrorFilter>()
-    .AddErrorFilter<OperatorSyncErrorFilter>();
+    .AddErrorFilter<OperatorSyncErrorFilter>()
+    .AddErrorFilter<ProviderCapabilityErrorFilter>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 

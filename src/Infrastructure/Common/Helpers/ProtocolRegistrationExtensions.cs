@@ -16,6 +16,8 @@
 using System.Reflection;
 using Common.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
+using TrackHub.Router.Domain.Constants;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Interfaces.Operator;
 
 namespace TrackHub.Router.Infrastructure.Common.Helpers;
@@ -57,9 +59,10 @@ public static class ProtocolRegistrationExtensions
         // a provider.
         var protocolNamespace = ResolveProtocolNamespace(protocolAssembly, protocolName);
 
-        var registered = RegisterReaders(services, protocolAssembly, protocolNamespace, protocol);
+        var (deviceReader, positionReader, connectivityTester) =
+            RegisterReaders(services, protocolAssembly, protocolNamespace, protocol);
 
-        if (!registered)
+        if (!deviceReader && !positionReader && !connectivityTester)
         {
             throw new InvalidOperationException(
                 $"Configured protocol '{protocolName}' resolved assembly "
@@ -68,14 +71,57 @@ public static class ProtocolRegistrationExtensions
                 + "provider's type names and namespace.");
         }
 
+        ValidateDeclaredCapabilities(protocolName, protocol, deviceReader, positionReader, connectivityTester);
+
         return services;
+    }
+
+    // The capability catalog is the client-facing truth about what a provider supports; a
+    // declaration that its assembly cannot back (or an implemented reader the catalog hides)
+    // would misattribute limitations to the provider or to TrackHub. Same fail-fast policy as
+    // the other alignment points: a mismatch is a development error, caught at startup.
+    private static void ValidateDeclaredCapabilities(
+        string protocolName,
+        ProtocolType protocol,
+        bool deviceReader,
+        bool positionReader,
+        bool connectivityTester)
+    {
+        var declared = ProviderCapabilityCatalog.Get(protocol);
+        if (declared == ProviderCapability.None)
+        {
+            throw new InvalidOperationException(
+                $"Configured protocol '{protocolName}' has no capability declaration. Add its entry "
+                + $"to {nameof(ProviderCapabilityCatalog)} (docs/adding-a-provider.md).");
+        }
+
+        var expected = (positionReader
+                ? ProviderCapability.RealTimePositions | ProviderCapability.PositionHistory
+                : ProviderCapability.None)
+            | (deviceReader ? ProviderCapability.DeviceCatalog : ProviderCapability.None)
+            | (connectivityTester ? ProviderCapability.ConnectivityPing : ProviderCapability.None);
+
+        // A declared capability with no backing reader class is always an error. The reverse —
+        // a reader class whose capability is NOT declared — is only legal for PositionHistory,
+        // which is the one capability a PositionReader may stub out (real-time and history share
+        // the interface; e.g. GpsGate).
+        var undeclarable = declared & ~expected;
+        var hidden = expected & ~declared & ~(positionReader ? ProviderCapability.PositionHistory : ProviderCapability.None);
+
+        if (undeclarable != ProviderCapability.None || hidden != ProviderCapability.None)
+        {
+            throw new InvalidOperationException(
+                $"Configured protocol '{protocolName}' declares capabilities that don't match its "
+                + $"readers ({nameof(ProviderCapabilityCatalog)}: '{declared}', assembly supports: "
+                + $"'{expected}'). Align the catalog entry with the provider's reader classes.");
+        }
     }
 
     private static Type? GetProtocolType(Assembly assembly, string protocolNamespace, string typeName)
         // ignoreCase: true — the config/enum spelling may differ in casing from the namespace.
         => assembly.GetType($"{protocolNamespace}.{typeName}", throwOnError: false, ignoreCase: true);
 
-    private static bool RegisterReaders(
+    private static (bool DeviceReader, bool PositionReader, bool ConnectivityTester) RegisterReaders(
         IServiceCollection services,
         Assembly assembly,
         string protocolNamespace,
@@ -84,27 +130,29 @@ public static class ProtocolRegistrationExtensions
         var deviceReaderType = GetProtocolType(assembly, protocolNamespace, "DeviceReader");
         var positionReaderType = GetProtocolType(assembly, protocolNamespace, "PositionReader");
         var connectivityTesterType = GetProtocolType(assembly, protocolNamespace, "ConnectivityTester");
-        var registered = false;
+        var deviceReader = false;
+        var positionReader = false;
+        var connectivityTester = false;
 
         if (deviceReaderType is not null && typeof(IExternalDeviceReader).IsAssignableFrom(deviceReaderType))
         {
             services.AddKeyedTransient(typeof(IExternalDeviceReader), protocol, deviceReaderType);
-            registered = true;
+            deviceReader = true;
         }
 
         if (positionReaderType is not null && typeof(IPositionReader).IsAssignableFrom(positionReaderType))
         {
             services.AddKeyedTransient(typeof(IPositionReader), protocol, positionReaderType);
-            registered = true;
+            positionReader = true;
         }
 
         if (connectivityTesterType is not null && typeof(IConnectivityTester).IsAssignableFrom(connectivityTesterType))
         {
             services.AddKeyedTransient(typeof(IConnectivityTester), protocol, connectivityTesterType);
-            registered = true;
+            connectivityTester = true;
         }
 
-        return registered;
+        return (deviceReader, positionReader, connectivityTester);
     }
 
     // The assembly's real root namespace for the provider types, matched case-insensitively so a

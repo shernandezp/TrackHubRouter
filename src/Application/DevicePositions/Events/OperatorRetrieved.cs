@@ -13,7 +13,7 @@
 //  limitations under the License.
 //
 
-using TrackHub.Router.Application.DevicePositions.Queries.Get;
+using TrackHub.Router.Application.DevicePositions.Commands.Sync;
 using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Application.DevicePositions.Events;
@@ -25,7 +25,7 @@ public sealed class OperatorRetrieved
         public class EventHandler(ISender sender) : INotificationHandler<Notification>
         {
             public async Task Handle(Notification notification, CancellationToken cancellationToken)
-                => await sender.Send(new GetPositionsByOperatorQuery(notification.Operator, notification.Settings), cancellationToken);
+                => await sender.Send(new GetPositionsByOperatorCommand(notification.Operator, notification.Settings), cancellationToken);
             
         }
     }

@@ -28,7 +28,7 @@ public sealed class DeviceReader(IProviderSessionStore sessionStore)
     public async Task<DeviceVm> GetDeviceAsync(DeviceTransporterVm deviceDto, CancellationToken cancellationToken)
     {
         var deviceSearch = new DeviceSearch(Id.Create(deviceDto.Identifier));
-        var device = await GeotabApi!.CallAsync<Device>("Get", typeof(Device), new { search = deviceSearch }, cancellationToken);
+        var device = await Api.CallAsync<Device>("Get", typeof(Device), new { search = deviceSearch }, cancellationToken);
         PersistSession();
         return device!.MapToDeviceVm(deviceDto);
     }
@@ -40,7 +40,7 @@ public sealed class DeviceReader(IProviderSessionStore sessionStore)
         {
             DeviceIds = devices.Select(device => Id.Create(device.Identifier))
         };
-        var result = await GeotabApi!.CallAsync<IEnumerable<Device>>("Get", typeof(Device), new { search = deviceSearch }, cancellationToken);
+        var result = await Api.CallAsync<IEnumerable<Device>>("Get", typeof(Device), new { search = deviceSearch }, cancellationToken);
         PersistSession();
         if (result is null)
         {
@@ -53,7 +53,7 @@ public sealed class DeviceReader(IProviderSessionStore sessionStore)
     // Retrieves multiple devices asynchronously
     public async Task<IEnumerable<DeviceVm>> GetDevicesAsync(CancellationToken cancellationToken)
     {
-        var devices = await GeotabApi!.CallAsync<IEnumerable<Device>>("Get", typeof(Device), cancellationToken);
+        var devices = await Api.CallAsync<IEnumerable<Device>>("Get", typeof(Device), cancellationToken);
         PersistSession();
         return devices is null ? ([]) : devices.MapToDeviceVm().Distinct();
     }

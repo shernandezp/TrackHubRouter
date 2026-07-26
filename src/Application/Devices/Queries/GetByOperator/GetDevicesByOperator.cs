@@ -24,11 +24,13 @@ namespace TrackHub.Router.Application.Devices.Queries.GetByOperator;
 
 
 [Authorize(Resource = Resources.Devices, Action = Actions.Read)]
+[AccountScopeEnforcedInHandler]
 public readonly record struct GetDevicesByOperatorQuery(Guid OperatorId) : IRequest<IEnumerable<DeviceVm>>;
 
 public class GetDevicesByOperatorQueryHandler(
         IConfiguration configuration,
         IOperatorReader operatorReader,
+        IOperatorSystemReader operatorSystemReader,
         IDeviceRegistry deviceRegistry)
         : IRequestHandler<GetDevicesByOperatorQuery, IEnumerable<DeviceVm>>
 {
@@ -37,11 +39,15 @@ public class GetDevicesByOperatorQueryHandler(
     // Handles the GetDevicesByOperatorQuery and returns a list of external device view models
     public async Task<IEnumerable<DeviceVm>> Handle(GetDevicesByOperatorQuery request, CancellationToken cancellationToken)
     {
-        var @operator = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
-        if (!@operator.Enabled)
+        // Caller-scoped resolve authorizes the operator; the service-identity re-read supplies the
+        // decrypted credential used to reach the provider.
+        var scopedOperator = await operatorReader.GetOperatorAsync(request.OperatorId, cancellationToken);
+        if (!scopedOperator.Enabled)
         {
             return [];
         }
+
+        var @operator = await operatorSystemReader.GetOperatorAsync(scopedOperator.OperatorId, cancellationToken);
         return await GetDevicesAsync(@operator, cancellationToken);
     }
 

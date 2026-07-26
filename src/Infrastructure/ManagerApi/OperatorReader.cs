@@ -15,11 +15,21 @@
 
 namespace ManagerApi;
 
+using GraphQL.Client.Abstractions;
+
 // This class represents the implementation of the IOperatorReader interface
-// It is responsible for reading operator data from the GraphQL service
-public class OperatorReader(IGraphQLClientFactory graphQLClient)
-    : GraphQLService(graphQLClient.CreateClient(Clients.Manager)), IOperatorReader
+// It is responsible for reading operator data from the GraphQL service.
+//
+// Resolves operators under the CALLER's identity, so Manager applies that caller's account and
+// group visibility. Credential material is redacted for callers without Credentials/Custom; use
+// IOperatorSystemReader when the decrypted credential is required to reach a provider.
+public class OperatorReader : GraphQLService, IOperatorReader
 {
+    public OperatorReader(IGraphQLClientFactory graphQLClient)
+        : base(graphQLClient.CreateClient(Clients.Manager)) { }
+
+    protected OperatorReader(IGraphQLClient graphQLClient) : base(graphQLClient) { }
+
     internal const string OperatorsByUserQuery = @"
                     query {
                         operatorsByUser

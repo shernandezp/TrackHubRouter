@@ -13,6 +13,7 @@
 //  limitations under the License.
 //
 
+using Common.Application.Attributes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrackHub.Router.Application.DevicePositions.Events;
@@ -20,6 +21,7 @@ using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
+[AllowCrossAccount("SyncWorker position-sync cycle: dispatched in-process under the worker's global service identity, it iterates every GPS-enabled account (GetAccountsToSyncAsync) and fans out per operator. It carries no account and spans all tenants by design, so there is nothing to bind it to.")]
 public readonly record struct SyncPositionCommand() : IRequest<bool>;
 
 public class UpdateTransporterCommandHandler(IAccountReader reader,

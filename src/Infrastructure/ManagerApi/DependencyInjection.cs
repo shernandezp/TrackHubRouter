@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<IGroupVisibilityReader, GroupVisibilityReader>();
         services.AddScoped<IDeviceTransporterReader, DeviceTransporterReader>();
         services.AddScoped<IOperatorReader, OperatorReader>();
+        services.AddScoped<IOperatorSystemReader, OperatorSystemReader>();
         services.AddScoped<ITransporterTypeReader, TransporterTypeReader>();
         services.AddScoped<IDeviceSyncWriter, DeviceSyncWriter>();
         services.AddScoped<IAlertEventWriter, AlertEventWriter>();

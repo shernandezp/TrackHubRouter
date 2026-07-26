@@ -30,6 +30,7 @@ public readonly record struct GetDevicesQuery() : IRequest<IEnumerable<DeviceVm>
 public class GetDevicesQueryHandler(
     IConfiguration configuration,
     IOperatorReader operatorReader,
+    IOperatorSystemReader operatorSystemReader,
     IDeviceRegistry deviceRegistry,
     IDeviceTransporterReader deviceReader)
     : IRequestHandler<GetDevicesQuery, IEnumerable<DeviceVm>>
@@ -39,14 +40,23 @@ public class GetDevicesQueryHandler(
 
     public async Task<IEnumerable<DeviceVm>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
     {
-        var allOperators = await operatorReader.GetOperatorsAsync(cancellationToken);
-        var visibleOperators = allOperators.ToList();
+        // Visibility under the caller's identity; credentials from a service-identity read of the same
+        // accounts, matched back to the visible set.
+        var visibleOperators = (await operatorReader.GetOperatorsAsync(cancellationToken)).ToList();
         if (visibleOperators.Count == 0)
         {
             return [];
         }
 
-        var operators = visibleOperators.Where(o => o.Enabled).ToList();
+        var visibleIds = visibleOperators.Select(o => o.OperatorId).ToHashSet();
+        var withCredentials = new List<OperatorVm>(visibleOperators.Count);
+        foreach (var accountId in visibleOperators.Select(o => o.AccountId).Where(id => id != Guid.Empty).Distinct())
+        {
+            var accountOperators = await operatorSystemReader.GetOperatorsByAccountsAsync(accountId, cancellationToken);
+            withCredentials.AddRange(accountOperators.Where(o => visibleIds.Contains(o.OperatorId)));
+        }
+
+        var operators = withCredentials.Where(o => o.Enabled).ToList();
         if (operators.Count == 0)
         {
             return [];

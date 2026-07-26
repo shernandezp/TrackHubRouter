@@ -36,6 +36,12 @@ public abstract class GeotabReaderBase(IProviderSessionStore sessionStore)
 
     protected API? GeotabApi = null;
 
+    // Readers are resolved from keyed DI and are unusable until Init supplies a credential.
+    // Reaching the SDK through here turns a forgotten Init into a named failure instead of a
+    // NullReferenceException surfacing from inside the provider call.
+    protected API Api => GeotabApi
+        ?? throw new InvalidOperationException("Geotab reader used before Init; call Init with a credential first.");
+
     public ProtocolType Protocol => ProtocolType.GeoTab;
 
     // Initializes the Geotab reader with the provided credential, reusing a cached session id

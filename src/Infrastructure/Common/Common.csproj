@@ -13,7 +13,7 @@
     <ProjectReference Include="..\Geotab\Geotab.csproj" />
     <ProjectReference Include="..\GpsGate\GpsGate.csproj" />
     <ProjectReference Include="..\Navixy\Navixy.csproj" />
-    <ProjectReference Include="..\Protack\Protrack.csproj" />
+    <ProjectReference Include="..\Protrack\Protrack.csproj" />
     <ProjectReference Include="..\Samsara\Samsara.csproj" />
     <ProjectReference Include="..\Traccar\Traccar.csproj" />
     <ProjectReference Include="..\Wialon\Wialon.csproj" />

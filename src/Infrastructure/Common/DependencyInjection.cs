@@ -48,6 +48,7 @@ public static class DependencyInjection
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
         services.AddScoped<IReverseGeocoder, NominatimReverseGeocoder>();
+        services.AddScoped<IReverseGeocoder, OpenRouteServiceReverseGeocoder>();
         services.AddScoped<IReverseGeocodingService, ReverseGeocodingService>();
 
         services.AddSingleton<IExecutionIntervalManager, ExecutionIntervalManager>();

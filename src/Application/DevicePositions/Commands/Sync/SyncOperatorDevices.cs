@@ -13,14 +13,22 @@
 //  limitations under the License.
 //
 
+using Common.Application.Attributes;
 using Ardalis.GuardClauses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TrackHub.Router.Domain.Constants;
 using TrackHub.Router.Domain.Extensions;
 using TrackHub.Router.Domain.Models;
 
 namespace TrackHub.Router.Application.DevicePositions.Commands.Sync;
 
+// In-process only (no [Authorize]); reached two ways. (1) The SyncWorker's device-sync loop, under
+// a global syncworker_client identity with no account claim. (2) TriggerOperatorSyncCommand, the
+// manual "sync now" user feature — that command carries a TOP-LEVEL AccountId which the guard still
+// enforces, and its handler rejects an operator belonging to a different account before dispatching
+// here, so this opt-out does not leave the user path open. The account rides inside OperatorVm.
+[AllowCrossAccount("SyncWorker device-sync loop: one global syncworker_client identity enumerates every account's operators and pushes each one's device catalog, so the OperatorVm's AccountId is by definition not the worker's own (it has none). The manual-sync entry point stays guarded by TriggerOperatorSyncCommand's own top-level AccountId.")]
 public readonly record struct SyncOperatorDevicesCommand(
     OperatorVm Operator,
     string TriggerType,
@@ -46,6 +54,9 @@ public class SyncOperatorDevicesCommandHandler(
         Guard.Against.Null(EncryptionKey, message: "Credential key not found.");
         if (request.Operator.Credential is null)
         {
+            logger.LogWarning(
+                "Device sync skipped for operator {OperatorId} (account {AccountId}): no stored credential. Correlation {CorrelationId}.",
+                request.Operator.OperatorId, request.Operator.AccountId, request.CorrelationId);
             return false;
         }
 
@@ -116,6 +127,11 @@ public class SyncOperatorDevicesCommandHandler(
         // zero, DevicesSeen reflects what the provider returned before the failure). Best-effort:
         // telemetry failures never fail the sync itself.
         var succeeded = result == "SUCCEEDED";
+        logger.LogInformation(
+            "Device sync {Result} for operator {OperatorId} (account {AccountId}): {Seen} seen, {Added} added, {Updated} updated, {Removed} removed in {ElapsedMs} ms. Trigger {TriggerType}, correlation {CorrelationId}.",
+            result, request.Operator.OperatorId, request.Operator.AccountId,
+            succeeded ? counts.DevicesSeen : devices.Length, counts.DevicesAdded, counts.DevicesUpdated, counts.DevicesRemoved,
+            (int)(DateTimeOffset.UtcNow - startedAt).TotalMilliseconds, request.TriggerType, correlationId);
         try
         {
             await syncRunWriter.RecordAsync(new OperatorSyncRunDto(
@@ -146,8 +162,7 @@ public class SyncOperatorDevicesCommandHandler(
             await healthWriter.RecordAsync(new OperatorHealthCheckDto(
                 AccountId: request.Operator.AccountId,
                 OperatorId: request.Operator.OperatorId,
-                // Telemetry's OperatorHealthCheckType enum, GraphQL form (like the worker's "PING").
-                CheckType: "DEVICE_SYNC",
+                CheckType: OperatorHealthCheckTypes.DeviceSync,
                 Status: providerReached ? "HEALTHY" : "OFFLINE",
                 LatencyMs: (int)(checkCompletedAt - startedAt).TotalMilliseconds,
                 StartedAt: startedAt,

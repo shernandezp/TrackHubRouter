@@ -30,45 +30,45 @@ public class DeviceReaderTests
     }
 
     [Test]
-    public void GetDeviceAsync_WithNullGeotabApi_ThrowsNullReferenceException()
+    public void GetDeviceAsync_WithNullGeotabApi_ThrowsInvalidOperationException()
     {
         // Arrange
         var deviceDto = new DeviceTransporterVm { Identifier = 1 };
         var cancellationToken = CancellationToken.None;
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(async () => await _deviceReader.GetDeviceAsync(deviceDto, cancellationToken));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _deviceReader.GetDeviceAsync(deviceDto, cancellationToken));
     }
 
     [Test]
-    public void GetDevicesAsync_WithNullGeotabApi_ThrowsNullReferenceException()
+    public void GetDevicesAsync_WithNullGeotabApi_ThrowsInvalidOperationException()
     {
         // Arrange
         var devices = new List<DeviceTransporterVm> { new () { Identifier = 1 }, new () { Identifier = 2 } };
         var cancellationToken = CancellationToken.None;
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(async () => await _deviceReader.GetDevicesAsync(devices, cancellationToken));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _deviceReader.GetDevicesAsync(devices, cancellationToken));
     }
 
     [Test]
-    public void GetDevicesAsync_WithEmptyDeviceList_ThrowsNullReferenceException()
+    public void GetDevicesAsync_WithEmptyDeviceList_ThrowsInvalidOperationException()
     {
         // Arrange
         var devices = new List<DeviceTransporterVm>();
         var cancellationToken = CancellationToken.None;
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(async () => await _deviceReader.GetDevicesAsync(devices, cancellationToken));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _deviceReader.GetDevicesAsync(devices, cancellationToken));
     }
 
     [Test]
-    public void GetDevicesAsync_WithNullGeotabApi_ThrowsNullReferenceException_NoParams()
+    public void GetDevicesAsync_WithNullGeotabApi_ThrowsInvalidOperationException_NoParams()
     {
         // Arrange
         var cancellationToken = CancellationToken.None;
 
         // Act & Assert
-        Assert.ThrowsAsync<NullReferenceException>(async () => await _deviceReader.GetDevicesAsync(cancellationToken));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _deviceReader.GetDevicesAsync(cancellationToken));
     }
 }
