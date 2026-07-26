@@ -15,6 +15,7 @@
 
 using Common.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
+using TrackHub.Router.Domain.Enumerators;
 using TrackHub.Router.Domain.Interfaces.Operator;
 using TrackHub.Router.Infrastructure.Common.Helpers;
 
@@ -73,15 +74,47 @@ public class ProtocolRegistrationExtensionsTests
     [Test]
     public void RegisterProtocol_GpsGate_RegistersWithUndeclaredPositionHistory()
     {
-        // GpsGate ships a PositionReader whose history method is a capability-guarded stub, so the
-        // catalog declares no PositionHistory. The startup cross-check must accept that shape:
+        // GpsGate ships a PositionReader whose history method is a capability-guarded stub, so its
+        // descriptor declares no PositionHistory. The startup cross-check must accept that shape:
         // history is the one capability a PositionReader may stub out.
         var services = new ServiceCollection();
 
-        Assert.DoesNotThrow(() => services.RegisterProtocol(ProtocolType.GpsGate.ToString()));
-        Assert.That(
-            services.Any(d => d.ServiceType == typeof(IPositionReader) && Equals(d.ServiceKey, ProtocolType.GpsGate)),
-            Is.True);
+        var descriptor = services.RegisterProtocol(ProtocolType.GpsGate.ToString());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                services.Any(d => d.ServiceType == typeof(IPositionReader) && Equals(d.ServiceKey, ProtocolType.GpsGate)),
+                Is.True);
+            Assert.That(descriptor.Protocol, Is.EqualTo(ProtocolType.GpsGate));
+            Assert.That(descriptor.Capabilities.HasFlag(ProviderCapability.PositionHistory), Is.False);
+            Assert.That(descriptor.Capabilities.HasFlag(ProviderCapability.RealTimePositions), Is.True);
+        });
+    }
+
+    [Test]
+    public void EveryProtocolTypeValue_IsEitherRegistrableOrReserved()
+    {
+        // Replaces the old central-catalog completeness guard: every value the enum can name must
+        // either resolve a self-describing provider assembly (descriptor discovered and validated
+        // by RegisterProtocol) or appear in the reserved placeholder list — a new enum value with
+        // neither would silently report ProviderCapability.None to clients.
+        var reserved = ProtocolRegistrationExtensions.ReservedDescriptors
+            .Select(d => d.Protocol)
+            .ToHashSet();
+
+        foreach (var protocol in Enum.GetValues<ProtocolType>().Where(p => !reserved.Contains(p)))
+        {
+            var services = new ServiceCollection();
+
+            var descriptor = services.RegisterProtocol(protocol.ToString());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor.Protocol, Is.EqualTo(protocol));
+                Assert.That(descriptor.DisplayName, Is.Not.Empty);
+            });
+        }
     }
 
     [Test]

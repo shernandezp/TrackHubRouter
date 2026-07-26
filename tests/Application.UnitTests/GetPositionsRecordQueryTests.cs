@@ -72,6 +72,7 @@ public class GetPositionsRecordQueryTests : TestsContext
             _configurationMock.Object,
             _operatorReaderMock.Object,
             _operatorSystemReaderMock.Object,
+            TestProviderDescriptors.DefaultCatalog,
             _positionRegistryMock.Object,
             _deviceReaderMock.Object,
             _modeResolverMock.Object,
@@ -112,7 +113,7 @@ public class GetPositionsRecordQueryTests : TestsContext
     [Test]
     public void Handle_ProviderWithoutHistoryCapability_ThrowsProviderCapabilityNotSupported()
     {
-        // GpsGate declares no PositionHistory in ProviderCapabilityCatalog: the handler must fail
+        // GpsGate declares no PositionHistory in its provider descriptor: the handler must fail
         // with the client-facing provider-limitation error before touching registry or provider,
         // never a masked server error that reads as a TrackHub restriction.
         var transporterId = Guid.NewGuid();

@@ -15,12 +15,14 @@
 
 namespace TrackHub.Router.Domain.Models;
 
-// One row of the provider capability matrix (ProviderCapabilityCatalog) as exposed to clients.
+// One row of the provider capability matrix (IProviderCapabilityCatalog) as exposed to clients.
 // Flat booleans rather than the [Flags] enum so the GraphQL shape stays additive when a
-// capability is introduced.
+// capability is introduced. DisplayName is the provider's client-facing name, declared by the
+// provider assembly itself, so clients need no local protocol-name table.
 public record struct ProviderCapabilitiesVm(
     int ProtocolTypeId,
     string Protocol,
+    string DisplayName,
     bool RealTimePositions,
     bool PositionHistory,
     bool DeviceCatalog,

@@ -18,11 +18,15 @@ using Microsoft.Extensions.Configuration;
 using TrackHub.Router.Infrastructure.Common;
 using TrackHub.Router.Infrastructure.Common.Geocoding;
 using TrackHub.Router.Infrastructure.Common.Helpers;
+using TrackHub.Router.Domain.Helpers;
+using TrackHub.Router.Domain.Interfaces;
 using TrackHub.Router.Domain.Interfaces.Geocoding;
 using TrackHub.Router.Application.Devices.Registry;
 using TrackHub.Router.Application.PingOperator;
 using TrackHub.Router.Application.DevicePositions.Registry;
 using TrackHub.Router.Domain.Interfaces.Registry;
+
+using Common.Application.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -34,11 +38,17 @@ public static class DependencyInjection
         Guard.Against.Null(protocols, message: $"Client configuration for Protocols not loaded");
 
         // Uniform registration for every provider (no adapter special-casing — router-audit A-18);
-        // each provider's readers are registered keyed by ProtocolType (router-audit A-07).
-        foreach (var protocol in protocols)
-        {
-            services.RegisterProtocol(protocol);
-        }
+        // each provider's readers are registered keyed by ProtocolType (router-audit A-07). Each
+        // registration yields the assembly's own descriptor; together with the reserved
+        // placeholders they form the runtime capability catalog.
+        var descriptors = protocols
+            .Select(protocol => services.RegisterProtocol(protocol))
+            .DistinctBy(descriptor => descriptor.Protocol)
+            .ToList();
+        var registered = descriptors.Select(d => d.Protocol).ToHashSet();
+        descriptors.AddRange(ProtocolRegistrationExtensions.ReservedDescriptors
+            .Where(reserved => !registered.Contains(reserved.Protocol)));
+        services.AddSingleton<IProviderCapabilityCatalog>(new ProviderCapabilityCatalog(descriptors));
 
         services.AddHttpClient(NominatimReverseGeocoder.HttpClientName);
 
@@ -67,6 +77,11 @@ public static class DependencyInjection
         services.AddScoped<IConnectivityRegistry, ConnectivityRegistry>();
         services.AddScoped<IDeviceRegistry, DeviceRegistry>();
         services.AddScoped<IPositionRegistry, PositionRegistry>();
+
+        // Module discovery seam: registers any IServiceModule implementations shipped in
+        // this assembly (none in this repository).
+        services.AddDiscoveredModules(typeof(ProviderSessionStore).Assembly, configuration);
+
         return services;
     }
 }
