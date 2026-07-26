@@ -55,7 +55,19 @@ public class RecordOperatorHealthCommandHandlerTests : TestsContext
         _connectivityRegistryMock.Object,
         _healthWriterMock.Object,
         _alertWriterMock.Object,
+        AllCapabilities(),
         Mock.Of<ILogger<RecordOperatorHealthCommandHandler>>());
+
+    // Reports every capability supported, so these tests exercise the handler exactly as
+    // before the partial-provider guard was introduced.
+    private static IProviderCapabilityCatalog AllCapabilities()
+    {
+        var catalog = new Mock<IProviderCapabilityCatalog>();
+        catalog
+            .Setup(c => c.Supports(It.IsAny<ProtocolType>(), It.IsAny<TrackHub.Router.Domain.Enumerators.ProviderCapability>()))
+            .Returns(true);
+        return catalog.Object;
+    }
 
     private static OperatorVm OperatorWith(CredentialTokenVm? credential, string? previousStatus = null) =>
         new(Guid.NewGuid(), (int)ProtocolType.CommandTrack, Guid.NewGuid(), credential,

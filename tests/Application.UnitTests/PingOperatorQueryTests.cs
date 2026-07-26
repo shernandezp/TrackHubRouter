@@ -57,7 +57,19 @@ public class PingOperatorQueryTests : TestsContext
             _operatorSystemReaderMock.Object,
             _connectivityRegistryMock.Object,
             _healthWriterMock.Object,
+            AllCapabilities(),
             Mock.Of<ILogger<PingOperatorQueryHandler>>());
+
+    // Reports every capability supported, so these tests exercise the handler exactly as
+    // before the partial-provider guard was introduced.
+    private static IProviderCapabilityCatalog AllCapabilities()
+    {
+        var catalog = new Mock<IProviderCapabilityCatalog>();
+        catalog
+            .Setup(c => c.Supports(It.IsAny<ProtocolType>(), It.IsAny<TrackHub.Router.Domain.Enumerators.ProviderCapability>()))
+            .Returns(true);
+        return catalog.Object;
+    }
 
     // The caller-scoped reader authorizes the operator; the system reader returns the same operator
     // carrying its credential. Mirroring the two keeps fixtures declaring the operator once.
