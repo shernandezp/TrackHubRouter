@@ -164,6 +164,18 @@ public class GetPositionsByUserQueryHandler(
             var assignedCount = assigned.Count();
             if (assignedCount == 0)
             {
+                // Used to `continue` silently, which made an empty map indistinguishable from a
+                // broken provider. A device carries no position of its own — the transporter does —
+                // so until a device is assigned to one the map is empty however healthy the provider
+                // is. This is a normal intermediate state, not a defect: providers that declare no
+                // DeviceCatalog capability have their devices registered by hand, and auto-assign
+                // deliberately touches only devices a sync has just discovered (re-assigning on every
+                // sync would resurrect transporters an operator had unassigned on purpose). Saying so
+                // is all that is needed — the operator finishes the wiring in the UI.
+                logger.LogWarning(
+                    "Live map returned no positions for operator {OperatorId} (account {AccountId}): none of its devices are assigned to a transporter. "
+                    + "A registered device only reaches the map once it is assigned to a transporter AND that transporter is in a group the user belongs to.",
+                    @operator.OperatorId, @operator.AccountId);
                 continue;
             }
 

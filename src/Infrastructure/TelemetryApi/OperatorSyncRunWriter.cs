@@ -1,7 +1,13 @@
 namespace TrackHub.Router.Infrastructure.TelemetryApi;
 
+// asService: RecordOperatorSyncRunCommand is gated on OperatorSyncRuns/Write, a SERVICE grant that
+// no portal role holds (Manager and User get Read only). The propagating client forwards the
+// triggering user's token, so a MANUAL sync recorded its run as that user and was refused — the run
+// vanished and the caller reported failure even though the sync itself had succeeded. Background
+// syncs were unaffected because the SyncWorker host registers these clients with
+// headerPropagation: false, which is precisely why this only ever surfaced on manual sync.
 public class OperatorSyncRunWriter(IGraphQLClientFactory graphQLClient)
-    : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry)), IOperatorSyncRunWriter
+    : GraphQLService(graphQLClient.CreateClient(Clients.Telemetry, asService: true)), IOperatorSyncRunWriter
 {
     internal const string RecordOperatorSyncRunMutation = @"
                 mutation($command: RecordOperatorSyncRunCommandInput!) {

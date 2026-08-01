@@ -4,7 +4,9 @@ namespace TrackHub.Router.Infrastructure.TelemetryApi;
 
 public class OperatorHealthCheckWriter : GraphQLService, IOperatorHealthCheckWriter
 {
-    public OperatorHealthCheckWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Telemetry)) { }
+    // asService — see the note on OperatorSyncRunWriter. RecordOperatorHealthCommand is
+    // ServiceClient-only, so forwarding the triggering user's token refused every manual check.
+    public OperatorHealthCheckWriter(IGraphQLClientFactory graphQLClient) : base(graphQLClient.CreateClient(Clients.Telemetry, asService: true)) { }
 
     protected OperatorHealthCheckWriter(IGraphQLClient graphQLClient) : base(graphQLClient) { }
 
