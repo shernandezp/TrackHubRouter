@@ -52,8 +52,6 @@ public class GetPositionTripsQueryTests : TestsContext
         _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
         _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
-        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
         _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
         _positionRegistryMock = new Mock<IPositionRegistry>();
@@ -104,6 +102,7 @@ public class GetPositionTripsQueryTests : TestsContext
         readerMock.Setup(r => r.GetPositionAsync(from, to, device, It.IsAny<CancellationToken>())).ReturnsAsync(positions);
 
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
+        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(device);
         _positionRegistryMock.Setup(x => x.GetReader(It.IsAny<ProtocolType>())).Returns(readerMock.Object);
         _transporterTypeReaderMock.Setup(x => x.GetTransporterTypeAsync(device.TransporterTypeId, It.IsAny<CancellationToken>())).ReturnsAsync(new TransporterTypeVm(false, 5, 10, 120));
@@ -130,6 +129,7 @@ public class GetPositionTripsQueryTests : TestsContext
         var device = new DeviceTransporterVm { TransporterId = transporterId, TransporterTypeId = 1 };
 
         _operatorReaderMock.Setup(x => x.GetOperatorByTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
+        _operatorReaderMock.Setup(x => x.GetOperatorAsync(operatorVm.OperatorId, It.IsAny<CancellationToken>())).ReturnsAsync(operatorVm);
         _deviceReaderMock.Setup(x => x.GetDevicesTransporterAsync(transporterId, It.IsAny<CancellationToken>())).ReturnsAsync(device);
 
         var handler = CreateHandler();

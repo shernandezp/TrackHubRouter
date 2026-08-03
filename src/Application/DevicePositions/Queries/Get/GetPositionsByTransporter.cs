@@ -61,8 +61,10 @@ public class GetPositionByTransporterQueryHandler(
         }
 
         // Only the provider branch needs the decrypted credential, which the Router reads with its own
-        // service identity so callers never require credential-viewing permission.
-        var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+        // service identity so callers never require credential-viewing permission. Read by operator id:
+        // the service principal carries no account scope, so only the [AllowCrossAccount] by-id
+        // operator read admits it (the by-transporter read is caller-scoped and fail-closed).
+        var @operator = await operatorSystemReader.GetOperatorAsync(scoped.OperatorId, cancellationToken);
         return await TryGetDevicePositionAsync(@operator, request.TransporterId, cancellationToken);
     }
 

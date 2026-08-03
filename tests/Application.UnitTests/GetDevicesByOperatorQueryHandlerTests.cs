@@ -46,8 +46,6 @@ public class GetDevicesByOperatorQueryHandlerTests : TestsContext
         _operatorSystemReaderMock = new Mock<IOperatorSystemReader>();
         _operatorSystemReaderMock.Setup(x => x.GetOperatorAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorAsync(id, ct));
-        _operatorSystemReaderMock.Setup(x => x.GetOperatorByTransporterAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns((Guid id, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorByTransporterAsync(id, ct));
         _operatorSystemReaderMock.Setup(x => x.GetOperatorsByAccountsAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns((Guid _, CancellationToken ct) => _operatorReaderMock.Object.GetOperatorsAsync(ct));
         _deviceRegistryMock = new Mock<IDeviceRegistry>();

@@ -36,10 +36,13 @@ namespace TrackHub.Router.Domain.Interfaces.Manager;
 public interface IOperatorSystemReader
 {
     /// <summary>Operator by id, with credentials.</summary>
+    /// <remarks>
+    /// Deliberately the ONLY per-operator read here: Manager admits the Router's account-less
+    /// service identity solely through the [AllowCrossAccount] by-id operator query. Resolve the
+    /// operator from a transporter under the CALLER's identity (IOperatorReader) first, then read
+    /// the credential here by the resolved id — never add a by-transporter read to this interface.
+    /// </remarks>
     Task<OperatorVm> GetOperatorAsync(Guid operatorId, CancellationToken cancellationToken);
-
-    /// <summary>Operator that owns the transporter's device, with credentials.</summary>
-    Task<OperatorVm> GetOperatorByTransporterAsync(Guid transporterId, CancellationToken cancellationToken);
 
     /// <summary>Every operator of an account, with credentials.</summary>
     Task<IEnumerable<OperatorVm>> GetOperatorsByAccountsAsync(Guid accountId, CancellationToken cancellationToken);
