@@ -75,8 +75,11 @@ public class GetPositionTripsQueryHandler(
         }
         else
         {
-            // PROVIDER replay needs the decrypted credential, read with the Router's service identity.
-            var @operator = await operatorSystemReader.GetOperatorByTransporterAsync(request.TransporterId, cancellationToken);
+            // PROVIDER replay needs the decrypted credential, read with the Router's service identity
+            // by operator id: the service principal carries no account scope, so only the
+            // [AllowCrossAccount] by-id operator read admits it (the by-transporter read is
+            // caller-scoped and fail-closed denies account-less principals).
+            var @operator = await operatorSystemReader.GetOperatorAsync(scoped.OperatorId, cancellationToken);
             positions = await GetDevicePositionAsync(
                 capabilityCatalog,
                 positionRegistry,
