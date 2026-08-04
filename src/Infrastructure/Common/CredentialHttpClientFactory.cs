@@ -33,7 +33,7 @@ public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFac
         var httpClient = httpClientFactory.CreateClient(ProviderHttpClientName);
         if (!string.IsNullOrEmpty(credential.Uri))
         {
-            httpClient.BaseAddress = new Uri(credential.Uri);
+            httpClient.BaseAddress = AsBaseAddress(credential.Uri);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
         else
@@ -41,5 +41,20 @@ public sealed class CredentialHttpClientFactory(IHttpClientFactory httpClientFac
             throw new InvalidOperationException($"Base URL for client '{credential.CredentialId}' not initialized.");
         }
         return httpClient;
+    }
+
+    // Providers that dial relative paths (Traccar "api/server", CommandTrack
+    // "DataConnectAPI/api/...") resolve them against BaseAddress, and .NET Uri resolution drops
+    // the last segment of a base whose path lacks a trailing slash — "https://host/gps" + "api/x"
+    // resolves to "https://host/api/x". The credential Uri is operator-entered text, so the
+    // trailing slash is established here, in the one component that depends on it, rather than
+    // demanded of whoever filled in the form. Any query or fragment is dropped: relative
+    // resolution discards it regardless, so a base address never carried one meaningfully.
+    private static Uri AsBaseAddress(string uri)
+    {
+        var parsed = new Uri(uri);
+        return parsed.AbsolutePath.EndsWith('/')
+            ? parsed
+            : new Uri(parsed, $"{parsed.AbsolutePath}/");
     }
 }
